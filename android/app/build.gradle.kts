@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.futbol_pro"
+    namespace = "com.Masai.futbol_pro"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

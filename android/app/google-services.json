@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1011658046972",
+    "project_id": "masai-app",
+    "storage_bucket": "masai-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011658046972:android:9ca7ae731b129e93a2c679",
+        "android_client_info": {
+          "package_name": "com.Masai.futbol_pro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRTB9kQvwRgMb6I6C_XW_uRSE8xvaUukU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
