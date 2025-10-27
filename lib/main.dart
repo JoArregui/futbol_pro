@@ -1,22 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart'; // <-- IMPORTANTE: Importar firebase_core
 import 'core/injection_container.dart' as di;
 import 'core/services/notification_service.dart';
 import 'routes/app_router.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
-
+// Asegúrate de que este archivo exista después de correr flutterfire configure
+import 'firebase_options.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 1. Inicializa todas las dependencias (GetIt)
+  // ==========================================================
+  // 1. CRÍTICO: Inicializar Firebase primero
+  // Esto debe suceder antes de cualquier dependencia (di.init()) 
+  // que intente usar Firebase, como NotificationService.
+  // ==========================================================
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // Si la inicialización falla (ej. falta google-services.json), imprime el error
+    print('Firebase Initialization Error: $e');
+  }
+
+  // 2. Inicializa todas las dependencias (GetIt) - Ahora pueden usar Firebase
   di.init(); 
 
-  // 2. Inicializa servicios Core esenciales (si no lo haces en init())
-  await di.sl<NotificationService>().initializeNotifications(); 
+  // 3. Inicializa servicios Core esenciales (si es necesario)
+  // Nota: Si initializeNotifications() usa FirebaseMessaging, la línea 
+  // 1 debe ir antes de di.init() Y antes de esta línea.
+  try {
+    await di.sl<NotificationService>().initializeNotifications(); 
+  } catch (e) {
+    print('Notification Service Initialization Error (likely Firebase setup related): $e');
+  }
   
-  // 3. Dispara la verificación de autenticación inicial
+  // 4. Dispara la verificación de autenticación inicial
   di.sl<AuthBloc>().add(AppStarted()); 
 
   runApp(const MyApp());
@@ -27,12 +49,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 4. Provee el AuthBloc a todo el árbol de widgets
+    // 5. Provee el AuthBloc a todo el árbol de widgets
     return BlocProvider<AuthBloc>.value(
       value: di.sl<AuthBloc>(),
       child: Builder(
         builder: (context) {
-          // 5. Usa el AuthBloc para configurar el GoRouter
+          // 6. Usa el AuthBloc para configurar el GoRouter
           final router = AppRouter(context.read<AuthBloc>());
           
           return MaterialApp.router(
@@ -66,9 +88,10 @@ class MainScaffold extends StatelessWidget {
         ],
         onTap: (index) {
           // Lógica simple de navegación con GoRouter
-          if (index == 0) context.go(AppRoutes.home);
-          if (index == 1) context.go(AppRoutes.standings);
-          if (index == 2) context.go(AppRoutes.fields);
+          // Las rutas deben ser definidas en AppRoutes
+          if (index == 0) context.go('/home'); // Asumo la ruta /home
+          if (index == 1) context.go('/standings'); // Asumo la ruta /standings
+          if (index == 2) context.go('/fields'); // Asumo la ruta /fields
         },
       ),
     );
