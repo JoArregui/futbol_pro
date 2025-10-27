@@ -3,7 +3,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/errors/exceptions.dart'; // Importar si existe
 import '../../domain/entities/standing.dart';
 import '../../domain/repositories/league_repository.dart';
-import '../datasources/league_remote_data_source.dart';
+import '../datasources/league_remote_datasource.dart';
 
 class LeagueRepositoryImpl implements LeagueRepository {
   final LeagueRemoteDataSource remoteDataSource;

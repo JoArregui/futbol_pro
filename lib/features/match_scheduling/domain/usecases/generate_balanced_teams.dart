@@ -1,13 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
-import 'dart:math';
-
-import '../../../../core/error/failures.dart';
-import '../../../../core/errors/failures.dart';
-import '../../../../core/usecase/usecase.dart';
+import '../../../../core/errors/failures.dart'; // Asegúrate de que este archivo contiene ValidationFailure
+import '../../../../core/usecases/usecase.dart';
 import '../entities/team.dart';
 import '../entities/player.dart';
-import '../repositories/match_repository.dart';
+
 
 // El resultado del Use Case es un par de equipos
 class TeamPair extends Equatable {
@@ -21,18 +18,22 @@ class TeamPair extends Equatable {
 }
 
 class GenerateBalancedTeams implements UseCase<TeamPair, GenerateTeamsParams> {
-  // Nota: Aunque este Use Case no necesita el repositorio para hacer una llamada
-  // a la API, podríamos pasarlo si necesitáramos guardar los equipos generados.
-  // Por simplicidad, asumiremos que solo calcula el resultado.
+  // Nota: Aunque este Use Case no necesita el repositorio...
   // final MatchRepository repository;
   // GenerateBalancedTeams(this.repository);
 
   @override
   Future<Either<Failure, TeamPair>> call(GenerateTeamsParams params) async {
+    // 🚨 CORRECCIÓN: Usar ValidationFailure en lugar de InputFailure
     if (params.players.length < 2) {
-      return Left(InputFailure(message: "Se requieren al menos 2 jugadores."));
+      return const Left(ValidationFailure("Se requieren al menos 2 jugadores para generar equipos."));
     }
     
+    // El Use Case debe verificar si cumple con el mínimo requerido (minPlayers)
+    if (params.players.length < params.minPlayers) {
+      return Left(ValidationFailure("Se requieren ${params.minPlayers} jugadores para iniciar el partido. Actualmente hay ${params.players.length}."));
+    }
+
     // Algoritmo de balanceo simplificado:
     // 1. Ordenar jugadores por rating.
     // 2. Distribuir los jugadores de mayor a menor rating alternando entre Equipo A y Equipo B.

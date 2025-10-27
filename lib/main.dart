@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'injection_container.dart' as di; // di = Dependency Injection
+import 'package:go_router/go_router.dart';
+import 'core/injection_container.dart' as di;
+import 'core/services/notification_service.dart';
 import 'routes/app_router.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:app_liga_semiprofesional/core/services/notification_service.dart'; // Para inicializar
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

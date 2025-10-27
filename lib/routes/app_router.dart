@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/routing/go_router_refresh_stream.dart';
 
 // Importa tus BLoCs y Páginas de cada módulo
 import '../features/auth/presentation/bloc/auth_bloc.dart';
-import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/auth/presentation/pages/login_page.dart'; // Crearemos esta página
 import '../features/league_management/presentation/pages/standings_page.dart';
 import '../features/match_scheduling/presentation/pages/match_list_page.dart'; // Crearemos esta página
 import '../features/field_management/presentation/pages/field_search_page.dart';
+
+// Importa el MainScaffold y el Stream
+import '../presentation/widgets/main_scaffold.dart';
 
 // Nombres de rutas estáticos para evitar errores de tipeo
 class AppRoutes {

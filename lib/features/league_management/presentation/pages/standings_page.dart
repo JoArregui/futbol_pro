@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// Importaciones requeridas
-import '../../../../core/injection_container.dart';
+
+// INYECCIÓN DE DEPENDENCIAS
+import '../../../../core/injection_container.dart'; // Contiene 'sl'
+
+// ENTIDAD DEL DOMINIO
 import '../../domain/entities/standing.dart';
 
-// ✅ CORRECCIÓN: Importar el BLoC y sus clases (Eventos y Estados)
-// ASUME que esta es la ruta correcta a tu archivo league_bloc.dart
+// BLoC, EVENTOS Y ESTADOS
 import '../bloc/league_bloc.dart';
+
+
+// ==============================================================
+// STANDINGS PAGE (Capa de Presentación)
+// ==============================================================
 
 class StandingsPage extends StatelessWidget {
   final String currentLeagueId; // Ejemplo: 'liga_principal_2025'
@@ -16,36 +23,55 @@ class StandingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // La variable 'sl' debe estar importada desde 'injection_container.dart'
+      // 1. Inyecta el BLoC usando GetIt (sl)
       create: (_) => sl<LeagueBloc>()
         ..add(
+          // 2. Dispara el evento al inicio para cargar la clasificación
           GetStandingsRequested(leagueId: currentLeagueId),
-        ), // Dispara el evento al inicio
+        ),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Tabla de Clasificación 🏆')),
+        appBar: AppBar(
+          title: const Text(
+            'Tabla de Clasificación 🏆',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+        ),
         body: BlocBuilder<LeagueBloc, LeagueState>(
           builder: (context, state) {
             if (state is LeagueLoading) {
               return const Center(child: CircularProgressIndicator());
             }
             if (state is LeagueLoadSuccess) {
-              // El acceso a 'state.standings' es seguro dentro del 'if'
               return StandingsTable(standings: state.standings);
             }
             if (state is LeagueError) {
-              // El acceso a 'state.message' es seguro dentro del 'if'
               return Center(
-                child: Text('Error al cargar la tabla: ${state.message}'),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    'Error al cargar la tabla: ${state.message}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red.shade700),
+                  ),
+                ),
               );
             }
             // Estado inicial o desconocido
-            return const Center(child: Text('Datos no disponibles.'));
+            return const Center(
+              child: Text('Selecciona una liga para ver los datos.'),
+            );
           },
         ),
       ),
     );
   }
 }
+
+// ==============================================================
+// STANDINGS TABLE WIDGET (Componente de Presentación)
+// ==============================================================
 
 class StandingsTable extends StatelessWidget {
   final List<Standing> standings;
@@ -64,30 +90,59 @@ class StandingsTable extends StatelessWidget {
       DataColumn(
         label: Text('Equipo', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      DataColumn(label: Text('PJ')), // Partidos Jugados
-      DataColumn(label: Text('PG')), // Partidos Ganados
-      DataColumn(label: Text('PE')), // Partidos Empatados
-      DataColumn(label: Text('PP')), // Partidos Perdidos
-      DataColumn(label: Text('GF')), // Goles a Favor
-      DataColumn(label: Text('GC')), // Goles en Contra
-      DataColumn(label: Text('DG')), // Diferencia de Goles
+      DataColumn(label: Text('PJ')),
+      DataColumn(label: Text('PG')),
+      DataColumn(label: Text('PE')),
+      DataColumn(label: Text('PP')),
+      DataColumn(label: Text('GF')),
+      DataColumn(label: Text('GC')),
+      DataColumn(label: Text('DG')),
       DataColumn(
         label: Text('Pts', style: TextStyle(fontWeight: FontWeight.bold)),
-      ), // Puntos
+      ),
     ];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
+        dataRowMaxHeight: 50,
+        headingRowHeight: 40,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300, width: 0.5),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        columnSpacing: 16,
         columns: columns,
         rows: sortedStandings.asMap().entries.map((entry) {
           final index = entry.key + 1;
           final s = entry.value;
+
+          // Estilo de la fila para destacar los primeros puestos
+          final isTopThree = index <= 3;
+
           return DataRow(
+            color: WidgetStateProperty.resolveWith<Color>(
+              (Set<WidgetState> states) {
+                if (isTopThree) {
+                  return Colors.blue.shade50;
+                }
+                return Colors.transparent;
+              },
+            ),
             cells: [
-              DataCell(Text(index.toString())),
               DataCell(
-                Text(s.teamName, style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  index.toString(),
+                  style: TextStyle(
+                    fontWeight: isTopThree ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+              DataCell(
+                Text(
+                  s.teamName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
               DataCell(Text(s.gamesPlayed.toString())),
               DataCell(Text(s.wins.toString())),
@@ -100,8 +155,8 @@ class StandingsTable extends StatelessWidget {
                 Text(
                   s.points.toString(),
                   style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),

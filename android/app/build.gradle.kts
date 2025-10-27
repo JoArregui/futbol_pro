@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.Masai.futbol_pro"
+    namespace = "com.masai.futbol_pro" // <-- UNIFICADO
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,10 +20,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.futbol_pro"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // CORREGIDO: Usamos el mismo nombre que el namespace para evitar conflictos de Clase No Encontrada.
+        applicationId = "com.masai.futbol_pro" // <-- UNIFICADO
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

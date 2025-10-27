@@ -16,7 +16,8 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<void> initializeNotifications() async {
     // 1. Solicitar permisos (solo iOS/Web)
-    NotificationSettings settings = await _fcm.requestPermission(
+    // ✅ CORREGIDO: Se llama a la función sin asignar el resultado a una variable local no utilizada.
+    await _fcm.requestPermission(
       alert: true, badge: true, sound: true,
     );
     

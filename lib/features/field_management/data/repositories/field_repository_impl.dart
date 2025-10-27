@@ -3,7 +3,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/field.dart';
 import '../../domain/repositories/field_repository.dart';
-import '../datasources/field_remote_data_source.dart';
+import '../datasources/field_remote_datasource.dart';
 
 class FieldRepositoryImpl implements FieldRepository {
   final FieldRemoteDataSource remoteDataSource;

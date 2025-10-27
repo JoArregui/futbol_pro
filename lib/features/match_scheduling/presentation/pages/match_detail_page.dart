@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/injection_container.dart';
 import '../bloc/match_bloc.dart';
-import '../bloc/widgets/join_match_button.dart'; 
+import '../widgets/join_match_button.dart'; 
 
 class MatchDetailPage extends StatelessWidget {
   final String matchId;

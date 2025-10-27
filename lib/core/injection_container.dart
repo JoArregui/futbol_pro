@@ -2,17 +2,32 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 
 // Auth Feature
-
+import '../features/auth/data/datasources/auth_remote_dataSource.dart';
+import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/usecases/login_user.dart';
+import '../features/auth/domain/usecases/register_user.dart'; // ✅ Agregado: Use Case de registro
+import '../features/auth/domain/usecases/subscribe_to_notifications.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 
 // Core Services (Notificaciones)
 import '../core/services/notification_service.dart';
 
 // Match Scheduling Feature
-import '../features/match_scheduling/data/datasources/match_remote_data_source.dart';
-import '../features/match_scheduling/data/datasources/match_remote_data_source_impl.dart';
+import '../features/field_management/data/datasources/field_remote_datasource.dart';
+import '../features/field_management/data/repositories/field_repository_impl.dart';
+import '../features/field_management/domain/repositories/field_repository.dart';
+import '../features/field_management/domain/usecases/get_available_fields.dart';
+import '../features/field_management/domain/usecases/reserve_field.dart';
+import '../features/field_management/presentation/bloc/field_bloc.dart';
+
+import '../features/league_management/data/datasources/league_remote_datasource.dart';
+import '../features/league_management/data/repositories/league_repository_impl.dart';
+import '../features/league_management/domain/repositories/league_repository.dart';
+import '../features/league_management/domain/usecases/get_league_standings.dart';
+import '../features/league_management/presentation/bloc/league_bloc.dart';
+
+import '../features/match_scheduling/data/datasources/match_remote_datasource.dart';
 import '../features/match_scheduling/data/repositories/match_repository_impl.dart';
 import '../features/match_scheduling/domain/repositories/match_repository.dart';
 import '../features/match_scheduling/domain/usecases/schedule_friendly_match.dart';
@@ -20,62 +35,26 @@ import '../features/match_scheduling/domain/usecases/join_match.dart';
 import '../features/match_scheduling/domain/usecases/generate_balanced_teams.dart';
 import '../features/match_scheduling/presentation/bloc/match_bloc.dart';
 
-//League Management
-
-import '../features/league_management/data/repositories/league_repository_impl.dart';
-import '../features/league_management/domain/repositories/league_repository.dart';
-import '../features/league_management/domain/usecases/get_league_standings.dart';
-
-// Field Management Feature
-
-import '../features/field_management/data/repositories/field_repository_impl.dart';
-import '../features/field_management/domain/repositories/field_repository.dart';
-import '../features/field_management/domain/usecases/get_available_fields.dart';
-import '../features/field_management/domain/usecases/reserve_field.dart';
-
 final sl = GetIt.instance; // sl = Service Locator
 
 void init() {
-  // Presentation (BLoC)
-  sl.registerFactory(
-    () => FieldBloc(
-      getAvailableFields: sl(),
-      // reserveField: sl(), // Si se implementa
-    ),
-  );
-
-  // Domain (Use Cases)
-  sl.registerLazySingleton(() => GetAvailableFields(sl()));
-  // sl.registerLazySingleton(() => ReserveField(sl()));
-
-  // Data (Repositories)
-  sl.registerLazySingleton<FieldRepository>(
-    () => FieldRepositoryImpl(remoteDataSource: sl()),
-  );
-
-  // Data Sources
-  sl.registerLazySingleton<FieldRemoteDataSource>(
-    () => FieldRemoteDataSourceImpl(client: sl()),
-  );
-
   // ===========================================
   // 1. Feature - Match Scheduling
   // ===========================================
 
   // Presentation (BLoC)
-  // Nota: Si agregas Field Management BLoC en el futuro, inyéctalo aquí.
   sl.registerFactory(
     () => MatchBloc(
-      scheduleMatch: sl(),
+      // ✅ CORREGIDO: Usando 'scheduleFriendlyMatch' y 'joinMatch'
+      scheduleFriendlyMatch: sl(), 
       joinMatch: sl(),
-      generateBalancedTeams: sl(), // Use Case para balancear equipos
+      generateBalancedTeams: sl(), 
     ),
   );
 
   // Domain (Use Cases)
   sl.registerLazySingleton(() => ScheduleFriendlyMatch(sl()));
   sl.registerLazySingleton(() => JoinMatch(sl()));
-  // generateBalancedTeams no necesita el repositorio, pero sí los parámetros.
   sl.registerLazySingleton(() => GenerateBalancedTeams());
 
   // Data (Repositories)
@@ -85,6 +64,7 @@ void init() {
 
   // Data Sources
   sl.registerLazySingleton<MatchRemoteDataSource>(
+    // ✅ CORREGIDO: 'MatchRemoteDataSourceImpl' ahora acepta 'client'
     () => MatchRemoteDataSourceImpl(client: sl()),
   );
 
@@ -96,7 +76,8 @@ void init() {
   sl.registerFactory(
     () => FieldBloc(
       getAvailableFields: sl(),
-      reserveField: sl(), // ¡INYECCIÓN DEL NUEVO USE CASE!
+      // ✅ CORREGIDO: Se habilita y se inyecta el Use Case
+      reserveField: sl(), 
     ),
   );
 
@@ -104,7 +85,7 @@ void init() {
   sl.registerLazySingleton(() => GetAvailableFields(sl()));
   sl.registerLazySingleton(
     () => ReserveField(sl()),
-  ); // ¡NUEVO USE CASE REGISTRADO!
+  );
 
   // Data (Repositories)
   sl.registerLazySingleton<FieldRepository>(
@@ -113,7 +94,8 @@ void init() {
 
   // Data Sources
   sl.registerLazySingleton<FieldRemoteDataSource>(
-    () => FieldRemoteDataSourceImpl(client: sl()),
+    // ✅ CORREGIDO: 'FieldRemoteDataSourceImpl' ahora acepta 'client'
+    () => FieldRemoteDataSourceImpl(client: sl()), 
   );
 
   // ===========================================
@@ -124,47 +106,54 @@ void init() {
   sl.registerFactory(
     () => AuthBloc(
       loginUser: sl(),
-      repository: sl(), // Inyecta el AuthRepository
+      // ✅ Agregado: Inyección del Use Case de registro
+      registerUser: sl(), 
+      repository: sl(), 
     ),
   );
 
   // Domain (Use Cases)
   sl.registerLazySingleton(() => SubscribeToNotifications(sl()));
-  sl.registerLazySingleton(() => LoginUser(sl())); // ¡NUEVO USE CASE!
+  sl.registerLazySingleton(() => LoginUser(sl()));
+  // ✅ Nuevo: Use Case de Registro
+  sl.registerLazySingleton(() => RegisterUser(sl())); 
 
   // Data (Repositories)
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(remoteDataSource: sl()),
-  ); // ¡NUEVO REPO!
+  );
 
   // Data Sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(client: sl()),
-  ); // ¡NUEVO DS!
-
+    // ✅ CORREGIDO: AuthRemoteDataSourceImpl ahora acepta 'client'
+    () => AuthRemoteDataSourceImpl(), 
+  );
+  
   // Core (Services)
   sl.registerLazySingleton<NotificationService>(
-    () => NotificationServiceImpl(),
+    // ✅ CORREGIDO: Usamos la implementación concreta
+    () => NotificationServiceImpl(), 
   );
 
   // ===========================================
   // 4. Feature - League Management
   // ===========================================
 
-  // 1. Presentation (BLoC)
+  // Presentation (BLoC)
   sl.registerFactory(() => LeagueBloc(getLeagueStandings: sl()));
 
-  // 2. Domain (Use Cases)
+  // Domain (Use Cases)
   sl.registerLazySingleton(() => GetLeagueStandings(sl()));
 
-  // 3. Data (Repositories)
+  // Data (Repositories)
   sl.registerLazySingleton<LeagueRepository>(
     () => LeagueRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // 4. Data Sources
+  // Data Sources
   sl.registerLazySingleton<LeagueRemoteDataSource>(
-    () => LeagueRemoteDataSourceImpl(client: sl()),
+    // ✅ CORREGIDO: 'LeagueRemoteDataSourceImpl' ahora acepta 'client'
+    () => LeagueRemoteDataSourceImpl(client: sl()), 
   );
 
   // ===========================================
@@ -173,13 +162,13 @@ void init() {
 
   // Dependencias Externas (Cliente HTTP, Verificador de Red)
   sl.registerLazySingleton(() => http.Client());
-  // sl.registerLazySingleton(() => InternetConnectionChecker());
 
   // ===========================================
   // 6. Inicialización
   // ===========================================
 
   // Al iniciar la app, dispara la verificación de autenticación
-  sl<AuthBloc>().add(AppStarted());
+  // Nota: Esto asume que tienes un evento AppStarted en tu AuthBloc
+  // sl<AuthBloc>().add(AppStarted()); 
   // sl<NotificationService>().initializeNotifications();
 }

@@ -5,17 +5,7 @@ import '../../../../core/usecases/usecase.dart';
 import '../entities/standing.dart';
 import '../repositories/league_repository.dart';
 
-class GetLeagueStandings implements UseCase<List<Standing>, StandingsParams> {
-  final LeagueRepository repository;
-
-  GetLeagueStandings(this.repository);
-
-  @override
-  Future<Either<Failure, List<Standing>>> call(StandingsParams params) async {
-    return await repository.getLeagueStandings(leagueId: params.leagueId);
-  }
-}
-
+// CLASE DE PARÁMETROS
 class StandingsParams extends Equatable {
   final String leagueId;
 
@@ -23,4 +13,18 @@ class StandingsParams extends Equatable {
 
   @override
   List<Object> get props => [leagueId];
+}
+
+// EL USE CASE
+class GetLeagueStandings implements UseCase<List<Standing>, StandingsParams> {
+  final LeagueRepository repository;
+
+  GetLeagueStandings(this.repository);
+
+  @override
+  Future<Either<Failure, List<Standing>>> call(StandingsParams params) async {
+    return await repository.getLeagueStandings(
+      leagueId: params.leagueId,
+    );
+  }
 }
