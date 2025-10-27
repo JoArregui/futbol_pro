@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1011658046972:android:9ca7ae731b129e93a2c679",
+        "mobilesdk_app_id": "1:1011658046972:android:5a53a1c7bdf372d5a2c679",
         "android_client_info": {
-          "package_name": "com.Masai.futbol_pro"
+          "package_name": "com.masai.futbol_pro"
         }
       },
       "oauth_client": [],

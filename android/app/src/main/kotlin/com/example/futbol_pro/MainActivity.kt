@@ -1,4 +1,4 @@
-package com.example.futbol_pro
+package com.masai.futbol_pro
 
 import io.flutter.embedding.android.FlutterActivity
 

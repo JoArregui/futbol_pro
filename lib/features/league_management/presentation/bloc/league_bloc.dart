@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dartz/dartz.dart'; 
 
 // Importaciones de dominio y core
 import '../../../../core/errors/failures.dart';
