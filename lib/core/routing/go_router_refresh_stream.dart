@@ -8,6 +8,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
   GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();
+    // Escucha el stream de forma permanente y notifica a GoRouter cuando cambia.
     _subscription = stream.asBroadcastStream().listen(
       (dynamic _) => notifyListeners(),
     );
@@ -15,7 +16,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _subscription.cancel(); // Asegura que la suscripción se cancele correctamente.
     super.dispose();
   }
 }

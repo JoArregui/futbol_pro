@@ -11,6 +11,16 @@ abstract class MatchState extends Equatable {
 class MatchInitial extends MatchState {}
 class MatchLoading extends MatchState {}
 
+// Nuevo estado: Detalles de un partido cargados correctamente
+class MatchLoaded extends MatchState {
+  final Match match;
+  const MatchLoaded({required this.match});
+  
+  @override
+  List<Object> get props => [match];
+}
+
+
 class MatchScheduledSuccess extends MatchState {
   final Match match;
   const MatchScheduledSuccess(this.match);

@@ -36,3 +36,11 @@ class GenerateTeamsForMatchEvent extends MatchEvent {
   @override
   List<Object> get props => [matchId, players];
 }
+
+// Nuevo evento para cargar los detalles en MatchDetailPage
+class GetMatchDetailsEvent extends MatchEvent {
+  final String matchId;
+  const GetMatchDetailsEvent({required this.matchId});
+  @override
+  List<Object> get props => [matchId];
+}

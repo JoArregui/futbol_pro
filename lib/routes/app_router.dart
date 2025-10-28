@@ -1,98 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/routing/go_router_refresh_stream.dart';
+import '../core/routing/go_router_refresh_stream.dart';
+import '../features/auth/presentation/bloc/auth_bloc.dart'; 
+import '../main.dart'; 
+// Importación de las páginas de autenticación
+import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/pages/register_page.dart';
+// Importación de las constantes de ruta
+import 'app_routes.dart'; // Aseguramos el import del Scaffold principal
 
-// Importa tus BLoCs y Páginas de cada módulo
-import '../features/auth/presentation/bloc/auth_bloc.dart';
-import '../features/auth/presentation/pages/login_page.dart'; // Crearemos esta página
-import '../features/league_management/presentation/pages/standings_page.dart';
-import '../features/match_scheduling/presentation/pages/match_list_page.dart'; // Crearemos esta página
-import '../features/field_management/presentation/pages/field_search_page.dart';
 
-// Importa el MainScaffold y el Stream
-import '../presentation/widgets/main_scaffold.dart';
-
-// Nombres de rutas estáticos para evitar errores de tipeo
-class AppRoutes {
-  static const home = '/';
-  static const login = '/login';
-  static const standings = '/standings';
-  static const schedule = '/schedule';
-  static const fields = '/fields';
-}
-
+/// Clase que gestiona la configuración de GoRouter y las rutas de la aplicación.
 class AppRouter {
   final AuthBloc authBloc;
+  late final GoRouter router;
 
-  AppRouter(this.authBloc);
+  AppRouter(this.authBloc) {
+    router = GoRouter(
+      // Usamos el estado del AuthBloc para la redirección
+      initialLocation: AppRoutes.initial, // Usar constante
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
+      redirect: (BuildContext context, GoRouterState state) {
+        final authState = authBloc.state;
 
-  late final GoRouter router = GoRouter(
-    // Clave para gestionar el estado de los campos de texto durante la redirección
-    initialLocation: AppRoutes.home,
-    
-    // ===============================================
-    // LÓGICA DE REDIRECCIÓN CENTRAL
-    // ===============================================
-    redirect: (BuildContext context, GoRouterState state) {
-      final authState = authBloc.state;
-      final isLoggingIn = state.matchedLocation == AppRoutes.login;
+        // Rutas que no requieren autenticación
+        final isAuthRoute = state.matchedLocation == AppRoutes.login || // Usar constante
+                            state.matchedLocation == AppRoutes.register; // Usar constante
+
+        // 1. Splash Screen / Inicialización
+        if (authState is AuthInitial || authState is AuthLoading) {
+          // Si estamos cargando, nos quedamos en la ruta actual o vamos al splash.
+          return state.matchedLocation == AppRoutes.initial ? null : AppRoutes.initial; // Usar constante
+        }
+
+        // 2. Usuario No Autenticado (AuthUnauthenticated)
+        if (authState is AuthUnauthenticated) {
+          // Si ya está en la ruta de autenticación (login/register), no redirigir.
+          return isAuthRoute ? null : AppRoutes.login; // Usar constante
+        }
+
+        // 3. Usuario Autenticado (AuthAuthenticated)
+        if (authState is AuthAuthenticated) {
+          // Si está autenticado e intenta ir a login/register o al splash, redirigir a la Home.
+          if (isAuthRoute || state.matchedLocation == AppRoutes.initial) { // Usar constante
+            return AppRoutes.home; // Usar constante
+          }
+        }
+        
+        // 4. No hay redirección, ir a la ruta solicitada
+        return null;
+      },
       
-      // 1. Si la aplicación recién inicia y el estado es Inicial, esperamos.
-      if (authState is AuthInitial) return null; 
+      routes: <RouteBase>[
+        // Ruta de Inicialización (Splash)
+        GoRoute(
+          path: AppRoutes.initial, // Usar constante
+          builder: (context, state) => const AuthInitializer(),
+        ),
 
-      // 2. Si el usuario está autenticado (logueado)
-      if (authState is AuthAuthenticated) {
-        // Si está logueado y va a la pantalla de login, lo redirigimos a la Home.
-        return isLoggingIn ? AppRoutes.home : null; 
-      }
+        // Rutas de Autenticación
+        GoRoute(
+          path: AppRoutes.login, // Usar constante
+          builder: (context, state) => const LoginPage(), // REEMPLAZADO por LoginPage
+        ),
+        GoRoute(
+          path: AppRoutes.register, // Usar constante
+          builder: (context, state) => const RegisterPage(), // REEMPLAZADO por RegisterPage
+        ),
 
-      // 3. Si el usuario NO está autenticado
-      if (authState is AuthUnauthenticated || authState is AuthError) {
-        // Si no está logueado y NO está en la página de login, lo redirigimos al Login.
-        return isLoggingIn ? null : AppRoutes.login; 
-      }
-      
-      // Permitir la navegación normal en cualquier otro caso
-      return null;
-    },
-    
-    // Escucha los cambios en el AuthBloc para forzar la revisión de redirección
-    refreshListenable: GoRouterRefreshStream(authBloc.stream),
-
-    // ===============================================
-    // DEFINICIÓN DE RUTAS
-    // ===============================================
-    routes: [
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (context, state) => const LoginPage(),
-      ),
-      // La Home Page debe ser un ShellRoute para incluir la barra de navegación (TabBar/BottomNavBar)
-      ShellRoute(
-        builder: (context, state, child) {
-          // Usar una Scaffold que contenga la BottomNavigationBar y el 'child' de la ruta actual
-          return MainScaffold(child: child); 
-        },
-        routes: [
-          GoRoute(
-            path: AppRoutes.home,
-            builder: (context, state) => const MatchListPage(), // Pantalla principal de partidos
-          ),
-          GoRoute(
-            path: AppRoutes.standings,
-            builder: (context, state) => const StandingsPage(currentLeagueId: 'liga-actual'),
-          ),
-          GoRoute(
-            path: AppRoutes.fields,
-            builder: (context, state) => const FieldSearchPage(),
-          ),
-          GoRoute(
-            path: AppRoutes.schedule,
-            builder: (context, state) => const MatchListPage(),
-          ),
-          // ... Otras rutas de ligas, perfiles, etc.
-        ],
-      ),
-    ],
-  );
+        // Rutas con Bottom Navigation Bar (MainScaffold)
+        ShellRoute(
+          // Utilizamos MainScaffold para envolver las rutas principales
+          builder: (context, state, child) => MainScaffold(child: child),
+          routes: [
+            GoRoute(
+              path: AppRoutes.home, // Usar constante
+              builder: (context, state) => const Placeholder(child: Center(child: Text('Home - Partidos'))),
+            ),
+            GoRoute(
+              path: AppRoutes.standings, // Usar constante
+              builder: (context, state) => const Placeholder(child: Center(child: Text('Liga - Clasificación'))),
+            ),
+            GoRoute(
+              path: AppRoutes.fields, // Usar constante
+              builder: (context, state) => const Placeholder(child: Center(child: Text('Campos'))),
+            ),
+            GoRoute(
+              path: AppRoutes.profile, // Usar constante
+              builder: (context, state) => const Placeholder(child: Center(child: Text('Perfil de Usuario'))),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }

@@ -39,6 +39,11 @@ dependencies:
   firebase_core: ^2.27.0 # <--- ¡ACTUALIZADO!
   firebase_messaging: ^14.8.10 # <--- ¡ACTUALIZADO!
   intl: ^0.19.0 # Versión compatible con Flutter 3.x
+  cloud_firestore: ^4.17.5
+  image_picker: ^1.2.0
+  firebase_storage: ^11.7.7
+  flutter_local_notifications: ^19.5.0
+  badges: ^3.1.2
 
 dev_dependencies:
   flutter_test:
