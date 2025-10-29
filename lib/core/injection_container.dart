@@ -120,11 +120,10 @@ void init() {
   sl.registerLazySingleton(() => UpdateProfile(sl()));
 
   // Presentation (BLoC)
-  sl.registerFactory(
+ sl.registerFactory(
     () => ProfileBloc(
       getProfile: sl(),
       updateProfile: sl(),
-      // ⚠️ ASUMO que AuthRepository tiene el método getCurrentUserId()
       currentUserId: sl<AuthRepository>().getCurrentUserId(),
     ),
   );

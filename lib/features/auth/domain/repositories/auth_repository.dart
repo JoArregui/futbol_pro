@@ -21,4 +21,8 @@ abstract class AuthRepository {
 
   /// Cierra la sesión del usuario.
   Future<Either<Failure, void>> logout();
+
+  /// 🟢 AÑADIDO: Obtiene el ID del usuario actualmente autenticado.
+  /// Se usa para inyectar la dependencia 'currentUserId' en otros BLoCs.
+  String getCurrentUserId(); 
 }

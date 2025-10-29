@@ -1,7 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../match_scheduling/domain/entities/player.dart';
-// Importamos los parámetros necesarios para crear las clases de la capa Data Source
 import '../../domain/usecases/login_user.dart'; 
 import '../../domain/usecases/register_user.dart'; 
 import '../datasources/auth_remote_dataSource.dart';
@@ -16,24 +15,18 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.remoteDataSource});
 
   /// Implementación del método 'login' de la interfaz AuthRepository.
-  /// Llama al Data Source con la clase LoginParams.
   @override
   Future<Either<Failure, Player>> login({
     required String email,
     required String password,
   }) async {
     try {
-      // 1. Convertimos los parámetros de dominio a la clase de parámetros de Data Source
       final params = LoginParams(email: email, password: password);
-      
-      // 2. Llamamos al Data Source (el nombre del método en DS es 'login', no 'loginUser')
       final player = await remoteDataSource.login(params);
       return Right(player);
     } on ServerException catch (e) {
-      // ✅ CORREGIDO: Se pasa el mensaje como argumento POSICIONAL.
       return Left(ServerFailure(e.message)); 
     } on Exception {
-      // Manejo de cualquier otra excepción inesperada
       return Left(ServerFailure('Error desconocido al intentar iniciar sesión.'));
     }
   }
@@ -46,18 +39,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required String nickname,
   }) async {
     try {
-      // 1. Convertimos los parámetros de dominio a la clase de parámetros de Data Source
       final params = RegisterParams(
         email: email, 
         password: password, 
         nickname: nickname,
       );
-      
-      // 2. Llamamos al Data Source 
       final player = await remoteDataSource.register(params);
       return Right(player);
     } on ServerException catch (e) {
-      // ✅ CORREGIDO: Se pasa el mensaje como argumento POSICIONAL.
       return Left(ServerFailure(e.message));
     } on Exception {
       return Left(ServerFailure('Error desconocido al intentar registrar el usuario.'));
@@ -71,10 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final player = await remoteDataSource.getAuthenticatedPlayer();
       return Right(player);
     } on UnauthenticatedException {
-      // ✅ CORREGIDO: Se pasa el mensaje como argumento POSICIONAL. Mapea a CacheFailure.
       return Left(CacheFailure('No hay sesión activa.'));
     } on Exception {
-      // ✅ CORREGIDO: Se pasa el mensaje como argumento POSICIONAL.
       return Left(ServerFailure('Error al verificar sesión.'));
     }
   }
@@ -86,8 +73,14 @@ class AuthRepositoryImpl implements AuthRepository {
       await remoteDataSource.logout();
       return const Right(null);
     } on Exception {
-      // ✅ CORREGIDO: Se pasa el mensaje como argumento POSICIONAL.
       return Left(ServerFailure('Error al cerrar sesión.'));
     }
+  }
+
+  /// 🟢 SOLUCIÓN: Implementación concreta del método síncrono.
+  @override
+  String getCurrentUserId() {
+    // Delegamos la lógica síncrona al Data Source
+    return remoteDataSource.getCurrentUserId();
   }
 }

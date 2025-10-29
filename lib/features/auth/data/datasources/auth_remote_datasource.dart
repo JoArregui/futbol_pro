@@ -18,10 +18,16 @@ abstract class AuthRemoteDataSource {
 
   /// Llama al endpoint de logout y limpia el token
   Future<void> logout();
+
+  /// 🟢 FIRMA AÑADIDA: Obtiene de forma síncrona el ID del usuario actual.
+  String getCurrentUserId();
 }
 
 /// Implementación Mock de la Fuente de Datos Remota de Autenticación
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+  // Simula el estado de autenticación.
+  String _currentUserId = 'user-001'; 
+
   AuthRemoteDataSourceImpl();
 
   /// Simula el inicio de sesión. Credenciales válidas: 'test@pro.com' / '123456'
@@ -30,6 +36,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (params.email == 'test@pro.com' && params.password == '123456') {
+      _currentUserId = 'user-001'; // Actualiza el ID al hacer login
       return const Player(
         id: 'user-001',
         name: 'Juan Pro Mock',
@@ -47,10 +54,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<Player> register(RegisterParams params) async {
     await Future.delayed(const Duration(milliseconds: 1200));
     
-    // Simulación de un registro exitoso con datos del formulario
+    final newId = 'user-${DateTime.now().microsecondsSinceEpoch}';
+    _currentUserId = newId; // Asume que el registro inicia sesión
+
     return Player(
-      id: 'user-${DateTime.now().microsecondsSinceEpoch}',
-      // ✅ CORRECCIÓN: Se usa un valor por defecto si params.name es null.
+      id: newId,
       name: params.name ?? 'Usuario Nuevo',
       rating: 3.0, // Asume un rating inicial por defecto
       nickname: params.nickname,
@@ -62,6 +70,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Player> getAuthenticatedPlayer() async {
     await Future.delayed(const Duration(milliseconds: 500));
+    
     throw const UnauthenticatedException(); 
   }
 
@@ -69,6 +78,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 300));
+    _currentUserId = ''; // Limpia el ID al hacer logout
     return;
+  }
+
+  /// 🟢 IMPLEMENTACIÓN: Devuelve el ID de usuario simulado.
+  @override
+  String getCurrentUserId() {
+    return _currentUserId;
   }
 }

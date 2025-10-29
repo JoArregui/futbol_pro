@@ -6,9 +6,8 @@ import '../repositories/chat_repository.dart';
 
 class MarkAsRead implements UseCase<void, MarkAsReadParams> {
   final ChatRepository repository;
-  final String currentUserId; // Necesitamos saber quién marca como leído
 
-  const MarkAsRead(this.repository, {required this.currentUserId});
+  const MarkAsRead(this.repository);
 
   @override
   Future<Either<Failure, void>> call(MarkAsReadParams params) async {
@@ -16,16 +15,17 @@ class MarkAsRead implements UseCase<void, MarkAsReadParams> {
     // el ID de la sala del parámetro y el ID del usuario actual inyectado.
     return await repository.markMessagesAsRead(
       params.roomId, 
-      currentUserId, 
+      params.userId,
     );
   }
 }
 
 class MarkAsReadParams extends Equatable {
   final String roomId;
+  final String userId;
 
-  const MarkAsReadParams({required this.roomId});
+  const MarkAsReadParams({required this.roomId, required this.userId});
 
   @override
-  List<Object> get props => [roomId];
+  List<Object> get props => [roomId, userId];
 }

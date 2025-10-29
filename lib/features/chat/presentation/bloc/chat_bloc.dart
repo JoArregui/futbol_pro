@@ -188,7 +188,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatMarkAsRead event,
     Emitter<ChatState> emit,
   ) async {
-    await markAsRead(MarkAsReadParams(roomId: event.roomId));
+    await markAsRead(MarkAsReadParams(
+      roomId: event.roomId,
+      userId: currentUserId,
+      ));
   }
 
 
