@@ -1,8 +1,6 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file
 plugins {
-    // RESOLVIENDO CONFLICTO: Unificamos a la versión 4.3.15, ya que una dependencia de Firebase 
-    // antigua la está cargando en el classpath.
-    id("com.google.gms.google-services") version "4.3.15" apply false // <-- ¡VERSIÓN UNIFICADA!
+    id("com.google.gms.google-services") version "4.3.15" apply false
 }
 
 allprojects {
@@ -21,8 +19,8 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
+    
+    // Evaluación de dependencias dentro del mismo bloque
     project.evaluationDependsOn(":app")
 }
 

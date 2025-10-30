@@ -1,20 +1,23 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // El Plugin de Flutter debe aplicarse después de los plugins de Android y Kotlin.
     id("dev.flutter.flutter-gradle-plugin")
     
     // Aplicamos el plugin de Google Services aquí.
-    id("com.google.gms.google-services") // <-- ¡NUEVO!
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.masai.futbol_pro" // <-- UNIFICADO
+    namespace = "com.masai.futbol_pro" // <-- ¡VERIFICA TU NAMESPACE!
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // Actualizado para apuntar a Java 21 (LTS)
+        // Habilitar el desugaring para compatibilidad (¡CORRECCIÓN CLAVE 1!)
+        isCoreLibraryDesugaringEnabled = true 
+        
+        // Apuntamos a Java 21 (LTS)
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
@@ -25,8 +28,7 @@ android {
     }
 
     defaultConfig {
-        // CORREGIDO: Usamos el mismo nombre que el namespace para evitar conflictos de Clase No Encontrada.
-        applicationId = "com.masai.futbol_pro" // <-- UNIFICADO
+        applicationId = "com.masai.futbol_pro" // <-- Debe coincidir con el namespace
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -35,8 +37,6 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -47,12 +47,15 @@ flutter {
 }
 
 // ==========================================================
-// ¡NUEVO! Sección de dependencias con Firebase BoM y Messaging
+// Sección de dependencias corregida
 // ==========================================================
 dependencies {
-    // Importamos el Firebase Bill of Materials (BoM)
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // Verifica la versión más reciente
-    
-    // Necesitamos el SDK de Firebase Cloud Messaging para las notificaciones
+    // 1. Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+   
+    // 2. Firebase Messaging
     implementation("com.google.firebase:firebase-messaging-ktx")
+    
+    // 3. Desugaring - VERSIÓN ACTUALIZADA
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

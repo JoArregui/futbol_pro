@@ -17,6 +17,20 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  // === MODO DE PRUEBA ===
+  final bool _isDemoMode = true; // Cambiar a false cuando conectes API/BD
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // === VALORES DE PRUEBA INICIALIZADOS AQUÍ ===
+    if (_isDemoMode) {
+      _emailController.text = 'demo@futbolpro.com';
+      _passwordController.text = 'demo123';
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -26,6 +40,37 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
+      // === MODO DEMO: Bypass de autenticación ===
+      if (_isDemoMode) {
+        final email = _emailController.text.trim();
+        final password = _passwordController.text.trim();
+        
+        // Usuario de prueba hardcodeado
+        if (email == 'demo@futbolpro.com' && password == 'demo123') {
+          // Simular login exitoso sin llamar a la API
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Login exitoso! (Modo Demo)'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navegar directamente a home sin pasar por el Bloc
+          context.go(AppRoutes.home);
+          return;
+        } else {
+          // Credenciales incorrectas en modo demo
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Credenciales incorrectas. Use: demo@futbolpro.com / demo123'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+      
+      // === MODO PRODUCCIÓN: Login real con Bloc ===
       context.read<AuthBloc>().add(
             LoginRequested(
               email: _emailController.text.trim(),
@@ -38,7 +83,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Iniciar Sesión')),
+      appBar: AppBar(
+        title: Text(_isDemoMode ? 'Iniciar Sesión (Demo)' : 'Iniciar Sesión'),
+      ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -60,6 +107,33 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
+                    // === BANNER DE MODO DEMO ===
+                    if (_isDemoMode)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber, color: Colors.orange.shade800),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Modo Demo\nUsuario: demo@futbolpro.com\nContraseña: demo123',
+                                style: TextStyle(
+                                  color: Colors.orange.shade900,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // Email Field
                     TextFormField(
                       controller: _emailController,

@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
 import '../../../match_scheduling/domain/entities/player.dart';
 import '../../domain/usecases/login_user.dart';
-import '../../domain/usecases/register_user.dart'; // ✅ Importamos el nuevo Use Case
+import '../../domain/usecases/register_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'package:equatable/equatable.dart';
 
@@ -10,87 +10,110 @@ part 'auth_event.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final LoginUser loginUser;
-  final RegisterUser registerUser; // ✅ NUEVO: Use Case para el registro
-  final AuthRepository
-      repository; // Necesitamos el repo para getAuthenticatedPlayer y logout
+final LoginUser loginUser;
+final RegisterUser registerUser;
+final AuthRepository repository;
+static const bool isDemoMode = true;
 
-  AuthBloc({
-    required this.loginUser, 
-    required this.registerUser, // ✅ Lo hacemos requerido en el constructor
-    required this.repository,
-  }) : super(AuthInitial()) {
-    on<AppStarted>(_onAppStarted);
-    on<LoginRequested>(_onLoginRequested);
-    on<RegisterRequested>(_onRegisterRequested); // ✅ NUEVO: Manejador para el registro
-    on<LogoutRequested>(_onLogoutRequested);
-  }
+AuthBloc({
+required this.loginUser, 
+required this.registerUser,
+required this.repository,
+}) : super(const AuthInitial()) {
+on<AppStarted>(_onAppStarted);
+on<LoginRequested>(_onLoginRequested);
+on<RegisterRequested>(_onRegisterRequested);
+on<LogoutRequested>(_onLogoutRequested);
+}
 
-  // Verifica el estado de autenticación al inicio
-  Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
-    final failureOrPlayer = await repository.getAuthenticatedPlayer();
+Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
+if (isDemoMode) {
+emit(const AuthUnauthenticated());
+return;
+}
+final failureOrPlayer = await repository.getAuthenticatedPlayer();
+failureOrPlayer.fold(
+(_) => emit(const AuthUnauthenticated()),
+(player) {
+emit(AuthAuthenticated(player: player));
+},
+);
+}
 
-    failureOrPlayer.fold(
-      (_) => emit(AuthUnauthenticated()), // Si falla o no hay token
-      (player) {
-        emit(AuthAuthenticated(player: player));
-        // Aquí podrías disparar la suscripción a notificaciones
-        // sl<SubscribeToNotifications>().call(params...);
-      },
-    );
-  }
+Future<void> _onLoginRequested(LoginRequested event, Emitter<AuthState> emit) async {
+emit(const AuthLoading());
 
-  // Maneja la solicitud de Login
-  Future<void> _onLoginRequested(
-    LoginRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
+if (isDemoMode && event.email == 'demo@futbolpro.com' && event.password == 'demo123') {
+await Future.delayed(const Duration(milliseconds: 800));
+final demoPlayer = const Player( 
+id: 'demo-player-123',
+nickname: 'DemoPlayer',
+name: 'Usuario Demo',
+profileImageUrl: 'https://i.pravatar.cc/150?u=demoplayer',
+rating: 1500.0,
+);
+emit(AuthAuthenticated(player: demoPlayer));
+return;
+}
 
-    final failureOrPlayer = await loginUser(
-      LoginParams(email: event.email, password: event.password),
-    );
+if (isDemoMode) {
+await Future.delayed(const Duration(milliseconds: 500));
+emit(const AuthError(
+message: 'Credenciales incorrectas.\nUsa: demo@futbolpro.com / demo123'
+));
+return;
+}
 
-    failureOrPlayer.fold(
-      (failure) => emit(AuthError(message: failure.errorMessage)),
-      (player) => emit(AuthAuthenticated(player: player)),
-    );
-  }
+final failureOrPlayer = await loginUser(
+LoginParams(email: event.email, password: event.password),
+);
+failureOrPlayer.fold(
+(failure) => emit(AuthError(message: failure.errorMessage)),
+(player) => emit(AuthAuthenticated(player: player)),
+);
+}
 
-  // ✅ NUEVO: Maneja la solicitud de Registro
-  Future<void> _onRegisterRequested(
-    RegisterRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
+Future<void> _onRegisterRequested(RegisterRequested event, Emitter<AuthState> emit) async {
+emit(const AuthLoading());
 
-    final failureOrPlayer = await registerUser(
-      RegisterParams(
-        email: event.email, 
-        password: event.password, 
-        nickname: event.nickname,
-        name: event.name, // El nombre es opcional
-      ),
-    );
+if (isDemoMode) {
+await Future.delayed(const Duration(milliseconds: 1000));
+final demoPlayer = Player(
+id: 'demo-player-${DateTime.now().millisecondsSinceEpoch}',
+nickname: event.nickname,
+name: 'Usuario Registrado', 
+profileImageUrl: 'https://i.pravatar.cc/150?u=${event.email}',
+rating: 1000.0,
+);
+emit(AuthAuthenticated(player: demoPlayer));
+return;
+}
 
-    failureOrPlayer.fold(
-      (failure) => emit(AuthError(message: failure.errorMessage)),
-      (player) => emit(AuthAuthenticated(player: player)),
-    );
-  }
+final failureOrPlayer = await registerUser(
+RegisterParams(
+email: event.email, 
+password: event.password, 
+nickname: event.nickname,
+name: event.name ?? '',
+),
+);
+failureOrPlayer.fold(
+(failure) => emit(AuthError(message: failure.errorMessage)),
+(player) => emit(AuthAuthenticated(player: player)),
+);
+}
 
-
-  // Maneja la solicitud de Logout
-  Future<void> _onLogoutRequested(
-    LogoutRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
-    final failureOrVoid = await repository.logout();
-
-    failureOrVoid.fold(
-      (failure) => emit(AuthError(message: failure.errorMessage)),
-      (_) => emit(AuthUnauthenticated()),
-    );
-  }
+Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
+emit(const AuthLoading()); 
+if (isDemoMode) {
+await Future.delayed(const Duration(milliseconds: 300));
+emit(const AuthUnauthenticated());
+return;
+}
+final failureOrVoid = await repository.logout();
+failureOrVoid.fold(
+(failure) => emit(AuthError(message: failure.errorMessage)),
+(_) => emit(const AuthUnauthenticated()),
+);
+}
 }
