@@ -1,27 +1,32 @@
 part of 'auth_bloc.dart';
 
 abstract class AuthState extends Equatable {
-const AuthState();
-@override
-List<Object> get props => [];
+  const AuthState();
+  @override
+  List<Object> get props => [];
 }
 
-class AuthInitial extends AuthState { const AuthInitial(); }
+/// Estado inicial (antes de la verificación)
+class AuthInitial extends AuthState {}
 
-class AuthLoading extends AuthState { const AuthLoading(); }
+/// Estado de carga (durante la verificación o la llamada a la API)
+class AuthLoading extends AuthState {}
 
+/// El usuario está autenticado
 class AuthAuthenticated extends AuthState {
-final Player player;
-const AuthAuthenticated({required this.player});
-@override
-List<Object> get props => [player];
+  final String userId;
+  const AuthAuthenticated(this.userId);
+  @override
+  List<Object> get props => [userId];
 }
 
-class AuthUnauthenticated extends AuthState { const AuthUnauthenticated(); }
+/// El usuario no está autenticado
+class AuthUnauthenticated extends AuthState {}
 
+/// Ocurrió un error en la autenticación
 class AuthError extends AuthState {
-final String message;
-const AuthError({required this.message});
-@override
-List<Object> get props => [message];
+  final String message;
+  const AuthError(this.message);
+  @override
+  List<Object> get props => [message];
 }
