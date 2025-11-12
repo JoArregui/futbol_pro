@@ -26,7 +26,7 @@ class PlayerJoinsMatchEvent extends MatchEvent {
 
 class GenerateTeamsForMatchEvent extends MatchEvent {
   final String matchId;
-  final List<Player> players; // Lista de jugadores inscritos
+  final List<Player> players;
 
   const GenerateTeamsForMatchEvent({
     required this.matchId,
@@ -37,7 +37,7 @@ class GenerateTeamsForMatchEvent extends MatchEvent {
   List<Object> get props => [matchId, players];
 }
 
-// Nuevo evento para cargar los detalles en MatchDetailPage
+
 class GetMatchDetailsEvent extends MatchEvent {
   final String matchId;
   const GetMatchDetailsEvent({required this.matchId});

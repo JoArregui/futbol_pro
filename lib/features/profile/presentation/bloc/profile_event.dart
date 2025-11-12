@@ -4,7 +4,6 @@ abstract class ProfileEvent extends Equatable {
   const ProfileEvent();
 
   @override
-  // 🟢 CORREGIDO: Usamos List<Object?> en la clase base para que coincida con la subclase
   List<Object?> get props => [];
 }
 
@@ -33,6 +32,5 @@ class ProfileUpdated extends ProfileEvent {
   });
 
   @override
-  // Esto ahora es válido porque la base ProfileEvent.props permite List<Object?>
-  List<Object?> get props => [uid, nickname, name, bio, avatarUrl]; 
+  List<Object?> get props => [uid, nickname, name, bio, avatarUrl];
 }

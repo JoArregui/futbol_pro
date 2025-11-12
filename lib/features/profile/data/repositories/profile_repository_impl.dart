@@ -10,14 +10,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
   @override
   Future<UserProfile> getUserProfile(String uid) async {
     try {
-      // Llama al DataSource para obtener el Model
       final profileModel = await remoteDataSource.fetchUserProfile(uid);
-      
-      // El Model es también la Entity, así que lo retornamos directamente
+
       return profileModel;
-      
     } catch (e) {
-      // Re-lanza la excepción o la envuelve en una excepción de dominio si es necesario
       throw Exception('Fallo en el Repositorio al obtener perfil: $e');
     }
   }
@@ -31,7 +27,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     String? avatarUrl,
   }) async {
     final updateData = {
-      'uid': uid, // Se necesita para el Datasource
+      'uid': uid,
       if (nickname != null) 'nickname': nickname,
       if (name != null) 'name': name,
       if (bio != null) 'bio': bio,
@@ -39,7 +35,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     };
 
     try {
-      // Llama al DataSource para actualizar la data
       await remoteDataSource.updateProfile(updateData);
     } catch (e) {
       throw Exception('Fallo en el Repositorio al actualizar perfil: $e');

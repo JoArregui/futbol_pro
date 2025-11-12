@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
-import 'player.dart'; // Importa la entidad Player ya definida
-import '../../data/models/team_model.dart'; // 🆕 Necesitas importar TeamModel
+import 'player.dart';
+import '../../data/models/team_model.dart';
 
 class Team extends Equatable {
-  final String name; // Ejemplo: 'Equipo A', 'Equipo B'
+  final String name;
   final List<Player> players;
-  final double combinedRating; // Suma de los ratings de los jugadores
+  final double combinedRating;
 
   const Team({
     required this.name,
@@ -13,27 +13,20 @@ class Team extends Equatable {
     required this.combinedRating,
   });
 
-  // ========================================================
-  // 🆕 MÉTODO TO MODEL (CONVERSIÓN DE DOMINIO A DATOS)
-  // Requerido por el repositorio para enviar datos al DataSource.
-  // ========================================================
   TeamModel toModel() {
     return TeamModel(
       name: name,
-      // Mapea la lista de entidades Player a una lista de String (solo IDs)
-      playerIds: players.map((p) => p.id).toList(), 
+      playerIds: players.map((p) => p.id).toList(),
       combinedRating: combinedRating,
     );
   }
-  
-  // ========================================================
-  // MÉTODO FROM JSON (DESERIALIZACIÓN)
-  // ========================================================
+
   factory Team.fromJson(Map<String, dynamic> json) {
-    // ... lógica fromJson existente ...
     final List<Player> playerList = (json['players'] as List<dynamic>?)
-        ?.map((playerJson) => Player.fromJson(playerJson as Map<String, dynamic>))
-        .toList() ?? [];
+            ?.map((playerJson) =>
+                Player.fromJson(playerJson as Map<String, dynamic>))
+            .toList() ??
+        [];
 
     return Team(
       name: json['name'] as String,
@@ -42,14 +35,10 @@ class Team extends Equatable {
     );
   }
 
-  // ========================================================
-  // MÉTODO TO JSON (SERIALIZACIÓN)
-  // ========================================================
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      // Al enviar al backend, generalmente solo enviamos los IDs
-      'playerIds': players.map((p) => p.id).toList(), 
+      'playerIds': players.map((p) => p.id).toList(),
       'combinedRating': combinedRating,
     };
   }

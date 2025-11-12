@@ -1,6 +1,5 @@
 part of 'match_bloc.dart';
 
-
 abstract class MatchState extends Equatable {
   const MatchState();
 
@@ -9,17 +8,16 @@ abstract class MatchState extends Equatable {
 }
 
 class MatchInitial extends MatchState {}
+
 class MatchLoading extends MatchState {}
 
-// Nuevo estado: Detalles de un partido cargados correctamente
 class MatchLoaded extends MatchState {
   final Match match;
   const MatchLoaded({required this.match});
-  
+
   @override
   List<Object> get props => [match];
 }
-
 
 class MatchScheduledSuccess extends MatchState {
   final Match match;
@@ -38,8 +36,8 @@ class MatchError extends MatchState {
 }
 
 class TeamsGeneratedSuccess extends MatchState {
-  final TeamPair teamPair; // Contiene Team A y Team B
-  
+  final TeamPair teamPair;
+
   const TeamsGeneratedSuccess({required this.teamPair});
 
   @override

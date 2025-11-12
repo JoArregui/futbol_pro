@@ -8,22 +8,23 @@ class FieldSearchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Provee el FieldBloc a la página
     return BlocProvider(
       create: (_) => sl<FieldBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Buscar Campos Disponibles 🏟️')),
+       appBar: AppBar(
+  title: const Text('Buscar Campos Disponibles 🏟️'),
+  automaticallyImplyLeading: true, 
+  centerTitle: true, 
+),
         body: Column(
           children: [
-            // Widget que dispara la búsqueda al presionar un botón
             SearchControls(
               onSearch: (start, end) {
                 context.read<FieldBloc>().add(
-                  GetAvailableFieldsEvent(startTime: start, endTime: end),
-                );
+                      GetAvailableFieldsEvent(startTime: start, endTime: end),
+                    );
               },
             ),
-            // 2. Escucha y construye la lista de resultados
             Expanded(
               child: BlocBuilder<FieldBloc, FieldState>(
                 builder: (context, state) {
@@ -40,10 +41,7 @@ class FieldSearchPage extends StatelessWidget {
                           subtitle: Text(
                             'Tarifa: \$${field.hourlyRate}/hr. Tipo: ${field.type.name}',
                           ),
-                          // Acción: Al presionar, inicia el flujo de reserva
-                          onTap: () {
-                            // Aquí se dispararía un ReserveFieldEvent
-                          },
+                          onTap: () {},
                         );
                       },
                     );
@@ -82,7 +80,7 @@ class SearchControls extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton(
         onPressed: () {
-          // Valores simulados para la búsqueda
+          // Valores simulados para la búsqued
           final now = DateTime.now();
           final start = DateTime(
             now.year,

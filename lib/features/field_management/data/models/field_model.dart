@@ -15,7 +15,6 @@ class FieldModel extends Field {
       name: json['name'] as String,
       address: json['address'] as String,
       hourlyRate: (json['hourlyRate'] as num).toDouble(),
-      // Mapeo del String de la API al Enum
       type: FieldType.values.firstWhere(
         (e) => e.toString().split('.').last == json['type'],
         orElse: () => FieldType.sevenVSeven,

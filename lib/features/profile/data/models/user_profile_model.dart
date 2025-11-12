@@ -15,29 +15,25 @@ class UserProfileModel extends UserProfile {
     required super.createdAt,
   });
 
-  // Factory constructor para crear el Model desde un DocumentSnapshot (Firestore)
   factory UserProfileModel.fromSnapshot(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
-    // Convertir el timestamp de Firestore a DateTime
+
     final timestamp = data['createdAt'] as Timestamp;
 
     return UserProfileModel(
-      uid: doc.id, // El UID es el ID del documento en Firestore
+      uid: doc.id,
       email: data['email'] as String,
       nickname: data['nickname'] as String,
       name: data['name'] as String?,
       avatarUrl: data['avatarUrl'] as String?,
       bio: data['bio'] as String?,
-      // Aseguramos que los valores sean del tipo correcto
-      gamesPlayed: (data['gamesPlayed'] as num).toInt(), 
+      gamesPlayed: (data['gamesPlayed'] as num).toInt(),
       wins: (data['wins'] as num).toInt(),
       rating: (data['rating'] as num).toDouble(),
       createdAt: timestamp.toDate(),
     );
   }
 
-  // Método para convertir el Model a un mapa de datos (útil para Firestore/API)
   Map<String, dynamic> toMap() {
     return {
       'email': email,
@@ -48,8 +44,7 @@ class UserProfileModel extends UserProfile {
       'gamesPlayed': gamesPlayed,
       'wins': wins,
       'rating': rating,
-      // Firestore maneja Timestamps
-      'createdAt': Timestamp.fromDate(createdAt), 
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }

@@ -5,7 +5,6 @@ import '../../../../core/usecases/usecase.dart';
 import '../entities/standing.dart';
 import '../repositories/league_repository.dart';
 
-// CLASE DE PARÁMETROS
 class StandingsParams extends Equatable {
   final String leagueId;
 
@@ -15,7 +14,6 @@ class StandingsParams extends Equatable {
   List<Object> get props => [leagueId];
 }
 
-// EL USE CASE
 class GetLeagueStandings implements UseCase<List<Standing>, StandingsParams> {
   final LeagueRepository repository;
 

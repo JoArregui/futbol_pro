@@ -12,7 +12,6 @@ class GetAvailableFields implements UseCase<List<Field>, AvailableFieldParams> {
 
   @override
   Future<Either<Failure, List<Field>>> call(AvailableFieldParams params) async {
-    // Lógica de negocio si fuera necesaria (ej: verificar permisos)
     return await repository.getAvailableFields(
       startTime: params.startTime,
       endTime: params.endTime,

@@ -5,7 +5,6 @@ import '../../../../core/usecases/usecase.dart';
 import '../entities/match.dart';
 import '../repositories/match_repository.dart';
 
-// El resultado del Use Case es un objeto Match
 class GetMatchDetails implements UseCase<Match, GetMatchDetailsParams> {
   final MatchRepository repository;
 
@@ -13,7 +12,6 @@ class GetMatchDetails implements UseCase<Match, GetMatchDetailsParams> {
 
   @override
   Future<Either<Failure, Match>> call(GetMatchDetailsParams params) async {
-    // Delega la responsabilidad de obtener los datos al repositorio
     return await repository.getMatchById(params.matchId);
   }
 }

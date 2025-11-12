@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user_profile.dart';
-// Manteniendo las rutas de importación solicitadas
 import '../../domain/usecases/get_profile.dart'; 
 import '../../domain/usecases/update_profile.dart';
 
@@ -17,7 +16,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     required this.getProfile,
     required this.updateProfile,
     required this.currentUserId,
-  }) : super(const ProfileInitial()) { // ✅ Ahora funciona si ProfileInitial es const
+  }) : super(const ProfileInitial()) { 
     on<ProfileLoadRequested>(_onProfileLoadRequested);
     on<ProfileUpdated>(_onProfileUpdated);
   }
@@ -41,7 +40,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     final currentState = state;
     if (currentState is! ProfileLoaded) {
-      emit(ProfileError('No se pudo actualizar: el perfil no estaba cargado.'));
+      emit(const ProfileError('No se pudo actualizar: el perfil no estaba cargado.'));
       return;
     }
 

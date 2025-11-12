@@ -9,31 +9,30 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Disparar la carga del perfil al inicio
-    // Usamos el ID del usuario actual inyectado en el BLoC
     final bloc = context.read<ProfileBloc>();
     bloc.add(ProfileLoadRequested(bloc.currentUserId));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mi Perfil'),
+        automaticallyImplyLeading: true,
+        centerTitle: true,
         backgroundColor: Colors.blueAccent,
       ),
-      // 2. Usar BlocListener para notificaciones (ej. éxito de actualización)
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is ProfileUpdateSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('✅ Perfil actualizado exitosamente!')),
+              const SnackBar(
+                  content: Text('✅ Perfil actualizado exitosamente!')),
             );
           }
           if (state is ProfileError && state.message.contains('actualizar')) {
-             ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('❌ Error al guardar: ${state.message}')),
             );
           }
         },
-        // 3. Usar BlocBuilder para construir la UI según el estado
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state is ProfileLoading || state is ProfileInitial) {
@@ -41,12 +40,10 @@ class ProfilePage extends StatelessWidget {
             }
 
             if (state is ProfileError) {
-              // Vista auxiliar para errores (solo para mantener la página limpia)
               return ProfileErrorView(message: state.message);
             }
 
             if (state is ProfileLoaded) {
-              // Vista principal con los datos del perfil y el formulario de edición
               return ProfileLoadedView(
                 profile: state.profile,
                 isUpdating: state.isUpdating,

@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-// Importaciones de dominio y core
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/standing.dart';
 import '../../domain/usecases/get_league_standings.dart';

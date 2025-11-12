@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/chat_bloc.dart';
-// Importamos los nuevos widgets
 import '../widgets/chat_input.dart';
-import '../widgets/message_list.dart'; 
+import '../widgets/message_list.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String chatRoomId;
-  
+
   const ChatRoomPage({
     super.key,
     required this.chatRoomId,
@@ -23,9 +22,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        // Usamos maxScrollExtent porque ListView está en modo 'reverse'
         _scrollController.animateTo(
-          0.0, // 0.0 es el nuevo "fondo" cuando reverse es true
+          0.0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -43,13 +41,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget build(BuildContext context) {
     return BlocConsumer<ChatBloc, ChatState>(
       listener: (context, state) {
-        // Dispara el scroll cuando llegan nuevos mensajes (ChatRoomSelectedState)
         if (state is ChatRoomSelectedState) {
           _scrollToBottom();
         }
       },
       builder: (context, state) {
-        if (state is ChatRoomSelectedState && state.room.id == widget.chatRoomId) {
+        if (state is ChatRoomSelectedState &&
+            state.room.id == widget.chatRoomId) {
           return Scaffold(
             appBar: AppBar(
               title: Text(state.room.title),
@@ -65,7 +63,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     scrollController: _scrollController,
                   ),
                 ),
-                // 4. Input y Botón de Envío (Usando el nuevo ChatInput)
+                // 4. Input y Botón de Envío
                 ChatInput(
                   roomId: widget.chatRoomId,
                   senderId: context.read<ChatBloc>().currentUserId,
@@ -75,13 +73,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           );
         }
-        
+
         // Manejo de estados de carga/error
         if (state is ChatLoading) {
-            return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (state is ChatError) {
-            return Center(child: Text('Error: ${state.message}'));
+          return Center(child: Text('Error: ${state.message}'));
         }
         return const Center(child: Text('Error: Sala no cargada.'));
       },

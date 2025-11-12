@@ -20,11 +20,10 @@ class FieldRepositoryImpl implements FieldRepository {
         startTime: startTime,
         endTime: endTime,
       );
-      // Asumiendo que fieldModels extiende List<Field>, esto es correcto.
+
       return Right(fieldModels);
     } on ServerException {
-      // CORRECCIÓN 1: Pasar el argumento 'message'
-      return Left(
+      return const Left(
         ServerFailure('Fallo al obtener la lista de canchas disponibles.'),
       );
     }
@@ -50,13 +49,11 @@ class FieldRepositoryImpl implements FieldRepository {
       );
       return Right(success);
     } on ServerException {
-      // CORRECCIÓN 2: Pasar el argumento 'message'
-      return Left(
+      return const Left(
         ServerFailure('El servidor no pudo procesar la reserva de la cancha.'),
       );
     } on ForbiddenException {
-      // CORRECCIÓN 3: Mapear a PermissionFailure (más semántico) y pasar mensaje
-      return Left(
+      return const Left(
         PermissionFailure(
           'Acción prohibida. No tienes los permisos necesarios.',
         ),

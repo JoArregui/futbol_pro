@@ -1,34 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/injection_container.dart';
-import '../bloc/match_bloc.dart';
-import '../widgets/join_match_button.dart'; 
+import '../bloc/match_detail_bloc.dart';
+import '../widgets/match_detail_view.dart';
 
-class MatchDetailPage extends StatelessWidget {
+class MatchDetailPage extends StatefulWidget {
   final String matchId;
 
-  const MatchDetailPage({super.key, required this.matchId});
+  const MatchDetailPage({
+    super.key,
+    required this.matchId,
+  });
+
+  @override
+  State<MatchDetailPage> createState() => _MatchDetailPageState();
+}
+
+class _MatchDetailPageState extends State<MatchDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    context
+        .read<MatchDetailBloc>()
+        .add(MatchDetailLoadRequested(widget.matchId));
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Usamos BlocProvider.value si ya se creó, o BlocProvider para crear una instancia.
-    // Usamos GetIt (sl) para obtener la instancia de MatchBloc
-    return BlocProvider(
-      // Usamos el Service Locator (sl) para obtener el MatchBloc
-      create: (_) => sl<MatchBloc>(), 
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Detalles del Amistoso')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const Text('Información del Partido...'),
-              const SizedBox(height: 30),
-              // 2. Aquí es donde se conecta el widget del botón
-              JoinMatchButton(matchId: matchId),
-            ],
-          ),
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalle del Partido'),
+        centerTitle: true,
+      ),
+      body: BlocBuilder<MatchDetailBloc, MatchDetailState>(
+        builder: (context, state) {
+          if (state is MatchDetailLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is MatchDetailError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.red, size: 60),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Error al cargar los detalles del partido.',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'ID del Partido: ${widget.matchId}\nDetalle: ${state.message}',
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (state is MatchDetailLoaded) {
+            return MatchDetailView(match: state.match);
+          }
+
+          return const Center(child: Text('Esperando datos del partido...'));
+        },
       ),
     );
   }

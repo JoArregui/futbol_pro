@@ -6,4 +6,5 @@ class AppRoutes {
   static const String standings = '/standings'; 
   static const String fields = '/fields'; 
   static const String profile = '/profile'; 
+  static const String chat = '/chat'; 
 }

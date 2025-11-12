@@ -1,22 +1,20 @@
-// Archivo: lib/domain/entities/user_profile.dart
-
 import 'package:equatable/equatable.dart';
 
-// Entidad que representa la información de perfil de un usuario.
+
 class UserProfile extends Equatable {
-  final String uid; // Identificador único del usuario (obligatorio)
-  final String email; // Correo electrónico (obligatorio)
-  final String nickname; // Nombre de usuario visible (obligatorio)
+  final String uid; 
+  final String email;
+  final String nickname; 
   
   // Campos opcionales
-  final String? name; // Nombre real del usuario
-  final String? avatarUrl; // URL de la imagen de perfil
-  final String? bio; // Breve biografía o descripción
+  final String? name; 
+  final String? avatarUrl; 
+  final String? bio; 
 
   // Métricas del juego
-  final int gamesPlayed; // Número de partidas jugadas
-  final int wins; // Número de victorias
-  final double rating; // Puntuación de habilidad (rating)
+  final int gamesPlayed; 
+  final int wins; 
+  final double rating; 
   
   // Metadatos
   final DateTime createdAt; // Fecha de creación del perfil
@@ -34,7 +32,7 @@ class UserProfile extends Equatable {
     required this.createdAt,
   });
 
-  // Método para crear una copia de la entidad modificando campos específicos (Inmutabilidad)
+  
   UserProfile copyWith({
     String? uid,
     String? email,

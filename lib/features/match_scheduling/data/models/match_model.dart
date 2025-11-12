@@ -16,9 +16,6 @@ class MatchModel extends Match {
     this.teamB,
   });
 
-  // =========================================================
-  // CONSTRUCTOR FROM JSON (PARA RECIBIR DATOS DEL BACKEND)
-  // =========================================================
   factory MatchModel.fromJson(Map<String, dynamic> json) {
     Team? parseTeam(Map<String, dynamic>? teamJson) {
       if (teamJson == null) return null;
@@ -40,10 +37,6 @@ class MatchModel extends Match {
     );
   }
 
-  // =========================================================
-  // MÉTODO TO JSON (PARA ENVIAR DATOS AL BACKEND)
-  // =========================================================
-  // Se eliminó la anotación @override porque Match no define este método.
   Map<String, dynamic> toJson() {
     return {
       'id': id,

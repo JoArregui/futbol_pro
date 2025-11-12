@@ -12,7 +12,6 @@ class RegisterUser implements UseCase<Player, RegisterParams> {
 
   @override
   Future<Either<Failure, Player>> call(RegisterParams params) async {
-    // Aquí podrías añadir lógica de validación previa al repositorio
     return await repository.register(
       email: params.email,
       password: params.password,
@@ -25,14 +24,13 @@ class RegisterParams extends Equatable {
   final String email;
   final String password;
   final String nickname;
-  final String? name; // Opcional, si no lo pides en el formulario
-  // Si tu API lo requiere, puedes añadir aquí más campos
+  final String? name;
 
   const RegisterParams({
-    required this.email, 
-    required this.password, 
+    required this.email,
+    required this.password,
     required this.nickname,
-    this.name, // Deja 'name' como opcional para simplificar la llamada
+    this.name,
   });
 
   @override

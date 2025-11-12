@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:futbol_pro/features/auth/presentation/bloc/auth_bloc.dart';
 
+import '../../../../routes/app_routes.dart';
+
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -33,7 +35,9 @@ class _RegisterPageState extends State<RegisterPage> {
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
               nickname: _nicknameController.text.trim(),
-              name: _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+              name: _nameController.text.trim().isEmpty
+                  ? null
+                  : _nameController.text.trim(),
             ),
           );
     }
@@ -42,7 +46,20 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear Cuenta')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.login);
+            }
+          },
+        ),
+        centerTitle: true,
+        title: const Text('Crear Cuenta'),
+      ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -51,11 +68,11 @@ class _RegisterPageState extends State<RegisterPage> {
             );
           }
           if (state is AuthAuthenticated) {
-            // Si el registro fue exitoso, el router redirigirá a /home,
-            // pero podemos mostrar un mensaje de éxito primero.
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Registro exitoso. ¡Bienvenido!')),
             );
+
+            context.go(AppRoutes.home);
           }
         },
         child: Center(
@@ -67,7 +84,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // Email Field
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(
@@ -84,8 +100,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Password Field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
@@ -102,8 +116,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Nickname Field
                   TextFormField(
                     controller: _nicknameController,
                     decoration: const InputDecoration(
@@ -119,8 +131,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Name Field (Opcional)
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -130,8 +140,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // Register Button
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
@@ -139,8 +147,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: isLoading ? null : _onRegisterPressed,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
                         ),
                         child: isLoading
                             ? const SizedBox(
@@ -151,16 +161,15 @@ class _RegisterPageState extends State<RegisterPage> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Registrarme', style: TextStyle(fontSize: 18)),
+                            : const Text('Registrarme',
+                                style: TextStyle(fontSize: 18)),
                       );
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Back to Login
                   TextButton(
                     onPressed: () {
-                      context.pop(); // Vuelve a la página anterior (Login)
+                      context.go(AppRoutes.login);
                     },
                     child: const Text('Ya tengo cuenta, Iniciar Sesión'),
                   ),

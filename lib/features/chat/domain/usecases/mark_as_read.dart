@@ -11,8 +11,7 @@ class MarkAsRead implements UseCase<void, MarkAsReadParams> {
 
   @override
   Future<Either<Failure, void>> call(MarkAsReadParams params) async {
-    // Llama al repositorio para marcar los mensajes como leídos usando
-    // el ID de la sala del parámetro y el ID del usuario actual inyectado.
+   
     return await repository.markMessagesAsRead(
       params.roomId, 
       params.userId,

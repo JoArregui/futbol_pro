@@ -17,13 +17,12 @@ class GetAvailableFieldsEvent extends FieldEvent {
   List<Object> get props => [startTime, endTime];
 }
 
-// Evento futuro: cuando el usuario selecciona un campo y decide reservarlo
-// class ReserveFieldEvent extends FieldEvent { ... }
+
 class ReserveFieldRequested extends FieldEvent {
   final String fieldId;
   final DateTime startTime;
   final DateTime endTime;
-  final String userId; // Tomado del AuthBloc/Usuario actual
+  final String userId; 
   final double totalCost;
 
   const ReserveFieldRequested({

@@ -25,14 +25,13 @@ class _ChatInputState extends State<ChatInput> {
   void _sendMessage() {
     final text = _textController.text.trim();
     if (text.isNotEmpty && !widget.isSending) {
-      // Disparar el evento de envío al BLoC
       context.read<ChatBloc>().add(
-        ChatMessageSent(
-          roomId: widget.roomId,
-          senderId: widget.senderId,
-          content: text, 
-        ),
-      );
+            ChatMessageSent(
+              roomId: widget.roomId,
+              senderId: widget.senderId,
+              content: text,
+            ),
+          );
       _textController.clear();
       setState(() => _isButtonEnabled = false);
     }
@@ -52,11 +51,10 @@ class _ChatInputState extends State<ChatInput> {
         color: Theme.of(context).cardColor,
         border: Border(top: BorderSide(color: Colors.grey.shade300)),
       ),
-      child: SafeArea( // Asegura que no se superponga con el teclado o bordes del sistema
+      child: SafeArea(
         top: false,
         child: Row(
           children: <Widget>[
-            // Campo de texto
             Expanded(
               child: TextField(
                 controller: _textController,
@@ -71,7 +69,6 @@ class _ChatInputState extends State<ChatInput> {
               ),
             ),
             const SizedBox(width: 8.0),
-            // Botón de enviar
             IconButton(
               icon: widget.isSending
                   ? SizedBox(
@@ -83,7 +80,8 @@ class _ChatInputState extends State<ChatInput> {
                       ),
                     )
                   : const Icon(Icons.send),
-              onPressed: _isButtonEnabled && !widget.isSending ? _sendMessage : null,
+              onPressed:
+                  _isButtonEnabled && !widget.isSending ? _sendMessage : null,
               color: Theme.of(context).primaryColor,
             ),
           ],

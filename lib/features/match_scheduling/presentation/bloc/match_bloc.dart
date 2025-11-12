@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/match.dart';
 import '../../domain/entities/player.dart';
+import '../../domain/entities/team.dart'; // Importación añadida
 import '../../domain/usecases/generate_balanced_teams.dart';
 import '../../domain/usecases/join_match.dart';
 import '../../domain/usecases/schedule_friendly_match.dart';
@@ -92,7 +93,6 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
   ) async {
     emit(MatchLoading());
 
-    // 1. Ejecutar el Use Case de balanceo de equipos
     final failureOrTeams = await generateBalancedTeams(
       GenerateTeamsParams(
         players: event.players,
@@ -103,7 +103,6 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     await failureOrTeams.fold(
       (failure) async => emit(MatchError(failure.errorMessage)),
       (teamPair) async {
-        // 2. Actualizar el partido en el backend con los equipos
         final failureOrUpdatedMatch = await updateMatchWithTeams(
           UpdateMatchWithTeamsParams(
             matchId: event.matchId,
@@ -111,10 +110,8 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
           ),
         );
 
-        // 3. Emitir el estado final basado en el resultado de la actualización
         failureOrUpdatedMatch.fold(
           (failure) => emit(MatchError(failure.errorMessage)),
-          // Usamos MatchScheduledSuccess ya que es un estado que lleva el Match final
           (updatedMatch) => emit(MatchScheduledSuccess(updatedMatch)),
         );
       },

@@ -8,6 +8,7 @@ abstract class FieldState extends Equatable {
 }
 
 class FieldInitial extends FieldState {}
+
 class FieldLoading extends FieldState {}
 
 class FieldLoadSuccess extends FieldState {
@@ -28,10 +29,8 @@ class FieldError extends FieldState {
   List<Object> get props => [message];
 }
 
-// Estado para cuando no hay campos disponibles, diferenciado del error
 class FieldNoData extends FieldState {}
 
-// Estado para la reserva exitosa
 class FieldReservedSuccess extends FieldState {
   final String fieldName;
 

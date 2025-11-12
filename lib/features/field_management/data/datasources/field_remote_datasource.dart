@@ -2,8 +2,8 @@ import 'package:http/http.dart' as http;
 import '../../../../core/errors/exceptions.dart';
 import '../models/field_model.dart';
 
-// ✅ CORREGIDO: Usando lowerCamelCase (baseUrlFieldManagement) para seguir estrictamente la convención de Dart.
-const String baseUrlFieldManagement = 'https://tu-api-backend.com/api/v1/fields';
+const String baseUrlFieldManagement =
+    'https://tu-api-backend.com/api/v1/fields';
 
 abstract class FieldRemoteDataSource {
   Future<List<FieldModel>> getAvailableFields({
@@ -23,7 +23,6 @@ abstract class FieldRemoteDataSource {
 class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
   final http.Client client;
 
-  // El constructor ahora acepta 'client' como parámetro nombrado.
   FieldRemoteDataSourceImpl({required this.client});
 
   @override
@@ -31,10 +30,8 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
     required DateTime startTime,
     required DateTime endTime,
   }) async {
-    // Simulación de respuesta HTTP (en un entorno real usarías client.get)
     await Future.delayed(const Duration(milliseconds: 600));
 
-    // Datos Mock: Dos campos disponibles
     final mockData = [
       {
         "id": "field-A",
@@ -66,14 +63,13 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
     required String userId,
     required double totalCost,
   }) async {
-    // Simulación de POST a la API
     await Future.delayed(const Duration(milliseconds: 900));
 
     if (fieldId.isEmpty) {
-      throw ServerException(message: 'El ID del campo no puede estar vacío.');
+      throw const ServerException(
+          message: 'El ID del campo no puede estar vacío.');
     }
-    
-    // Simula una reserva exitosa
+
     return true;
   }
 }

@@ -12,7 +12,6 @@ class LoginUser implements UseCase<Player, LoginParams> {
 
   @override
   Future<Either<Failure, Player>> call(LoginParams params) async {
-    // Aquí puedes incluir validaciones de email o contraseña si no se hicieron en la UI
     return await repository.login(
       email: params.email,
       password: params.password,

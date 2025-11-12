@@ -4,8 +4,8 @@ class Field extends Equatable {
   final String id;
   final String name;
   final String address;
-  final double hourlyRate; // Tarifa por hora
-  final FieldType type; // 7v7, 11v11, etc.
+  final double hourlyRate; 
+  final FieldType type; 
 
   const Field({
     required this.id,

@@ -30,7 +30,7 @@ class ChatMessagesSubscriptionRequested extends ChatEvent {
   List<Object> get props => [roomId];
 }
 
-/// Evento disparado internamente por el BLoC cuando se reciben nuevos mensajes del Stream.
+
 class ChatMessagesReceived extends ChatEvent {
   final List<Message> messages;
 
@@ -66,7 +66,7 @@ class ChatMarkAsRead extends ChatEvent {
   List<Object> get props => [roomId];
 }
 
-/// Evento disparado internamente por el BLoC cuando se reciben nuevas salas del Stream.
+
 class ChatRoomsReceived extends ChatEvent {
   final List<ChatRoom> rooms;
 

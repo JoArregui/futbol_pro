@@ -1,32 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-// INYECCIÓN DE DEPENDENCIAS
-import '../../../../core/injection_container.dart'; // Contiene 'sl'
-
-// ENTIDAD DEL DOMINIO
+import '../../../../core/injection_container.dart';
 import '../../domain/entities/standing.dart';
-
-// BLoC, EVENTOS Y ESTADOS
 import '../bloc/league_bloc.dart';
 
-
 // ==============================================================
-// STANDINGS PAGE (Capa de Presentación)
+// STANDINGS PAGE
 // ==============================================================
 
 class StandingsPage extends StatelessWidget {
-  final String currentLeagueId; // Ejemplo: 'liga_principal_2025'
+  final String currentLeagueId;
 
   const StandingsPage({super.key, required this.currentLeagueId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // 1. Inyecta el BLoC usando GetIt (sl)
       create: (_) => sl<LeagueBloc>()
         ..add(
-          // 2. Dispara el evento al inicio para cargar la clasificación
           GetStandingsRequested(leagueId: currentLeagueId),
         ),
       child: Scaffold(
@@ -35,6 +26,8 @@ class StandingsPage extends StatelessWidget {
             'Tabla de Clasificación 🏆',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
+          automaticallyImplyLeading: true,
+          centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Colors.white,
         ),
@@ -58,7 +51,7 @@ class StandingsPage extends StatelessWidget {
                 ),
               );
             }
-            // Estado inicial o desconocido
+
             return const Center(
               child: Text('Selecciona una liga para ver los datos.'),
             );
@@ -70,7 +63,7 @@ class StandingsPage extends StatelessWidget {
 }
 
 // ==============================================================
-// STANDINGS TABLE WIDGET (Componente de Presentación)
+// STANDINGS TABLE WIDGET
 // ==============================================================
 
 class StandingsTable extends StatelessWidget {
@@ -80,11 +73,9 @@ class StandingsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ordenar por Puntos (descendente) antes de construir la tabla
     final sortedStandings = List<Standing>.from(standings)
       ..sort((a, b) => b.points.compareTo(a.points));
 
-    // DataRow para la cabecera
     const columns = [
       DataColumn(label: Text('#')),
       DataColumn(
@@ -117,7 +108,6 @@ class StandingsTable extends StatelessWidget {
           final index = entry.key + 1;
           final s = entry.value;
 
-          // Estilo de la fila para destacar los primeros puestos
           final isTopThree = index <= 3;
 
           return DataRow(
@@ -134,7 +124,8 @@ class StandingsTable extends StatelessWidget {
                 Text(
                   index.toString(),
                   style: TextStyle(
-                    fontWeight: isTopThree ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isTopThree ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),

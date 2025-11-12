@@ -4,7 +4,6 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/usecases/usecase.dart';
 
-// Este Use Case se usa para temas generales (e.g., 'liga_principal', 'amistosos_abiertos')
 class SubscribeToNotifications implements UseCase<void, SubscribeParams> {
   final NotificationService service;
 
@@ -18,7 +17,6 @@ class SubscribeToNotifications implements UseCase<void, SubscribeParams> {
       }
       return const Right(null);
     } catch (e) {
-      // Manejo de errores de suscripción
       return Left(ServerFailure(e.toString()));
     }
   }

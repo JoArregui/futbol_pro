@@ -5,7 +5,7 @@ class Match extends Equatable {
   final String title;
   final DateTime scheduledTime;
   final String fieldId;
-  final MatchType type; // Enum: League, Friendly
+  final MatchType type; 
   final List<String> playerIds;
 
   const Match({
