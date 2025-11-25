@@ -1,6 +1,9 @@
 import '../entities/user_profile.dart';
 
 abstract class ProfileRepository {
+  // 🚀 Nuevo método abstracto
+  Future<UserProfile> createProfile(String uid, String email, String nickname);
+  
   Future<UserProfile> getUserProfile(String uid);
 
   Future<void> updateProfile({

@@ -13,6 +13,7 @@ class SubscribeToNotifications implements UseCase<void, SubscribeParams> {
   Future<Either<Failure, void>> call(SubscribeParams params) async {
     try {
       if (params.topic.isNotEmpty) {
+        // La llamada a este método ahora funcionará
         await service.subscribeToTopic(params.topic);
       }
       return const Right(null);

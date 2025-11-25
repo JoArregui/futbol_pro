@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart'; // Importado para navegación segura
 import '../bloc/chat_bloc.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/message_list.dart';
@@ -48,8 +49,22 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       builder: (context, state) {
         if (state is ChatRoomSelectedState &&
             state.room.id == widget.chatRoomId) {
+          // Determinar si es un chat grupal para pasarlo a MessageList/Bubble
+          final isGroupChat = state.room.memberIds.length > 2;
+
           return Scaffold(
             appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/home');
+                  }
+                },
+              ),
+              automaticallyImplyLeading: false,
               title: Text(state.room.title),
               backgroundColor: Colors.blueAccent,
             ),
@@ -60,13 +75,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   child: MessageList(
                     messages: state.messages,
                     currentUserId: context.read<ChatBloc>().currentUserId,
+                    isGroupChat: isGroupChat, // 🟢 Pasar la propiedad de chat grupal
                     scrollController: _scrollController,
                   ),
                 ),
                 // 4. Input y Botón de Envío
                 ChatInput(
                   roomId: widget.chatRoomId,
-                  senderId: context.read<ChatBloc>().currentUserId,
                   isSending: state.isSending,
                 ),
               ],
@@ -74,14 +89,31 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           );
         }
 
-        // Manejo de estados de carga/error
-        if (state is ChatLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (state is ChatError) {
-          return Center(child: Text('Error: ${state.message}'));
-        }
-        return const Center(child: Text('Error: Sala no cargada.'));
+        // Manejo de estados de carga/error (envueltos en un Scaffold simple)
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            ),
+            automaticallyImplyLeading: false,
+            title: const Text('Sala de Chat'),
+            backgroundColor: Colors.blueAccent,
+          ),
+          body: Center(
+            child: (state is ChatLoading)
+                ? const CircularProgressIndicator()
+                : (state is ChatError)
+                    ? Text('Error: ${state.message}')
+                    : const Text('Error: Sala no cargada.'),
+          ),
+        );
       },
     );
   }

@@ -23,11 +23,11 @@ class AppRouter {
 
   late final GoRouter router = GoRouter(
     initialLocation: AppRoutes.home,
+    // Escucha el stream del AuthBloc para reevaluar las rutas
     refreshListenable: GoRouterRefreshStream(authBloc.stream),
     routes: <RouteBase>[
       ShellRoute(
         builder: (context, state, child) {
-        
           final hideNavBar = state.matchedLocation.contains('room') ||
               state.matchedLocation.contains('match_detail');
           return MainScaffold(
@@ -37,10 +37,9 @@ class AppRouter {
         },
         routes: [
           GoRoute(
-            path: AppRoutes.home,
+            path: AppRoutes.matches,
             builder: (context, state) => const HomePage(),
             routes: [
-           
               GoRoute(
                 path: 'match_detail/:matchId',
                 name: 'matchDetail',
@@ -51,6 +50,10 @@ class AppRouter {
                 },
               ),
             ],
+          ),
+          GoRoute(
+            path: AppRoutes.home,
+            builder: (context, state) => const HomePage(),
           ),
           GoRoute(
             path: AppRoutes.standings,
@@ -66,9 +69,8 @@ class AppRouter {
             path: AppRoutes.chat,
             builder: (context, state) => const ChatListPage(),
             routes: [
-           
               GoRoute(
-                path: ':roomId', 
+                path: ':roomId',
                 name: 'chatRoom',
                 builder: (context, state) {
                   final roomId = state.pathParameters['roomId'] ?? 'unknown';
@@ -83,7 +85,6 @@ class AppRouter {
           ),
         ],
       ),
-    
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginPage(),
@@ -93,23 +94,27 @@ class AppRouter {
         builder: (context, state) => const RegisterPage(),
       ),
     ],
+    // FUNCIÓN DE REDIRECCIÓN: maneja la lógica de autenticación
     redirect: (BuildContext context, GoRouterState state) {
       final authState = authBloc.state;
       final isAuthenticated = authState is AuthAuthenticated;
-      final isLoggingInOrUp =
-          state.fullPath == AppRoutes.login || state.fullPath == AppRoutes.register;
+      final isLoggingInOrUp = state.fullPath == AppRoutes.login ||
+          state.fullPath == AppRoutes.register;
 
       if (isAuthenticated) {
+        // Si ya estás autenticado y tratas de ir a login/register, ve a home.
         return isLoggingInOrUp ? AppRoutes.home : null;
       } else {
+        // Si NO estás autenticado y tratas de ir a una página protegida (que no es login/register), ve a login.
         final isProtected = !isLoggingInOrUp;
+
         return isProtected ? AppRoutes.login : null;
       }
     },
     errorBuilder: (context, state) => Scaffold(
       appBar: AppBar(
         title: const Text('Error de Navegación'),
-        automaticallyImplyLeading: true, 
+        automaticallyImplyLeading: true,
       ),
       body: Center(child: Text('Ruta no encontrada: ${state.uri}')),
     ),

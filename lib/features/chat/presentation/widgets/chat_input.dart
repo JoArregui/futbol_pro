@@ -4,13 +4,12 @@ import '../bloc/chat_bloc.dart';
 
 class ChatInput extends StatefulWidget {
   final String roomId;
-  final String senderId;
   final bool isSending;
+  // 🟢 Se eliminan senderId y currentUserName estático
 
   const ChatInput({
     super.key,
     required this.roomId,
-    required this.senderId,
     required this.isSending,
   });
 
@@ -28,8 +27,8 @@ class _ChatInputState extends State<ChatInput> {
       context.read<ChatBloc>().add(
             ChatMessageSent(
               roomId: widget.roomId,
-              senderId: widget.senderId,
               content: text,
+              // 🟢 senderId y senderName se toman directamente del BLoC en el evento
             ),
           );
       _textController.clear();

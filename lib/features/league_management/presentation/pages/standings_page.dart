@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart'; // Importar go_router para navegación segura
 import '../../../../core/injection_container.dart';
 import '../../domain/entities/standing.dart';
 import '../bloc/league_bloc.dart';
@@ -22,11 +23,24 @@ class StandingsPage extends StatelessWidget {
         ),
       child: Scaffold(
         appBar: AppBar(
+          // 🚀 CORRECCIÓN: Usar '/home' como ruta de respaldo.
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back), // Ícono de la flecha
+            onPressed: () {
+              // Si la pila de navegación no está vacía, hacemos pop.
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                // Si es la última página (o la raíz), navegamos a la ruta principal segura.
+                context.go('/home');
+              }
+            },
+          ),
+          automaticallyImplyLeading: false, // Deshabilitar el leading automático
           title: const Text(
             'Tabla de Clasificación 🏆',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          automaticallyImplyLeading: true,
           centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Colors.white,

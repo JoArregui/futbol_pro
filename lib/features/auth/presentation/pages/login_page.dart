@@ -50,10 +50,12 @@ class _LoginPageState extends State<LoginPage> {
                   content: Text('Error al iniciar sesión: ${state.message}')),
             );
           }
+          
           if (state is AuthAuthenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Inicio de sesión exitoso.')),
             );
+            // La navegación a AppRoutes.home la maneja el 'redirect' del GoRouter.
           }
         },
         child: Center(
@@ -66,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   const Text(
-                    'Credenciales Demo: demo@futbolpro.com / demo123',
+                    'Credenciales Demo: test@pro.com / 123456', 
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -132,7 +134,9 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () {
-                      context.go(AppRoutes.register);
+                      // ✅ CORRECCIÓN: Usar push() o replace() en lugar de go() 
+                      // para navegar a una ruta hermana (registro) desde el login.
+                      context.push(AppRoutes.register);
                     },
                     child: const Text('Crear una cuenta nueva'),
                   ),

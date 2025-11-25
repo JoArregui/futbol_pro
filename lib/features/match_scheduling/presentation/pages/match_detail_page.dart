@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart'; // Importado para navegación segura
 import '../bloc/match_detail_bloc.dart';
 import '../widgets/match_detail_view.dart';
 
@@ -29,6 +30,18 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // 🚀 CORRECCIÓN: Usar '/home' como ruta de respaldo.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home'); // ¡CORREGIDO A /home!
+            }
+          },
+        ),
+        automaticallyImplyLeading: false, // Deshabilitar el leading automático
         title: const Text('Detalle del Partido'),
         centerTitle: true,
       ),

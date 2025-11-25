@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'match_detail_page.dart';
+import 'package:go_router/go_router.dart';
+
 
 class MockMatch {
   final String id;
@@ -31,6 +32,17 @@ class MatchListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+        ),
+        automaticallyImplyLeading: false,
         title: const Text('Partidos Programados'),
         centerTitle: true,
         backgroundColor: Colors.teal,
@@ -54,12 +66,8 @@ class MatchListPage extends StatelessWidget {
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MatchDetailPage(matchId: match.id),
-                  ),
-                );
+                // ✅ Usando GoRouter para navegar de forma consistente
+                context.go('/match/${match.id}');
               },
             ),
           );

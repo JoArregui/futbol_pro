@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user_profile.dart';
-import '../../domain/usecases/get_profile.dart'; 
+import '../../domain/usecases/get_profile.dart';
 import '../../domain/usecases/update_profile.dart';
+import '../../domain/usecases/create_profile.dart'; // 🚀 Nuevo UseCase
 
 part 'profile_event.dart';
 part 'profile_state.dart';
@@ -10,11 +11,13 @@ part 'profile_state.dart';
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final GetProfile getProfile;
   final UpdateProfile updateProfile;
+  final CreateProfile createProfile; // 🚀 Inyectado
   final String currentUserId; 
 
   ProfileBloc({
     required this.getProfile,
     required this.updateProfile,
+    required this.createProfile, // 🚀 Añadido
     required this.currentUserId,
   }) : super(const ProfileInitial()) { 
     on<ProfileLoadRequested>(_onProfileLoadRequested);
@@ -30,6 +33,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final profile = await getProfile(event.uid); 
       emit(ProfileLoaded(profile: profile));
     } catch (e) {
+      // 🚀 Lógica de CATCH-AND-CREATE: Si el perfil no existe, créalo.
+      if (e.toString().contains('Usuario no encontrado')) {
+        try {
+          // 1. Crear el perfil inicial
+          final newProfile = await createProfile(
+            uid: event.uid,
+            email: event.email,
+            nickname: event.nickname,
+          );
+          // 2. Emitir el perfil recién creado
+          emit(ProfileLoaded(profile: newProfile));
+          return;
+        } catch (createError) {
+          emit(ProfileError('Error al crear y cargar el perfil: ${createError.toString()}'));
+          return;
+        }
+      }
+      
+      // Error general
       emit(ProfileError('Error al cargar el perfil: ${e.toString()}'));
     }
   }
@@ -55,12 +77,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         avatarUrl: event.avatarUrl,
       );
 
+      // 🚀 Cargar el perfil nuevamente para obtener la versión actualizada de Firestore
       final updatedProfile = await getProfile(event.uid);
       
       emit(ProfileUpdateSuccess(profile: updatedProfile));
       
     } catch (e) {
       emit(ProfileError('Error al actualizar el perfil: ${e.toString()}'));
+      // Volver al estado cargado anterior si la actualización falla.
       emit(currentState.copyWith(isUpdating: false));
     }
   }

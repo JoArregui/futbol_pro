@@ -47,15 +47,15 @@ flutter {
 }
 
 // ==========================================================
-// Sección de dependencias corregida
+// Sección de dependencias CORREGIDA
 // ==========================================================
 dependencies {
-    // 1. Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-   
-    // 2. Firebase Messaging
-    implementation("com.google.firebase:firebase-messaging-ktx")
-    
-    // 3. Desugaring - VERSIÓN ACTUALIZADA
+    // 1. Desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    
+    // 2. ¡IMPORTANTE! Comentamos la BoM para evitar conflictos de resolución.
+    // implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    
+    // 3. Firebase Messaging - AÑADIMOS LA VERSIÓN EXPLÍCITAMENTE
+    implementation("com.google.firebase:firebase-messaging-ktx:24.0.0") 
 }

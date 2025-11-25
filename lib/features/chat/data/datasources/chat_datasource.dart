@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Importar Firestore
 import 'package:futbol_pro/core/errors/exceptions.dart';
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
-import '../../domain/entities/chat_room.dart';
 
 abstract class ChatRemoteDataSource {
   Stream<List<MessageModel>> getMessagesStream(String roomId);
@@ -13,49 +13,38 @@ abstract class ChatRemoteDataSource {
     required String text,
   });
   Future<void> markMessagesAsRead(String roomId, String userId);
-  Future<List<ChatRoom>> getChatRooms(String userId);
+  // Se actualiza a Stream para mantener la coherencia con la arquitectura reactiva
+  Stream<List<ChatRoomModel>> getChatRoomsStream(String userId); 
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
-  final Map<String, List<MessageModel>> _messagesDb = {
-    'general_chat_id': [
-      MessageModel(
-        id: 'msg1',
-        senderId: 'user-001',
-        senderName: 'Juan Pro',
-        text: '¡Bienvenidos al chat general de FutbolPro!',
-        timestamp: DateTime.now(),
-      ),
-      MessageModel(
-        id: 'msg2',
-        senderId: 'user-002',
-        senderName: 'Maria Goleadora',
-        text: 'Hola a todos, ¿quién para un partido hoy?',
-        timestamp: DateTime.now(),
-      ),
-    ],
-  };
+  final FirebaseFirestore firestore;
 
-  final _messageStreamController =
-      StreamController<List<MessageModel>>.broadcast();
+  // 🟢 CORRECCIÓN: El constructor requiere la instancia de Firestore
+  ChatRemoteDataSourceImpl({required this.firestore});
 
-  ChatRemoteDataSourceImpl() {
-    _messageStreamController.add(_messagesDb['general_chat_id'] ?? []);
-  }
-
+  // 🟢 CORRECCIÓN: Implementación real de la escucha de mensajes con Firestore
   @override
   Stream<List<MessageModel>> getMessagesStream(String roomId) {
-    if (!_messagesDb.containsKey(roomId)) {
-      _messagesDb[roomId] = [];
-    }
-
-    return _messageStreamController.stream.map((list) {
-      return list
-          .where((msg) => (_messagesDb[roomId] ?? []).contains(msg))
-          .toList();
+    return firestore
+        .collection('chat_rooms')
+        .doc(roomId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true) // Los mensajes más nuevos primero (para la lista)
+        .snapshots()
+        .map((snapshot) {
+      try {
+        return snapshot.docs
+            .map((doc) => MessageModel.fromFirestore(doc))
+            .toList();
+      } catch (e) {
+        // En caso de error de mapeo, lanzamos una excepción
+        throw ServerException(message: 'Error al mapear mensajes: $e');
+      }
     });
   }
 
+  // 🟢 CORRECCIÓN: Implementación real del envío de mensajes
   @override
   Future<void> sendMessage({
     required String roomId,
@@ -63,56 +52,60 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required String senderName,
     required String text,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
     if (text.trim().isEmpty) {
       throw const ServerException(message: 'El mensaje no puede estar vacío.');
     }
 
-    final newMessage = MessageModel(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+    final messageRef = firestore.collection('chat_rooms').doc(roomId).collection('messages').doc();
+    final timestamp = DateTime.now();
+    
+    final newMessageData = MessageModel(
+      id: messageRef.id,
       senderId: senderId,
       senderName: senderName,
       text: text,
-      timestamp: DateTime.now(),
-    );
+      timestamp: timestamp,
+    ).toJson();
 
-    if (_messagesDb.containsKey(roomId)) {
-      _messagesDb[roomId]!.add(newMessage);
-    } else {
-      _messagesDb[roomId] = [newMessage];
-    }
+    // 1. Añadir el mensaje a la subcolección
+    await messageRef.set(newMessageData);
 
-    _messageStreamController.add(_messagesDb['general_chat_id']!);
+    // 2. 🟢 Opcional: Actualizar el campo lastMessage en el documento de la sala
+    await firestore.collection('chat_rooms').doc(roomId).update({
+      'lastMessage': newMessageData,
+      'lastActive': timestamp.millisecondsSinceEpoch,
+    });
   }
 
   @override
   Future<void> markMessagesAsRead(String roomId, String userId) async {
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    print('Simulación: Sala $roomId marcada como leída por $userId');
-    return;
+    // Implementación real (ejemplo simple: actualizar un campo de la sala)
+    try {
+      await firestore.collection('chat_rooms').doc(roomId).update({
+        'readBy.$userId': DateTime.now().millisecondsSinceEpoch,
+      });
+    } on Exception catch (e) {
+      throw ServerException(message: 'Error al marcar como leído: $e');
+    }
   }
 
+  // 🟢 CORRECCIÓN: Implementación real de la escucha de salas con Firestore
   @override
-  Future<List<ChatRoom>> getChatRooms(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final rooms = [
-      const ChatRoomModel(
-        id: 'general_chat_id',
-        type: ChatRoomType.general,
-        title: 'Chat Global Comunitario',
-        memberIds: ['user-001', 'user-002'],
-      ),
-      const ChatRoomModel(
-        id: 'league_1_id',
-        type: ChatRoomType.league,
-        title: 'Liga Pro - 2025',
-        memberIds: ['user-001'],
-      ),
-    ];
-
-    return rooms.where((room) => room.memberIds.contains(userId)).toList();
+  Stream<List<ChatRoomModel>> getChatRoomsStream(String userId) {
+    return firestore
+        .collection('chat_rooms')
+        .where('memberIds', arrayContains: userId) // Filtrar por participante
+        .orderBy('lastActive', descending: true) // Ordenar por actividad reciente
+        .snapshots()
+        .map((snapshot) {
+      try {
+        return snapshot.docs
+            .map((doc) => ChatRoomModel.fromFirestore(doc))
+            .toList();
+      } catch (e) {
+        // En caso de error de mapeo, lanzamos una excepción
+        throw ServerException(message: 'Error al mapear salas: $e');
+      }
+    });
   }
 }

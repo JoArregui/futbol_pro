@@ -15,22 +15,42 @@ class UserProfileModel extends UserProfile {
     required super.createdAt,
   });
 
+  // 🚀 CORRECCIÓN: Manejo robusto de nulos para campos numéricos y de texto.
   factory UserProfileModel.fromSnapshot(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>?;
 
-    final timestamp = data['createdAt'] as Timestamp;
+    if (data == null) {
+      throw Exception('El documento de perfil está vacío.');
+    }
+
+    // Inicializa el timestamp con una fecha actual si falta (idealmente no debería faltar)
+    final timestamp = data['createdAt'] as Timestamp? ?? Timestamp.now();
 
     return UserProfileModel(
       uid: doc.id,
-      email: data['email'] as String,
-      nickname: data['nickname'] as String,
+      email: data['email'] as String? ?? 'correo_no_disponible@app.com',
+      nickname: data['nickname'] as String? ?? 'NuevoJugador',
       name: data['name'] as String?,
       avatarUrl: data['avatarUrl'] as String?,
       bio: data['bio'] as String?,
-      gamesPlayed: (data['gamesPlayed'] as num).toInt(),
-      wins: (data['wins'] as num).toInt(),
-      rating: (data['rating'] as num).toDouble(),
+      // 🚨 Los valores numéricos deben usar ?? 0 (o 0.0) para evitar errores 'Null is not a subtype of int'
+      gamesPlayed: (data['gamesPlayed'] as num?)?.toInt() ?? 0,
+      wins: (data['wins'] as num?)?.toInt() ?? 0,
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
       createdAt: timestamp.toDate(),
+    );
+  }
+
+  // 🚀 NUEVA FUNCIÓN: Genera un perfil inicial para un nuevo registro.
+  factory UserProfileModel.initial(String uid, String email, String nickname) {
+    return UserProfileModel(
+      uid: uid,
+      email: email,
+      nickname: nickname,
+      gamesPlayed: 0,
+      wins: 0,
+      rating: 1000.0, // Rating inicial común
+      createdAt: DateTime.now(),
     );
   }
 

@@ -18,5 +18,6 @@ abstract class ChatRepository {
   Future<Either<Failure, void>> markMessagesAsRead(
       String roomId, String userId);
 
-  Stream<Either<Failure, List<ChatRoom>>> getChatRooms();
+  // 🟢 CORRECCIÓN: Se agrega el userId al método para filtrar salas
+  Stream<Either<Failure, List<ChatRoom>>> getChatRoomsStream(String userId); 
 }

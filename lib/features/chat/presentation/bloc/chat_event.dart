@@ -7,7 +7,7 @@ abstract class ChatEvent extends Equatable {
   List<Object> get props => [];
 }
 
-/// Evento para inicializar y cargar las salas de chat disponibles.
+/// 🟢 Evento para inicializar y cargar las salas de chat disponibles (La clase que faltaba).
 class ChatRoomsSubscriptionRequested extends ChatEvent {}
 
 /// Evento disparado cuando se selecciona una sala de chat específica.
@@ -44,16 +44,14 @@ class ChatMessagesReceived extends ChatEvent {
 class ChatMessageSent extends ChatEvent {
   final String content;
   final String roomId;
-  final String senderId;
 
   const ChatMessageSent({
     required this.content,
     required this.roomId,
-    required this.senderId,
   });
 
   @override
-  List<Object> get props => [content, roomId, senderId];
+  List<Object> get props => [content, roomId];
 }
 
 /// Evento para marcar los mensajes de una sala como leídos.

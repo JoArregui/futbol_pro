@@ -57,18 +57,20 @@ class ChatRepositoryImpl implements ChatRepository {
     try {
       await remoteDataSource.markMessagesAsRead(roomId, userId);
       return const Right(null);
+    } on ServerException catch (e) { // 🟢 CORRECCIÓN: Usar 'catch (e)'
+      return Left(ServerFailure(e.message));
     } on Exception {
       return const Left(
           CacheFailure('No se pudo actualizar el estado de lectura.'));
     }
   }
 
+  // 🟢 CORRECCIÓN: Implementación del nuevo método que usa el userId
   @override
-  Stream<Either<Failure, List<ChatRoom>>> getChatRooms() {
-    final futureRooms = remoteDataSource.getChatRooms('user-001');
+  Stream<Either<Failure, List<ChatRoom>>> getChatRoomsStream(String userId) {
+    final roomsStream = remoteDataSource.getChatRoomsStream(userId);
 
-    return Stream.fromFuture(futureRooms)
-        .map<Either<Failure, List<ChatRoom>>>((roomModels) {
+    return roomsStream.map<Either<Failure, List<ChatRoom>>>((roomModels) {
       return Right(roomModels);
     }).handleError((error, stackTrace) {
       if (error is ServerException) {

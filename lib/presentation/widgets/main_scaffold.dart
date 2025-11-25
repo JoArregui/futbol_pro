@@ -4,7 +4,7 @@ import '../../routes/app_routes.dart';
 import 'draggable_floating_chat_button.dart';
 
 const List<String> shellRoutes = [
-  AppRoutes.home,
+  AppRoutes.matches,
   AppRoutes.standings,
   AppRoutes.fields,
   AppRoutes.chat,
@@ -24,8 +24,8 @@ class MainScaffold extends StatelessWidget {
   void _onItemTapped(BuildContext context, int index) {
     if (index >= 0 && index < shellRoutes.length) {
       final path = shellRoutes[index];
-   
-      context.go(path); 
+
+      context.go(path);
     }
   }
 

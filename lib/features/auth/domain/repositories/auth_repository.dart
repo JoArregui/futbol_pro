@@ -19,4 +19,6 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> logout();
 
   String getCurrentUserId();
+  
+  String getCurrentUserName();
 }

@@ -25,8 +25,25 @@ class Standing extends Equatable {
     required this.goalDifference,
   });
 
+  // 🚀 CORRECCIÓN CLAVE: Uso del operador ?? 0 para manejar nulos
+  // Esto asegura que si 'points' es null, se usa 0 en su lugar, evitando el error.
+  factory Standing.fromJson(Map<String, dynamic> json) {
+    return Standing(
+      teamName: json['teamName'] as String? ?? 'Equipo Desconocido',
+      teamId: json['teamId'] as String? ?? 'ID Desconocido',
+      points: json['points'] as int? ?? 0,
+      gamesPlayed: json['gamesPlayed'] as int? ?? 0,
+      wins: json['wins'] as int? ?? 0,
+      draws: json['draws'] as int? ?? 0,
+      losses: json['losses'] as int? ?? 0,
+      goalsFor: json['goalsFor'] as int? ?? 0,
+      goalsAgainst: json['goalsAgainst'] as int? ?? 0,
+      goalDifference: json['goalDifference'] as int? ?? 0,
+    );
+  }
+
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         teamName,
         teamId,
         points,

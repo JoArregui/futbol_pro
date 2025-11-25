@@ -3,9 +3,10 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../../match_scheduling/domain/entities/player.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/register_user.dart';
-import '../datasources/auth_remote_dataSource.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
 import 'package:futbol_pro/core/errors/exceptions.dart';
+
+import '../datasources/auth_remote_datasource.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -76,5 +77,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   String getCurrentUserId() {
     return remoteDataSource.getCurrentUserId();
+  }
+  
+  @override
+  String getCurrentUserName() {
+    return remoteDataSource.getCurrentUserName();
   }
 }

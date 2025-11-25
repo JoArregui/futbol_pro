@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/match.dart';
 import '../../domain/entities/player.dart';
-import '../../domain/entities/team.dart'; // Importación añadida
 import '../../domain/usecases/generate_balanced_teams.dart';
 import '../../domain/usecases/join_match.dart';
 import '../../domain/usecases/schedule_friendly_match.dart';

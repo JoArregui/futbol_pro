@@ -4,17 +4,21 @@ import '../../domain/entities/message.dart';
 class MessageBubble extends StatelessWidget {
   final Message message;
   final bool isMe;
+  final bool isGroupChat; // 🟢 Añadido para la lógica de visualización
 
   const MessageBubble({
     super.key,
     required this.message,
     required this.isMe,
+    this.isGroupChat = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isGroupChat = !isMe && message.senderName != 'Usuario Actual';
+
+    // 🟢 CORRECCIÓN: Mostrar nombre si NO soy yo Y es un chat grupal
+    final shouldShowSenderName = !isMe && isGroupChat;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -24,7 +28,7 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment:
               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            if (!isMe && isGroupChat)
+            if (shouldShowSenderName) // 🟢 Usar la lógica corregida
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, bottom: 2.0),
                 child: Text(

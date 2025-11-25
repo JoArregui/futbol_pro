@@ -8,7 +8,7 @@ final List<AppSection> _sections = [
   const AppSection(
     title: 'Partidos/Agenda',
     icon: Icons.calendar_today_rounded,
-    routePath: AppRoutes.home,
+    routePath: AppRoutes.matches, // ✅ CORREGIDO: Ahora apunta a /matches
   ),
   const AppSection(
     title: 'Gestión de Ligas',

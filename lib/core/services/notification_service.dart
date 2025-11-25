@@ -1,85 +1,48 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-// Asume que necesitas importar Firestore para guardar el token
-// Importa según tu setup de Firestore (ej. cloud_firestore)
-// import 'package:cloud_firestore/cloud_firestore.dart'; 
+import 'dart:async'; // Necesario para Future y StreamController si se añaden
 
-/// Define la interfaz para el servicio de notificaciones, ideal para DI.
+/// Interfaz para el servicio de gestión de notificaciones.
 abstract class NotificationService {
-  /// Inicializa los permisos y la escucha de notificaciones.
-  Future<void> initializeNotifications();
-  
-  /// Obtiene el token de registro de FCM.
-  Future<String?> getFCMToken();
+  /// Inicializa la configuración del servicio de notificaciones (e.g., Firebase).
+  Future<void> initialize();
 
-  /// Se suscribe a un tema específico.
+  /// Se suscribe a un tópico específico para recibir notificaciones dirigidas.
   Future<void> subscribeToTopic(String topic);
 
-  /// Se desuscribe de un tema específico.
-  Future<void> unsubscribeFromTopic(String topic);
-  
-  /// Stream para escuchar mensajes en primer plano (foreground).
-  Stream<RemoteMessage> get onMessageReceived;
+  // Opcionales que podrías necesitar:
+  // Future<String?> getToken();
+  // Future<void> unsubscribeFromTopic(String topic);
+  // Stream<RemoteMessage> get onMessage; // Para escuchar mensajes entrantes.
 }
 
-/// Implementación concreta del servicio de notificaciones usando Firebase Messaging.
+/// Implementación concreta del servicio de notificaciones.
 class NotificationServiceImpl implements NotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  // final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Si usas Firestore
+  
+  // Puedes añadir dependencias aquí si fueran necesarias (e.g., FirebaseMessaging instance)
 
-  // Función dummy para simular el guardado del token (necesitarás implementar tu lógica real)
-  Future<void> _saveTokenToDatabase(String token) async {
-    // ⚠️ TODO: Implementar lógica real para guardar el token
-    print('Token recibido y guardado (dummy): $token');
-    // Ejemplo si usaras Firestore:
-    // await _firestore.collection('user_tokens').doc(userId).set({
-    //   'token': token,
-    //   'createdAt': FieldValue.serverTimestamp(),
-    // });
-  }
+  @override
+  Future<void> initialize() async {
+    // 
 
-  // Función dummy para mostrar una notificación local (si usas flutter_local_notifications)
-  void _showLocalNotification(RemoteMessage message) {
-     print('Mensaje recibido en Foreground: ${message.notification?.title}');
-     // ⚠️ TODO: Aquí invocarías tu paquete de notificaciones locales 
-     // para mostrar un banner o alerta al usuario.
+
+
+    // Implementación real de la inicialización (e.g., configurar Firebase Messaging)
+    print('✅ NotificationService: Inicializado.');
+    // Simulación:
+    await Future.delayed(const Duration(milliseconds: 100)); 
   }
 
   @override
-  Future<void> initializeNotifications() async {
-    // 1. Solicitar permisos (necesario para iOS y Web)
-    await _fcm.requestPermission(
-      alert: true, badge: true, sound: true,
-    );
-    
-    // 2. Obtener y guardar el token
-    String? token = await getFCMToken();
-    if (token != null) {
-      print('FCM Token obtenido: $token');
-      await _saveTokenToDatabase(token);
+  Future<void> subscribeToTopic(String topic) async {
+    // Implementación real para suscribirse al tópico (e.g., FirebaseMessaging.subscribeToTopic)
+    if (topic.isEmpty) {
+      print('⚠️ NotificationService: El tópico está vacío, omitiendo suscripción.');
+      return;
     }
-
-    // 3. Escuchar mensajes en primer plano (foreground)
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showLocalNotification(message);
-    });
-    
-    // 4. CRÍTICO: Configurar el Background Handler (DEBE ser una función de nivel superior, 
-    // pero la llamada a la configuración se haría aquí o en main.dart)
-    // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
-    // 5. Manejar clics en notificaciones (app en background/terminada)
-    // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+    print('➡️ NotificationService: Suscribiendo al tópico: $topic');
+    // Simulación:
+    await Future.delayed(const Duration(milliseconds: 50));
+    print('✅ NotificationService: Suscripción a "$topic" completada.');
   }
 
-  @override
-  Future<String?> getFCMToken() => _fcm.getToken();
-
-  @override
-  Future<void> subscribeToTopic(String topic) => _fcm.subscribeToTopic(topic);
-
-  @override
-  Future<void> unsubscribeFromTopic(String topic) => _fcm.unsubscribeFromTopic(topic);
-
-  @override
-  Stream<RemoteMessage> get onMessageReceived => FirebaseMessaging.onMessage;
+  // Si añades métodos opcionales en la interfaz, debes implementarlos aquí.
 }

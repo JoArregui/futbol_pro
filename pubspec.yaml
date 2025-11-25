@@ -22,26 +22,26 @@ dependencies:
   # ----------------------------------------
   # GESTIÓN DE ESTADO Y ARQUITECTURA
   # ----------------------------------------
-  flutter_bloc: ^8.1.5 # Versión actualizada
+  flutter_bloc: ^9.1.1 # Versión actualizada
   equatable: ^2.0.5 
   dartz: ^0.10.1
-  get_it: ^7.7.0
+  get_it: ^9.1.0
   
   # ----------------------------------------
   # NAVEGACIÓN
   # ----------------------------------------
-  go_router: ^14.0.0 # Manteniendo tu restricción de versión, aunque la más nueva es 16.x
+  go_router: ^17.0.0 # Manteniendo tu restricción de versión, aunque la más nueva es 16.x
   
   # ----------------------------------------
   # SERVICIOS (VERSIONES CRÍTICAS ACTUALIZADAS)
   # ----------------------------------------
   http: ^1.2.1 
-  firebase_core: ^2.27.0 # <--- ¡ACTUALIZADO!
-  firebase_messaging: ^14.8.10 # <--- ¡ACTUALIZADO!
-  intl: ^0.19.0 # Versión compatible con Flutter 3.x
-  cloud_firestore: ^4.17.5
+  firebase_core: ^4.2.1 # <--- ¡ACTUALIZADO!
+  firebase_messaging: ^16.0.4 # <--- ¡ACTUALIZADO!
+  intl: ^0.20.2 # Versión compatible con Flutter 3.x
+  cloud_firestore: ^6.1.0
   image_picker: ^1.2.0
-  firebase_storage: ^11.7.7
+  firebase_storage: ^13.0.4
   flutter_local_notifications: ^19.5.0
   badges: ^3.1.2
 
@@ -49,7 +49,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^3.0.0 # Versión compatible con Flutter 3.x
+  flutter_lints: ^6.0.0 # Versión compatible con Flutter 3.x
 
 # The following section is specific to Flutter packages.
 flutter:

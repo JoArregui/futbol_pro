@@ -14,6 +14,7 @@ class _AuthInitializerState extends State<AuthInitializer> {
   void initState() {
     super.initState();
 
+    // 🚀 Lanza el evento AppStarted para verificar la sesión
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthBloc>().add(const AppStarted());
     });
@@ -21,6 +22,8 @@ class _AuthInitializerState extends State<AuthInitializer> {
 
   @override
   Widget build(BuildContext context) {
+    // Este Scaffold se muestra mientras el AuthBloc procesa el evento AppStarted 
+    // y antes de que GoRouter redirija la navegación.
     return const Scaffold(
       backgroundColor: Color(0xFF008080),
       body: Center(

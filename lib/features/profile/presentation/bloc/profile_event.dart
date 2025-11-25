@@ -10,10 +10,14 @@ abstract class ProfileEvent extends Equatable {
 class ProfileLoadRequested extends ProfileEvent {
   final String uid;
 
-  const ProfileLoadRequested(this.uid);
+  // 🚀 Añadimos email y nickname, que son obligatorios para la creación inicial
+  final String email;
+  final String nickname;
+
+  const ProfileLoadRequested(this.uid, {required this.email, required this.nickname});
 
   @override
-  List<Object> get props => [uid];
+  List<Object> get props => [uid, email, nickname];
 }
 
 class ProfileUpdated extends ProfileEvent {
