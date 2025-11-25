@@ -12,20 +12,25 @@ class ChatRepositoryImpl implements ChatRepository {
 
   ChatRepositoryImpl({required this.remoteDataSource});
 
+  // ===============================================
+  // 🔄 CORREGIDO: De Stream a Future para API REST
+  // ===============================================
   @override
-  Stream<Either<Failure, List<Message>>> getMessagesStream(String roomId) {
-    final stream = remoteDataSource.getMessagesStream(roomId);
+  Future<Either<Failure, List<Message>>> getMessages(String roomId) async {
+    try {
+      // 1. Llama al nuevo método Future
+      final messageModels = await remoteDataSource.getMessages(roomId);
 
-    return stream.map((messageModels) {
-      try {
-        final entities =
-            messageModels.map<Message>((model) => model as Message).toList();
-        return Right(entities);
-      } on Exception {
-        return const Left(
-            ServerFailure('Error al procesar los mensajes recibidos.'));
-      }
-    });
+      // 2. Mapea los modelos a entidades
+      final entities = messageModels.map<Message>((model) => model).toList();
+
+      return Right(entities);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return const Left(
+          ServerFailure('Error desconocido al obtener los mensajes.'));
+    }
   }
 
   @override
@@ -57,38 +62,33 @@ class ChatRepositoryImpl implements ChatRepository {
     try {
       await remoteDataSource.markMessagesAsRead(roomId, userId);
       return const Right(null);
-    } on ServerException catch (e) { // 🟢 CORRECCIÓN: Usar 'catch (e)'
+    } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on Exception {
+      // Cambiado de CacheFailure, ya que ahora es una llamada a la API
       return const Left(
-          CacheFailure('No se pudo actualizar el estado de lectura.'));
+          ServerFailure('No se pudo actualizar el estado de lectura.'));
     }
   }
 
-  // 🟢 CORRECCIÓN: Implementación del nuevo método que usa el userId
+  // ===============================================
+  // 🔄 CORREGIDO: De Stream a Future para API REST
+  // ===============================================
   @override
-  Stream<Either<Failure, List<ChatRoom>>> getChatRoomsStream(String userId) {
-    final roomsStream = remoteDataSource.getChatRoomsStream(userId);
+  Future<Either<Failure, List<ChatRoom>>> getChatRooms(String userId) async {
+    try {
+      // 1. Llama al nuevo método Future
+      final roomModels = await remoteDataSource.getChatRooms(userId);
 
-    return roomsStream.map<Either<Failure, List<ChatRoom>>>((roomModels) {
-      return Right(roomModels);
-    }).handleError((error, stackTrace) {
-      if (error is ServerException) {
-        throw Left(ServerFailure(error.message));
-      }
-      throw const Left(
-          ServerFailure('Error al obtener la lista de salas de chat.'));
-    }).transform(StreamTransformer.fromHandlers(
-      handleData: (data, sink) => sink.add(data),
-      handleError: (error, stackTrace, sink) {
-        if (error is Left<Failure, dynamic>) {
-          sink.add(error as Left<Failure, List<ChatRoom>>);
-        } else {
-          sink.add(
-              const Left(ServerFailure('Error inesperado al obtener salas.')));
-        }
-        sink.close();
-      },
-    ));
+      // 2. Mapea los modelos a entidades
+      final entities = roomModels.map<ChatRoom>((model) => model).toList();
+
+      return Right(entities);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return const Left(
+          ServerFailure('Error desconocido al obtener las salas de chat.'));
+    }
   }
 }

@@ -1,50 +1,66 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Importar Firestore
+// ❌ ELIMINAMOS: import 'package:cloud_firestore/cloud_firestore.dart'; 
+import 'package:http/http.dart' as http; // 🟢 NUEVA DEPENDENCIA: HTTP
+import 'dart:convert'; // Necesario para JSON
+
 import 'package:futbol_pro/core/errors/exceptions.dart';
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
 
+// URL base de tu API REST
+const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1'; 
+const String _kChatUrl = '$_kBaseUrl/chats';
+
+
 abstract class ChatRemoteDataSource {
-  Stream<List<MessageModel>> getMessagesStream(String roomId);
+  // 🔄 CAMBIO: De Stream a Future para API REST
+  Future<List<MessageModel>> getMessages(String roomId);
+  
   Future<void> sendMessage({
     required String roomId,
     required String senderId,
     required String senderName,
     required String text,
   });
+  
   Future<void> markMessagesAsRead(String roomId, String userId);
-  // Se actualiza a Stream para mantener la coherencia con la arquitectura reactiva
-  Stream<List<ChatRoomModel>> getChatRoomsStream(String userId); 
+  
+  // 🔄 CAMBIO: De Stream a Future para API REST
+  Future<List<ChatRoomModel>> getChatRooms(String userId); 
 }
 
+// ----------------------------------------------------
+// IMPLEMENTACIÓN CON API REST (MySQL)
+// ----------------------------------------------------
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
-  final FirebaseFirestore firestore;
+  // ❌ ELIMINADA la dependencia de Firestore
+  final http.Client client;
 
-  // 🟢 CORRECCIÓN: El constructor requiere la instancia de Firestore
-  ChatRemoteDataSourceImpl({required this.firestore});
+  // 🟢 Constructor actualizado
+  ChatRemoteDataSourceImpl({required this.client});
 
-  // 🟢 CORRECCIÓN: Implementación real de la escucha de mensajes con Firestore
+  
+  /// Obtiene los mensajes de la sala por HTTP
   @override
-  Stream<List<MessageModel>> getMessagesStream(String roomId) {
-    return firestore
-        .collection('chat_rooms')
-        .doc(roomId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true) // Los mensajes más nuevos primero (para la lista)
-        .snapshots()
-        .map((snapshot) {
-      try {
-        return snapshot.docs
-            .map((doc) => MessageModel.fromFirestore(doc))
-            .toList();
-      } catch (e) {
-        // En caso de error de mapeo, lanzamos una excepción
-        throw ServerException(message: 'Error al mapear mensajes: $e');
+  Future<List<MessageModel>> getMessages(String roomId) async {
+    final url = Uri.parse('$_kChatUrl/$roomId/messages');
+
+    try {
+      final response = await client.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => MessageModel.fromJson(json)).toList();
+      } else {
+        throw ServerException(message: 'Error al obtener mensajes: ${response.statusCode}');
       }
-    });
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión: $e');
+    }
   }
 
-  // 🟢 CORRECCIÓN: Implementación real del envío de mensajes
+
+  /// Envía un mensaje a la API REST para insertar en la BD
   @override
   Future<void> sendMessage({
     required String roomId,
@@ -52,60 +68,63 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required String senderName,
     required String text,
   }) async {
-    if (text.trim().isEmpty) {
-      throw const ServerException(message: 'El mensaje no puede estar vacío.');
+    final url = Uri.parse('$_kChatUrl/$roomId/messages');
+
+    try {
+      final response = await client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'senderId': senderId,
+          'senderName': senderName,
+          'text': text,
+        }),
+      );
+
+      if (response.statusCode != 201 && response.statusCode != 200) {
+        throw ServerException(message: 'Error al enviar mensaje: ${response.statusCode}');
+      }
+      
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión al enviar mensaje: $e');
     }
-
-    final messageRef = firestore.collection('chat_rooms').doc(roomId).collection('messages').doc();
-    final timestamp = DateTime.now();
-    
-    final newMessageData = MessageModel(
-      id: messageRef.id,
-      senderId: senderId,
-      senderName: senderName,
-      text: text,
-      timestamp: timestamp,
-    ).toJson();
-
-    // 1. Añadir el mensaje a la subcolección
-    await messageRef.set(newMessageData);
-
-    // 2. 🟢 Opcional: Actualizar el campo lastMessage en el documento de la sala
-    await firestore.collection('chat_rooms').doc(roomId).update({
-      'lastMessage': newMessageData,
-      'lastActive': timestamp.millisecondsSinceEpoch,
-    });
   }
 
+  
+  /// Marca los mensajes como leídos (asumiendo que la API actualizará la tabla chats)
   @override
   Future<void> markMessagesAsRead(String roomId, String userId) async {
-    // Implementación real (ejemplo simple: actualizar un campo de la sala)
+    final url = Uri.parse('$_kChatUrl/$roomId/read/$userId');
+
     try {
-      await firestore.collection('chat_rooms').doc(roomId).update({
-        'readBy.$userId': DateTime.now().millisecondsSinceEpoch,
-      });
+      // Usamos un PUT o POST para notificar al servidor
+      final response = await client.put(url); 
+
+      if (response.statusCode != 200) {
+        throw ServerException(message: 'Error al marcar como leído: ${response.statusCode}');
+      }
     } on Exception catch (e) {
-      throw ServerException(message: 'Error al marcar como leído: $e');
+      throw ServerException(message: 'Fallo de conexión: $e');
     }
   }
 
-  // 🟢 CORRECCIÓN: Implementación real de la escucha de salas con Firestore
+  
+  /// Obtiene la lista de salas de chat del usuario
   @override
-  Stream<List<ChatRoomModel>> getChatRoomsStream(String userId) {
-    return firestore
-        .collection('chat_rooms')
-        .where('memberIds', arrayContains: userId) // Filtrar por participante
-        .orderBy('lastActive', descending: true) // Ordenar por actividad reciente
-        .snapshots()
-        .map((snapshot) {
-      try {
-        return snapshot.docs
-            .map((doc) => ChatRoomModel.fromFirestore(doc))
-            .toList();
-      } catch (e) {
-        // En caso de error de mapeo, lanzamos una excepción
-        throw ServerException(message: 'Error al mapear salas: $e');
+  Future<List<ChatRoomModel>> getChatRooms(String userId) async {
+    final url = Uri.parse('$_kBaseUrl/users/$userId/chats'); 
+
+    try {
+      final response = await client.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => ChatRoomModel.fromJson(json)).toList();
+      } else {
+        throw ServerException(message: 'Error al obtener salas: ${response.statusCode}');
       }
-    });
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión: $e');
+    }
   }
 }

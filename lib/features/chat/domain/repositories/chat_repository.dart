@@ -4,9 +4,9 @@ import '../entities/message.dart';
 import '../entities/chat_room.dart';
 
 abstract class ChatRepository {
-  Stream<Either<Failure, List<Message>>> getMessagesStream(String roomId);
+  // Antes era Stream, ahora es Future
+  Future<Either<Failure, List<Message>>> getMessages(String roomId); 
 
-  /// Envía un nuevo mensaje a una sala de chat.
   Future<Either<Failure, void>> sendMessage({
     required String roomId,
     required String senderId,
@@ -14,10 +14,8 @@ abstract class ChatRepository {
     required String text,
   });
 
-  /// Marca todos los mensajes de una sala como leídos para un usuario.
-  Future<Either<Failure, void>> markMessagesAsRead(
-      String roomId, String userId);
+  Future<Either<Failure, void>> markMessagesAsRead(String roomId, String userId);
 
-  // 🟢 CORRECCIÓN: Se agrega el userId al método para filtrar salas
-  Stream<Either<Failure, List<ChatRoom>>> getChatRoomsStream(String userId); 
+  // Antes era Stream, ahora es Future
+  Future<Either<Failure, List<ChatRoom>>> getChatRooms(String userId); 
 }

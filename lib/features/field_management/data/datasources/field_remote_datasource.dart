@@ -1,9 +1,10 @@
 import 'package:http/http.dart' as http;
+import 'dart:convert'; // Necesario para jsonEncode y jsonDecode
 import '../../../../core/errors/exceptions.dart';
 import '../models/field_model.dart';
 
-const String baseUrlFieldManagement =
-    'https://tu-api-backend.com/api/v1/fields';
+// 🟢 URL BASE REAL: Apuntando a tu servidor Node.js (Puerto 3000)
+const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1/fields'; 
 
 abstract class FieldRemoteDataSource {
   Future<List<FieldModel>> getAvailableFields({
@@ -25,36 +26,45 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
 
   FieldRemoteDataSourceImpl({required this.client});
 
+  // ==================================================
+  // OBTENER CAMPOS DISPONIBLES (GET a la API)
+  // ==================================================
   @override
   Future<List<FieldModel>> getAvailableFields({
     required DateTime startTime,
     required DateTime endTime,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    // 1. Convertir las fechas a formato ISO 8601 (UTC recomendado)
+    final startIso = startTime.toUtc().toIso8601String();
+    final endIso = endTime.toUtc().toIso8601String();
+    
+    // 2. Construir la URL con los parámetros de consulta
+    final url = Uri.parse('$_kBaseUrl/available?start=$startIso&end=$endIso');
 
-    final mockData = [
-      {
-        "id": "field-A",
-        "name": "Cancha Estelar A",
-        "hourlyRate": 35.0,
-        "capacity": 10
-      },
-      {
-        "id": "field-B",
-        "name": "Cancha Rápida B",
-        "hourlyRate": 25.0,
-        "capacity": 8
+    try {
+      final response = await client.get(url, headers: {'Content-Type': 'application/json'});
+
+      if (response.statusCode == 200) {
+        // 3. Decodificar la respuesta y mapear a FieldModel
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => FieldModel.fromJson(json)).toList();
+        
+      } else if (response.statusCode == 404) {
+        // La API devuelve 404 si no hay campos disponibles (según la lógica del backend)
+        return []; 
+      } else {
+        // Manejar otros errores del servidor
+        throw ServerException(message: 'Error al obtener campos: ${response.statusCode}');
       }
-    ];
-
-    // Nota: Aquí en un entorno real usarías el cliente HTTP:
-    // final uri = Uri.parse('$baseUrlFieldManagement/available?start=${startTime.toIso8601String()}&end=${endTime.toIso8601String()}');
-    // final response = await client.get(uri, headers: {'Content-Type': 'application/json'});
-    // ... manejo de la respuesta ...
-
-    return mockData.map((json) => FieldModel.fromJson(json)).toList();
+    } on Exception catch (e) {
+      // Manejar errores de conexión de red
+      throw ServerException(message: 'Fallo de conexión al servidor: $e');
+    }
   }
 
+  // ==================================================
+  // RESERVAR CAMPO (POST a la API)
+  // ==================================================
   @override
   Future<bool> reserveField({
     required String fieldId,
@@ -63,13 +73,32 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
     required String userId,
     required double totalCost,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 900));
+    final url = Uri.parse('$_kBaseUrl/$fieldId/reserve');
 
-    if (fieldId.isEmpty) {
-      throw const ServerException(
-          message: 'El ID del campo no puede estar vacío.');
+    try {
+      final response = await client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        // 1. Codificar el cuerpo de la petición con los detalles de la reserva
+        body: jsonEncode({
+          'startTime': startTime.toUtc().toIso8601String(),
+          'endTime': endTime.toUtc().toIso8601String(),
+          'userId': userId,
+          'totalCost': totalCost,
+        }),
+      );
+
+      if (response.statusCode == 201) { // 201 Created (Reserva exitosa)
+        return true;
+      } else if (response.statusCode == 409) {
+        // 409 Conflict (El backend ya verificó que el campo está ocupado)
+        throw const ServerException(message: 'El campo ya está reservado en ese horario.');
+      } else {
+        // Otros errores, como 400 Bad Request o 500 Internal Server Error
+        throw ServerException(message: 'Error al reservar campo: ${response.statusCode}');
+      }
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión al servidor: $e');
     }
-
-    return true;
   }
 }

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user_profile.dart';
 
 class UserProfileModel extends UserProfile {
@@ -15,33 +14,30 @@ class UserProfileModel extends UserProfile {
     required super.createdAt,
   });
 
-  // 🚀 CORRECCIÓN: Manejo robusto de nulos para campos numéricos y de texto.
-  factory UserProfileModel.fromSnapshot(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>?;
-
-    if (data == null) {
-      throw Exception('El documento de perfil está vacío.');
-    }
-
-    // Inicializa el timestamp con una fecha actual si falta (idealmente no debería faltar)
-    final timestamp = data['createdAt'] as Timestamp? ?? Timestamp.now();
+  // 🚀 NUEVA FUNCIÓN: Deserialización desde JSON (API REST)
+  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    // Usamos el UID proporcionado en el JSON
+    final uid = json['uid'] as String;
+    
+    // Convertir el string de fecha (ISO 8601) a DateTime
+    final createdAtString = json['createdAt'] as String? ?? DateTime.now().toIso8601String();
 
     return UserProfileModel(
-      uid: doc.id,
-      email: data['email'] as String? ?? 'correo_no_disponible@app.com',
-      nickname: data['nickname'] as String? ?? 'NuevoJugador',
-      name: data['name'] as String?,
-      avatarUrl: data['avatarUrl'] as String?,
-      bio: data['bio'] as String?,
-      // 🚨 Los valores numéricos deben usar ?? 0 (o 0.0) para evitar errores 'Null is not a subtype of int'
-      gamesPlayed: (data['gamesPlayed'] as num?)?.toInt() ?? 0,
-      wins: (data['wins'] as num?)?.toInt() ?? 0,
-      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
-      createdAt: timestamp.toDate(),
+      uid: uid,
+      email: json['email'] as String? ?? 'correo_no_disponible@app.com',
+      nickname: json['nickname'] as String? ?? 'NuevoJugador',
+      name: json['name'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
+      bio: json['bio'] as String?,
+      // Manejo seguro de valores numéricos desde JSON (num? -> int/double)
+      gamesPlayed: (json['gamesPlayed'] as num?)?.toInt() ?? 0,
+      wins: (json['wins'] as num?)?.toInt() ?? 0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 1000.0,
+      createdAt: DateTime.parse(createdAtString),
     );
   }
 
-  // 🚀 NUEVA FUNCIÓN: Genera un perfil inicial para un nuevo registro.
+  // Genera un perfil inicial para un nuevo registro.
   factory UserProfileModel.initial(String uid, String email, String nickname) {
     return UserProfileModel(
       uid: uid,
@@ -54,8 +50,11 @@ class UserProfileModel extends UserProfile {
     );
   }
 
+  // Conversión a Map para serialización a JSON (para POST/PUT)
+  @override
   Map<String, dynamic> toMap() {
     return {
+      'uid': uid, // Incluir UID para las rutas de la API
       'email': email,
       'nickname': nickname,
       'name': name,
@@ -64,7 +63,8 @@ class UserProfileModel extends UserProfile {
       'gamesPlayed': gamesPlayed,
       'wins': wins,
       'rating': rating,
-      'createdAt': Timestamp.fromDate(createdAt),
+      // Usar ISO 8601 String para API REST
+      'createdAt': createdAt.toIso8601String(), 
     };
   }
 }

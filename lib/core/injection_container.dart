@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Mantenido por si otras features lo usan
 
 // Auth Feature
 import '../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -24,14 +24,15 @@ import '../features/profile/presentation/bloc/profile_bloc.dart';
 // Chat Feature 💬
 import '../features/chat/data/repositories/chat_repository_impl.dart';
 import '../features/chat/domain/repositories/chat_repository.dart';
-import '../features/chat/domain/usecases/get_messages_stream.dart';
+import '../features/chat/domain/usecases/get_messages.dart';
 import '../features/chat/domain/usecases/send_message.dart';
 import '../features/chat/domain/usecases/mark_as_read.dart';
-import '../features/chat/domain/usecases/get_chat_rooms_stream.dart';
+import '../features/chat/domain/usecases/get_chat_rooms.dart';
 import '../features/chat/presentation/bloc/chat_bloc.dart';
 
 // Core Services
-import '../core/services/notification_service.dart';
+// Asegúrate de tener una implementación llamada NotificationServiceImpl
+import '../core/services/notification_service.dart'; 
 
 // Field Management Feature
 import '../features/field_management/data/datasources/field_remote_datasource.dart';
@@ -74,8 +75,9 @@ Future<void> init() async {
     sl.registerLazySingleton(() => FirebaseFirestore.instance);
 
     // Core (Services)
+    // Asumiendo que existe NotificationServiceImpl
     sl.registerLazySingleton<NotificationService>(
-        () => NotificationServiceImpl(),
+        () => NotificationServiceImpl(), 
     );
     print('✅ Core registrado correctamente');
 
@@ -86,24 +88,24 @@ Future<void> init() async {
 
     // Data Sources
     sl.registerLazySingleton<AuthRemoteDataSource>(
+        // 🟢 CORREGIDO: Solo se pasa http.Client
         () => AuthRemoteDataSourceImpl(
-            firestore: sl<FirebaseFirestore>(), // Tipo explícito
-            client: sl<http.Client>(),           // Tipo explícito
+            client: sl<http.Client>(),        
         ), 
     );
-    print('  ✅ AuthRemoteDataSource registrado');
+    print('  ✅ AuthRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<AuthRepository>(
         () => AuthRepositoryImpl(remoteDataSource: sl<AuthRemoteDataSource>()),
     );
-    print('  ✅ AuthRepository registrado');
+    print('  ✅ AuthRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => SubscribeToNotifications(sl<NotificationService>()));
     sl.registerLazySingleton(() => LoginUser(sl<AuthRepository>()));
     sl.registerLazySingleton(() => RegisterUser(sl<AuthRepository>()));
-    print('  ✅ UseCases registrados');
+    print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(
@@ -113,7 +115,7 @@ Future<void> init() async {
             repository: sl<AuthRepository>(),
         ),
     );
-    print('  ✅ AuthBloc registrado');
+    print('  ✅ AuthBloc registrado');
 
     // ===========================================
     // 3. Feature - Profile Management
@@ -122,20 +124,27 @@ Future<void> init() async {
 
     // Data Sources
     sl.registerLazySingleton<ProfileRemoteDataSource>(
-        () => ProfileRemoteDataSourceImpl(firestore: sl<FirebaseFirestore>()),
+        // 🟢 CORREGIDO: Solo se pasa http.Client
+        () => ProfileRemoteDataSourceImpl(
+            client: sl<http.Client>(),
+        ),
     );
+    print('  ✅ ProfileRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<ProfileRepository>(
         () => ProfileRepositoryImpl(remoteDataSource: sl<ProfileRemoteDataSource>()),
     );
+    print('  ✅ ProfileRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => GetProfile(sl<ProfileRepository>()));
     sl.registerLazySingleton(() => UpdateProfile(sl<ProfileRepository>()));
     sl.registerLazySingleton(() => CreateProfile(sl<ProfileRepository>())); 
+    print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
+    // ⚠️ NOTA: Asumo que getCurrentUserId() está disponible en AuthRepository
     sl.registerFactory(
         () => ProfileBloc(
             getProfile: sl<GetProfile>(),
@@ -153,27 +162,34 @@ Future<void> init() async {
 
     // Data Sources
     sl.registerLazySingleton<ChatRemoteDataSource>(
-        () => ChatRemoteDataSourceImpl(firestore: sl<FirebaseFirestore>()), 
+        // 🟢 CORREGIDO: Solo se pasa http.Client
+        () => ChatRemoteDataSourceImpl(
+            client: sl<http.Client>(), 
+        ), 
     );
+    print('  ✅ ChatRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<ChatRepository>(
         () => ChatRepositoryImpl(remoteDataSource: sl<ChatRemoteDataSource>()),
     );
+    print('  ✅ ChatRepository registrado');
 
     // Domain (Use Cases)
-    sl.registerLazySingleton(() => GetMessagesStream(sl<ChatRepository>()));
+    sl.registerLazySingleton(() => GetMessages(sl<ChatRepository>()));
     sl.registerLazySingleton(() => SendMessage(sl<ChatRepository>()));
     sl.registerLazySingleton(() => MarkAsRead(sl<ChatRepository>()));
-    sl.registerLazySingleton(() => GetChatRoomsStream(sl<ChatRepository>()));
+    sl.registerLazySingleton(() => GetChatRooms(sl<ChatRepository>()));
+    print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
+    // ⚠️ NOTA: Asumo que getCurrentUserId() y getCurrentUserName() están disponibles en AuthRepository
     sl.registerFactory(
         () => ChatBloc(
-            getMessagesStream: sl<GetMessagesStream>(),
+            getMessages: sl<GetMessages>(),
             sendMessage: sl<SendMessage>(),
             markAsRead: sl<MarkAsRead>(),
-            getChatRoomsStream: sl<GetChatRoomsStream>(),
+            getChatRooms: sl<GetChatRooms>(),
             currentUserId: sl<AuthRepository>().getCurrentUserId(),
             currentUserName: sl<AuthRepository>().getCurrentUserName(), 
         ),
@@ -189,18 +205,21 @@ Future<void> init() async {
     sl.registerLazySingleton<MatchRemoteDataSource>(
         () => MatchRemoteDataSourceImpl(client: sl<http.Client>()),
     );
+    print('  ✅ MatchRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<MatchRepository>(
         () => MatchRepositoryImpl(remoteDataSource: sl<MatchRemoteDataSource>()),
     );
+    print('  ✅ MatchRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => ScheduleFriendlyMatch(sl<MatchRepository>()));
     sl.registerLazySingleton(() => JoinMatch(sl<MatchRepository>()));
-    sl.registerLazySingleton(() => GenerateBalancedTeams());
+    sl.registerLazySingleton(() => GenerateBalancedTeams()); // No requiere dependencias
     sl.registerLazySingleton(() => GetMatchDetails(sl<MatchRepository>()));
     sl.registerLazySingleton(() => UpdateMatchWithTeams(sl<MatchRepository>()));
+    print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(
@@ -223,17 +242,20 @@ Future<void> init() async {
     sl.registerLazySingleton<FieldRemoteDataSource>(
         () => FieldRemoteDataSourceImpl(client: sl<http.Client>()),
     );
+    print('  ✅ FieldRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<FieldRepository>(
         () => FieldRepositoryImpl(remoteDataSource: sl<FieldRemoteDataSource>()),
     );
+    print('  ✅ FieldRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => GetAvailableFields(sl<FieldRepository>()));
     sl.registerLazySingleton(
         () => ReserveField(sl<FieldRepository>()),
     );
+    print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(
@@ -253,14 +275,17 @@ Future<void> init() async {
     sl.registerLazySingleton<LeagueRemoteDataSource>(
         () => LeagueRemoteDataSourceImpl(client: sl<http.Client>()),
     );
+    print('  ✅ LeagueRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<LeagueRepository>(
         () => LeagueRepositoryImpl(remoteDataSource: sl<LeagueRemoteDataSource>()),
     );
+    print('  ✅ LeagueRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => GetLeagueStandings(sl<LeagueRepository>()));
+    print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(() => LeagueBloc(getLeagueStandings: sl<GetLeagueStandings>()));
