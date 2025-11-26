@@ -44,3 +44,11 @@ class GetMatchDetailsEvent extends MatchEvent {
   @override
   List<Object> get props => [matchId];
 }
+
+// ⚽ NUEVO EVENTO
+class GetUpcomingMatchesEvent extends MatchEvent {
+  const GetUpcomingMatchesEvent();
+
+  @override
+  List<Object> get props => [];
+}

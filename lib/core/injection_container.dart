@@ -13,6 +13,7 @@ import '../features/auth/presentation/bloc/auth_bloc.dart';
 
 // Profile Feature
 import '../features/chat/data/datasources/chat_datasource.dart';
+import '../features/match_scheduling/domain/usecases/get_upcoming_matches.dart';
 import '../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../features/profile/data/repositories/profile_repository_impl.dart';
 import '../features/profile/domain/repositories/profile_repository.dart';
@@ -219,6 +220,7 @@ Future<void> init() async {
     sl.registerLazySingleton(() => GenerateBalancedTeams()); // No requiere dependencias
     sl.registerLazySingleton(() => GetMatchDetails(sl<MatchRepository>()));
     sl.registerLazySingleton(() => UpdateMatchWithTeams(sl<MatchRepository>()));
+    sl.registerLazySingleton(() => GetUpcomingMatches(sl<MatchRepository>()));
     print('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
@@ -229,6 +231,7 @@ Future<void> init() async {
             generateBalancedTeams: sl<GenerateBalancedTeams>(),
             getMatchDetails: sl<GetMatchDetails>(),
             updateMatchWithTeams: sl<UpdateMatchWithTeams>(),
+            getUpcomingMatches: sl<GetUpcomingMatches>(),
         ),
     );
     print('✅ Match Scheduling Feature registrado');

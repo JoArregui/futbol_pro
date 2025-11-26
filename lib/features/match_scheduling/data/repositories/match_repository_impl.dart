@@ -7,6 +7,7 @@ import '../../domain/usecases/generate_balanced_teams.dart';
 import '../datasources/match_remote_datasource.dart';
 import '../models/match_model.dart';
 
+
 class MatchRepositoryImpl implements MatchRepository {
   final MatchRemoteDataSource remoteDataSource;
 
@@ -33,6 +34,7 @@ class MatchRepositoryImpl implements MatchRepository {
     }
   }
 
+  // Soporta JoinMatch
   @override
   Future<Either<Failure, Match>> joinMatch({
     required String matchId,
@@ -49,6 +51,7 @@ class MatchRepositoryImpl implements MatchRepository {
     }
   }
 
+  // Soporta ScheduleFriendlyMatch
   @override
   Future<Either<Failure, Match>> scheduleFriendlyMatch({
     required DateTime time,
@@ -66,6 +69,7 @@ class MatchRepositoryImpl implements MatchRepository {
     }
   }
 
+  // Soporta GetUpcomingMatches
   @override
   Future<Either<Failure, List<Match>>> getUpcomingMatches() async {
     try {
@@ -77,6 +81,7 @@ class MatchRepositoryImpl implements MatchRepository {
     }
   }
 
+  // Soporta GetMatchDetails (mediante getMatchById)
   @override
   Future<Either<Failure, Match>> getMatchById(String matchId) async {
     try {
@@ -88,12 +93,14 @@ class MatchRepositoryImpl implements MatchRepository {
     }
   }
 
+  // Soporta UpdateMatchWithTeams
   @override
   Future<Either<Failure, Match>> updateMatchWithTeams({
     required String matchId,
     required TeamPair teamPair,
   }) async {
     try {
+      // ⚠️ Asumo que las entidades Team tienen un método toModel()
       final MatchModel matchModel = await remoteDataSource.updateMatchTeams(
         matchId: matchId,
         teamA: teamPair.teamA.toModel(),

@@ -8,6 +8,9 @@ import '../../domain/usecases/join_match.dart';
 import '../../domain/usecases/schedule_friendly_match.dart';
 import '../../domain/usecases/get_match_details.dart';
 import '../../domain/usecases/update_match_with_teams.dart';
+// ⚽ NUEVO IMPORT
+import '../../domain/usecases/get_upcoming_matches.dart'; 
+import '../../../../core/usecases/usecase.dart'; // Importar NoParams
 
 part 'match_event.dart';
 part 'match_state.dart';
@@ -18,6 +21,8 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
   final ScheduleFriendlyMatch scheduleFriendlyMatch;
   final GetMatchDetails getMatchDetails;
   final UpdateMatchWithTeams updateMatchWithTeams;
+  // ⚽ NUEVO USE CASE
+  final GetUpcomingMatches getUpcomingMatches;
 
   MatchBloc({
     required this.joinMatch,
@@ -25,13 +30,32 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     required this.scheduleFriendlyMatch,
     required this.getMatchDetails,
     required this.updateMatchWithTeams,
+    // ⚽ INYECTAR NUEVO USE CASE
+    required this.getUpcomingMatches,
   }) : super(MatchInitial()) {
     on<ScheduleFriendlyMatchEvent>(_onScheduleFriendlyMatch);
     on<PlayerJoinsMatchEvent>(_onPlayerJoinsMatch);
     on<GenerateTeamsForMatchEvent>(_onGenerateTeamsForMatch);
     on<GetMatchDetailsEvent>(_onGetMatchDetails);
+    // ⚽ REGISTRAR NUEVO MANEJADOR
+    on<GetUpcomingMatchesEvent>(_onGetUpcomingMatches); 
   }
 
+  // ⚽ NUEVO MANEJADOR DE EVENTO
+  Future<void> _onGetUpcomingMatches(
+    GetUpcomingMatchesEvent event,
+    Emitter<MatchState> emit,
+  ) async {
+    emit(MatchLoading());
+
+    final failureOrMatches = await getUpcomingMatches(NoParams());
+
+    failureOrMatches.fold(
+      (failure) => emit(MatchError(failure.errorMessage)),
+      (matches) => emit(MatchesListLoaded(matches: matches)),
+    );
+  }
+  
   Future<void> _onGetMatchDetails(
     GetMatchDetailsEvent event,
     Emitter<MatchState> emit,

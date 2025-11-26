@@ -1,22 +1,37 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../../../core/errors/exceptions.dart';
+import 'package:http/http.dart' as http; // Necesario para la implementación de la API REST
+import 'dart:convert'; // Necesario para codificar/decodificar JSON
+
 import '../models/match_model.dart';
 import '../models/team_model.dart';
-
-const String baseUrl = 'https://tu-api-backend.com/api/v1';
+import '../../../../core/errors/exceptions.dart'; 
+import '../../../../core/consts.dart'; // 🚀 IMPORT CORREGIDO A AppConsts
 
 abstract class MatchRemoteDataSource {
-  Future<MatchModel> scheduleFriendlyMatch(
-      {required DateTime time, required String fieldId});
+  
+  /// Programa un nuevo partido amistoso.
+  /// Llama al endpoint de la API REST para crear un partido.
+  Future<MatchModel> scheduleFriendlyMatch({
+    required DateTime time,
+    required String fieldId,
+  });
 
+  /// Obtiene la lista de todos los partidos futuros programados.
+  /// Soporta el Use Case: GetUpcomingMatches.
   Future<List<MatchModel>> getUpcomingMatches();
 
-  Future<MatchModel> addPlayerToMatch(
-      {required String matchId, required String playerId});
+  /// Añade al usuario actual como jugador en un partido.
+  /// Llama al endpoint de la API para unirse a un partido.
+  Future<MatchModel> addPlayerToMatch({
+    required String matchId,
+    required String playerId,
+  });
 
+  /// Obtiene los detalles de un partido específico por ID.
+  /// Soporta el Use Case: GetMatchDetails.
   Future<MatchModel> getMatchById(String matchId);
 
+  /// Envía los equipos balanceados de vuelta al servidor para actualizar el partido.
+  /// Soporta el Use Case: UpdateMatchWithTeams.
   Future<MatchModel> updateMatchTeams({
     required String matchId,
     required TeamModel teamA,
@@ -24,94 +39,90 @@ abstract class MatchRemoteDataSource {
   });
 }
 
+// ===============================================
+// 💡 IMPLEMENTACIÓN DEL DATASOURCE
+// ===============================================
+
 class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   final http.Client client;
 
   MatchRemoteDataSourceImpl({required this.client});
 
-  void _handleStatusCode(int statusCode) {
-    switch (statusCode) {
-      case 401:
-        throw const UnauthorizedException();
-      case 403:
-        throw const ForbiddenException();
-      case 404:
-        throw const NotFoundException();
-      case 409:
-        throw const ConflictException();
-      default:
-        throw const ServerException();
+  // Método auxiliar para manejar respuestas de API
+  dynamic _handleResponse(http.Response response) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 400) {
+      throw ConflictException(message: response.body); 
+    } else if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    } else if (response.statusCode == 403) {
+      throw ForbiddenException();
+    } else if (response.statusCode == 404) {
+      throw NotFoundException();
+    } else {
+      throw ServerException();
     }
   }
 
   @override
-  Future<MatchModel> scheduleFriendlyMatch(
-      {required DateTime time, required String fieldId}) async {
+  Future<MatchModel> scheduleFriendlyMatch({
+    required DateTime time,
+    required String fieldId,
+  }) async {
     final response = await client.post(
-      Uri.parse('$baseUrl/matches'),
+      // 🚀 NOMBRE DE LA CLASE CORREGIDO
+      Uri.parse('${AppConsts.baseUrl}/matches'), 
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
-        'time': time.toIso8601String(),
+        'scheduledTime': time.toIso8601String(),
         'fieldId': fieldId,
+        // Puede que necesites userId del AuthBloc
       }),
     );
-
-    if (response.statusCode == 201) {
-      return MatchModel.fromJson(json.decode(response.body));
-    } else {
-      _handleStatusCode(response.statusCode);
-      throw const ServerException();
-    }
+    final data = _handleResponse(response);
+    return MatchModel.fromJson(data);
   }
-
+  
   @override
   Future<List<MatchModel>> getUpcomingMatches() async {
     final response = await client.get(
-      Uri.parse('$baseUrl/matches/upcoming'),
+      // 🚀 NOMBRE DE LA CLASE CORREGIDO
+      Uri.parse('${AppConsts.baseUrl}/matches/upcoming'),
       headers: {'Content-Type': 'application/json'},
     );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = json.decode(response.body);
-      return jsonList.map((json) => MatchModel.fromJson(json)).toList();
-    } else {
-      _handleStatusCode(response.statusCode);
-      throw const ServerException();
-    }
+    final List<dynamic> jsonList = _handleResponse(response);
+    return jsonList.map((json) => MatchModel.fromJson(json)).toList();
   }
-
+  
   @override
-  Future<MatchModel> addPlayerToMatch(
-      {required String matchId, required String playerId}) async {
+  Future<MatchModel> addPlayerToMatch({
+    required String matchId,
+    required String playerId,
+  }) async {
     final response = await client.post(
-      Uri.parse('$baseUrl/matches/$matchId/join'),
+      // 🚀 NOMBRE DE LA CLASE CORREGIDO
+      Uri.parse('${AppConsts.baseUrl}/matches/$matchId/join'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'playerId': playerId}),
+      body: json.encode({
+        'playerId': playerId,
+      }),
     );
-
-    if (response.statusCode == 200) {
-      return MatchModel.fromJson(json.decode(response.body));
-    } else {
-      _handleStatusCode(response.statusCode);
-      throw const ServerException();
-    }
+    final data = _handleResponse(response);
+    return MatchModel.fromJson(data);
   }
-
+  
   @override
   Future<MatchModel> getMatchById(String matchId) async {
     final response = await client.get(
-      Uri.parse('$baseUrl/matches/$matchId'),
+      // 🚀 NOMBRE DE LA CLASE CORREGIDO
+      Uri.parse('${AppConsts.baseUrl}/matches/$matchId'),
       headers: {'Content-Type': 'application/json'},
     );
-
-    if (response.statusCode == 200) {
-      return MatchModel.fromJson(json.decode(response.body));
-    } else {
-      _handleStatusCode(response.statusCode);
-      throw const ServerException();
-    }
+    final data = _handleResponse(response);
+    return MatchModel.fromJson(data);
   }
-
+  
   @override
   Future<MatchModel> updateMatchTeams({
     required String matchId,
@@ -119,19 +130,15 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     required TeamModel teamB,
   }) async {
     final response = await client.put(
-      Uri.parse('$baseUrl/matches/$matchId/teams'),
+      // 🚀 NOMBRE DE LA CLASE CORREGIDO
+      Uri.parse('${AppConsts.baseUrl}/matches/$matchId/teams'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'teamA': teamA.toJson(),
         'teamB': teamB.toJson(),
       }),
     );
-
-    if (response.statusCode == 200) {
-      return MatchModel.fromJson(json.decode(response.body));
-    } else {
-      _handleStatusCode(response.statusCode);
-      throw const ServerException();
-    }
+    final data = _handleResponse(response);
+    return MatchModel.fromJson(data);
   }
 }

@@ -19,6 +19,16 @@ class MatchLoaded extends MatchState {
   List<Object> get props => [match];
 }
 
+// ⚽ NUEVO ESTADO para la lista
+class MatchesListLoaded extends MatchState {
+  final List<Match> matches;
+  const MatchesListLoaded({required this.matches});
+
+  @override
+  List<Object> get props => [matches];
+}
+
+
 class MatchScheduledSuccess extends MatchState {
   final Match match;
   const MatchScheduledSuccess(this.match);

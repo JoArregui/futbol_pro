@@ -13,6 +13,7 @@ import '../features/field_management/presentation/pages/field_search_page.dart';
 import '../features/league_management/presentation/pages/standings_page.dart';
 import '../features/main_page/presentation/pages/home_page.dart';
 import '../features/match_scheduling/presentation/pages/match_detail_page.dart';
+import '../features/match_scheduling/presentation/pages/match_list_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../presentation/widgets/main_scaffold.dart';
 
@@ -38,7 +39,7 @@ class AppRouter {
         routes: [
           GoRoute(
             path: AppRoutes.matches,
-            builder: (context, state) => const HomePage(),
+            builder: (context, state) => const MatchListPage(),
             routes: [
               GoRoute(
                 path: 'match_detail/:matchId',
