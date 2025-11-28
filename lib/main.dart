@@ -21,6 +21,7 @@ import 'features/chat/presentation/bloc/chat_bloc.dart';
 import 'features/match_scheduling/presentation/bloc/match_bloc.dart';
 import 'features/field_management/presentation/bloc/field_bloc.dart';
 import 'features/league_management/presentation/bloc/league_bloc.dart';
+import 'core/theme/app_theme.dart';
 
 
 void main() async {
@@ -105,26 +106,14 @@ class MyApp extends StatelessWidget {
       // 🚀 Lógica de enrutamiento basada en el estado inicial de AuthBloc
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          // Obtener el tema base del contexto
-          final lightTheme = ThemeData(
-            primarySwatch: Colors.blue,
-            useMaterial3: true,
-            brightness: Brightness.light,
-          );
-          final darkTheme = ThemeData(
-            primarySwatch: Colors.blue,
-            useMaterial3: true,
-            brightness: Brightness.dark,
-          );
-          
           // 1. Si el estado es AuthInitial, mostramos el SplashScreen
           if (state is AuthInitial) {
             // Usamos MaterialApp simple con la pantalla de inicialización
             return MaterialApp(
               title: 'Futbol Pro',
               debugShowCheckedModeBanner: false,
-              theme: lightTheme,
-              darkTheme: darkTheme,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
               themeMode: ThemeMode.system,
               home: const AuthInitializer(), 
             );
@@ -136,8 +125,8 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'Futbol Pro',
             debugShowCheckedModeBanner: false,
-            theme: lightTheme,
-            darkTheme: darkTheme,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
             routerConfig: appRouter.router, // ✅ Usamos GoRouter
           );

@@ -56,6 +56,7 @@ dependencies {
     // 2. ¡IMPORTANTE! Comentamos la BoM para evitar conflictos de resolución.
     // implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     
-    // 3. Firebase Messaging - AÑADIMOS LA VERSIÓN EXPLÍCITAMENTE
+    // 3. Firebase Dependencies
     implementation("com.google.firebase:firebase-messaging-ktx:24.0.0") 
+    implementation("com.google.firebase:firebase-auth-ktx")
 }
