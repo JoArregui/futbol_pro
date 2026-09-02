@@ -1,67 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../domain/entities/message.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
   final bool isMe;
-  final bool isGroupChat; // 🟢 Añadido para la lógica de visualización
+  final bool isGroupChat;
+  const MessageBubble({super.key, required this.message, required this.isMe, this.isGroupChat = false});
 
-  const MessageBubble({
-    super.key,
-    required this.message,
-    required this.isMe,
-    this.isGroupChat = false,
-  });
+  Color _senderColor(String name) {
+    final colors = [Colors.blue, Colors.purple, Colors.teal, Colors.orange, Colors.indigo, Colors.green];
+    return colors[name.hashCode % colors.length];
+  }
+
+  Widget _tick(MessageStatus s) {
+    IconData icon;
+    Color color = Colors.white70;
+    switch (s) {
+      case MessageStatus.sending:
+        return const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.white70));
+      case MessageStatus.sent:
+        icon = Icons.check;
+        break;
+      case MessageStatus.delivered:
+        icon = Icons.done_all;
+        break;
+      case MessageStatus.read:
+        icon = Icons.done_all;
+        color = const Color(0xFF53BDEB);
+        break;
+      case MessageStatus.failed:
+        icon = Icons.error_outline;
+        color = Colors.red.shade300;
+        break;
+    }
+    return Icon(icon, size: 14, color: color);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // 🟢 CORRECCIÓN: Mostrar nombre si NO soy yo Y es un chat grupal
+    final time = DateFormat('HH:mm').format(message.timestamp);
     final shouldShowSenderName = !isMe && isGroupChat;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            if (shouldShowSenderName) // 🟢 Usar la lógica corregida
+            if (shouldShowSenderName)
               Padding(
-                padding: const EdgeInsets.only(left: 12.0, bottom: 2.0),
-                child: Text(
-                  message.senderName,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                padding: const EdgeInsets.only(left: 12, bottom: 2),
+                child: Text(message.senderName, style: TextStyle(color: _senderColor(message.senderName), fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
               decoration: BoxDecoration(
-                color: isMe ? theme.primaryColor : Colors.grey[300],
-                borderRadius: BorderRadius.circular(16).copyWith(
-                  topRight: isMe
-                      ? const Radius.circular(4)
-                      : const Radius.circular(16),
-                  topLeft: isMe
-                      ? const Radius.circular(16)
-                      : const Radius.circular(4),
+                color: isMe ? const Color(0xFF005C4B) : Colors.white,
+                borderRadius: BorderRadius.circular(8).copyWith(
+                  topRight: Radius.circular(isMe ? 0 : 8),
+                  topLeft: Radius.circular(isMe ? 8 : 0),
                 ),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 1, offset: const Offset(0, 1))],
               ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  color: isMe ? Colors.white : Colors.black,
-                  fontSize: 15,
-                ),
+              padding: const EdgeInsets.fromLTRB(8, 6, 6, 4),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(right: isMe ? 56 : 38, bottom: 2),
+                    child: Text(message.text, style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontSize: 15, height: 1.3)),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(time, style: TextStyle(color: isMe ? Colors.white70 : Colors.grey.shade600, fontSize: 11)),
+                        if (isMe) ...[const SizedBox(width: 4), _tick(message.status)],
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

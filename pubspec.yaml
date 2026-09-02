@@ -36,20 +36,24 @@ dependencies:
   # SERVICIOS (VERSIONES CRÍTICAS ACTUALIZADAS)
   # ----------------------------------------
   http: ^1.2.1 
-  firebase_core: ^4.2.1 # <--- ¡ACTUALIZADO!
-  firebase_messaging: ^16.0.4 # <--- ¡ACTUALIZADO!
-  intl: ^0.20.2 # Versión compatible con Flutter 3.x
+  firebase_core: ^4.2.1
+  firebase_messaging: ^16.0.4
+  intl: ^0.20.2
   cloud_firestore: ^6.1.0
   image_picker: ^1.2.0
   firebase_storage: ^13.0.4
   flutter_local_notifications: ^19.5.0
   badges: ^3.1.2
+  flutter_secure_storage: ^9.2.4
+  socket_io_client: ^3.1.2
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  flutter_lints: ^6.0.0 # Versión compatible con Flutter 3.x
+  flutter_lints: ^6.0.0
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
 
 # The following section is specific to Flutter packages.
 flutter:

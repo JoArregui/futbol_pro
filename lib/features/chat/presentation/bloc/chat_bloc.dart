@@ -2,34 +2,43 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
+import 'package:futbol_pro/core/services/socket_service.dart';
 import '../../domain/entities/chat_room.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/usecases/get_chat_rooms.dart';
 import '../../domain/usecases/get_messages.dart';
 import '../../domain/usecases/mark_as_read.dart';
 import '../../domain/usecases/send_message.dart';
+import '../../domain/usecases/create_chat.dart';
+import '../../domain/usecases/search_users.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  // Use Cases
   final GetMessages getMessages;
   final SendMessage sendMessage;
   final MarkAsRead markAsRead;
   final GetChatRooms getChatRooms;
+  final CreateChat createChat;
+  final SearchUsers searchUsers;
+  final AuthRepository authRepository;
+  final SocketService socketService;
+  Timer? _typingTimer;
 
-  // ID y Nombre del usuario actual
-  final String currentUserId;
-  final String currentUserName;
+  String get currentUserId => authRepository.getCurrentUserId();
+  String get currentUserName => authRepository.getCurrentUserName();
 
   ChatBloc({
     required this.getMessages,
     required this.sendMessage,
     required this.markAsRead,
     required this.getChatRooms,
-    required this.currentUserId,
-    required this.currentUserName,
+    required this.createChat,
+    required this.searchUsers,
+    required this.authRepository,
+    required this.socketService,
   }) : super(ChatInitial()) {
     on<ChatRoomsSubscriptionRequested>(_onRoomsFetchRequested);
     on<ChatRoomsReceived>(_onRoomsReceived);
@@ -38,18 +47,41 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatMessagesReceived>(_onMessagesReceived);
     on<ChatMessageSent>(_onMessageSent);
     on<ChatMarkAsRead>(_onMarkAsRead);
+    on<ChatCreateRequested>(_onCreateChat);
+    on<ChatSearchRequested>(_onSearch);
+    on<ChatTypingChanged>(_onTypingChanged);
+    on<ChatSocketMessageReceived>(_onSocketMessage);
+    on<ChatSocketTypingReceived>(_onSocketTyping);
+    _initSocket();
+  }
+
+  void _initSocket() {
+    if (currentUserId.isEmpty) return;
+    try {
+      socketService.connect(userId: currentUserId);
+      socketService.onNewMessage((data) {
+        final roomId = data['roomId']?.toString() ?? '';
+        final msg = Message(
+          id: data['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          senderId: data['senderId']?.toString() ?? '',
+          senderName: data['senderName']?.toString() ?? '',
+          text: data['text']?.toString() ?? '',
+          timestamp: DateTime.fromMillisecondsSinceEpoch((data['timestamp'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch),
+          status: MessageStatus.delivered,
+        );
+        add(ChatSocketMessageReceived(message: msg, roomId: roomId));
+      });
+      socketService.onChatUpdated((_) => add(ChatRoomsSubscriptionRequested()));
+      socketService.onChatCreated((_) => add(ChatRoomsSubscriptionRequested()));
+      socketService.onTyping((data) => add(ChatSocketTypingReceived(roomId: data['roomId'].toString(), userId: data['userId'].toString(), isTyping: data['isTyping'] as bool)));
+    } catch (_) {}
   }
 
   // ... (Manejadores _onRoomsFetchRequested y _onRoomsReceived sin cambios)
   // ==================================================
   // 1. Maneja la solicitud de carga de las salas de chat (ANTES STREAM)
   // ==================================================
-  Future<void> _onRoomsFetchRequested(
-    ChatRoomsSubscriptionRequested event,
-    Emitter<ChatState> emit,
-  ) async {
-    if (state is ChatRoomsLoaded) return;
-
+  Future<void> _onRoomsFetchRequested(ChatRoomsSubscriptionRequested event, Emitter<ChatState> emit) async {
     emit(ChatLoading());
 
     final failureOrRooms =
@@ -112,6 +144,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
 
       emit(ChatRoomSelectedState(room: room));
+      try { socketService.joinRoom(room.id); } catch (_) {}
       add(ChatMessagesSubscriptionRequested(event.roomId));
       add(ChatMarkAsRead(event.roomId));
     } else {
@@ -192,22 +225,62 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  // 7. _onMarkAsRead
-  Future<void> _onMarkAsRead(
-    ChatMarkAsRead event,
-    Emitter<ChatState> emit,
-  ) async {
-    await markAsRead(MarkAsReadParams(
-      roomId: event.roomId,
-      userId: currentUserId,
-    ));
+  Future<void> _onMarkAsRead(ChatMarkAsRead event, Emitter<ChatState> emit) async {
+    await markAsRead(MarkAsReadParams(roomId: event.roomId, userId: currentUserId));
   }
 
-  // 8. Limpieza
+  Future<void> _onCreateChat(ChatCreateRequested event, Emitter<ChatState> emit) async {
+    emit(ChatLoading());
+    final res = await createChat(CreateChatParams(title: event.title, type: event.type, memberIds: event.memberIds));
+    res.fold(
+      (f) => emit(ChatError(f.message)),
+      (room) {
+        emit(ChatRoomsLoaded(rooms: [room]));
+        add(ChatRoomsSubscriptionRequested());
+        add(ChatRoomSelected(room.id));
+      },
+    );
+  }
+
+  Future<void> _onSearch(ChatSearchRequested event, Emitter<ChatState> emit) async {
+    emit(const ChatSearchState(isSearching: true));
+    final res = await searchUsers(SearchUsersParams(query: event.query, excludeUid: currentUserId));
+    res.fold(
+      (f) => emit(ChatError(f.message)),
+      (users) => emit(ChatSearchState(users: users, isSearching: false)),
+    );
+  }
+
+  void _onTypingChanged(ChatTypingChanged event, Emitter<ChatState> emit) {
+    socketService.sendTyping(event.roomId, currentUserId, event.isTyping);
+    if (event.isTyping) {
+      _typingTimer?.cancel();
+      _typingTimer = Timer(const Duration(seconds: 2), () => add(ChatTypingChanged(roomId: event.roomId, isTyping: false)));
+    }
+  }
+
+  void _onSocketMessage(ChatSocketMessageReceived event, Emitter<ChatState> emit) {
+    if (state is ChatRoomSelectedState && (state as ChatRoomSelectedState).room.id == event.roomId) {
+      final cur = state as ChatRoomSelectedState;
+      final exists = cur.messages.any((m) => m.id == event.message.id);
+      if (!exists) emit(cur.copyWith(messages: [...cur.messages, event.message]));
+    } else {
+      // actualizar lista en background
+      add(ChatRoomsSubscriptionRequested());
+    }
+  }
+
+  void _onSocketTyping(ChatSocketTypingReceived event, Emitter<ChatState> emit) {
+    if (state is ChatRoomSelectedState && (state as ChatRoomSelectedState).room.id == event.roomId && event.userId != currentUserId) {
+      final cur = state as ChatRoomSelectedState;
+      emit(cur.copyWith(isTyping: event.isTyping, typingUserId: event.isTyping ? event.userId : null));
+    }
+  }
+
   @override
   Future<void> close() {
-    // ❌ Eliminamos el "unnecessary override" si no hay lógica de cancelación.
-    // Si la dejamos, el compilador puede emitir una advertencia, pero es funcional.
+    _typingTimer?.cancel();
+    socketService.dispose();
     return super.close();
   }
 }

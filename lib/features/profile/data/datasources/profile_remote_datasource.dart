@@ -4,8 +4,8 @@ import '../models/user_profile_model.dart';
 // Asegúrate de que esta ruta es correcta
 import 'package:futbol_pro/core/errors/exceptions.dart'; 
 
-// 🟢 URL BASE
-const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1/users'; 
+import 'package:futbol_pro/core/consts.dart';
+const String _kBaseUrl = '${AppConsts.baseUrl}/users';
 
 abstract class ProfileRemoteDataSource {
   Future<UserProfileModel> fetchUserProfile(String uid);

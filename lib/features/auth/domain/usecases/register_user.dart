@@ -16,6 +16,7 @@ class RegisterUser implements UseCase<Player, RegisterParams> {
       email: params.email,
       password: params.password,
       nickname: params.nickname,
+      name: params.name,
     );
   }
 }

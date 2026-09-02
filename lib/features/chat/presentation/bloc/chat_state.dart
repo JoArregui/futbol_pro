@@ -41,30 +41,34 @@ class ChatRoomsLoaded extends ChatState {
 /// ESTADOS DE LA SALA DE CHAT ACTIVA (CHAT ROOM)
 /// ------------------------------------------
 
-/// Estado cuando se ha entrado a una sala específica y se están cargando los mensajes.
 class ChatRoomSelectedState extends ChatState {
   final ChatRoom room;
   final List<Message> messages;
-  final bool isSending; // Indica si un mensaje está en proceso de envío
-
+  final bool isSending;
+  final bool isTyping; // alguien escribiendo
+  final String? typingUserId;
   const ChatRoomSelectedState({
     required this.room,
     this.messages = const [],
     this.isSending = false,
+    this.isTyping = false,
+    this.typingUserId,
   });
-
-  // Método helper para crear un nuevo estado con mensajes actualizados
-  ChatRoomSelectedState copyWith({
-    List<Message>? messages,
-    bool? isSending,
-  }) {
-    return ChatRoomSelectedState(
-      room: room,
-      messages: messages ?? this.messages,
-      isSending: isSending ?? this.isSending,
-    );
-  }
-
+  ChatRoomSelectedState copyWith({List<Message>? messages, bool? isSending, bool? isTyping, String? typingUserId}) => ChatRoomSelectedState(
+        room: room,
+        messages: messages ?? this.messages,
+        isSending: isSending ?? this.isSending,
+        isTyping: isTyping ?? this.isTyping,
+        typingUserId: typingUserId,
+      );
   @override
-  List<Object?> get props => [room, messages, isSending];
+  List<Object?> get props => [room, messages, isSending, isTyping, typingUserId];
+}
+
+class ChatSearchState extends ChatState {
+  final List<Map<String, dynamic>> users;
+  final bool isSearching;
+  const ChatSearchState({this.users = const [], this.isSearching = false});
+  @override
+  List<Object?> get props => [users, isSearching];
 }

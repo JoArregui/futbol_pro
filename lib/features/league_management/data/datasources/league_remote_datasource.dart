@@ -3,8 +3,8 @@ import 'dart:convert'; // Necesario para jsonDecode
 import '../models/standing_model.dart';
 import 'package:futbol_pro/core/errors/exceptions.dart'; // Asegúrate de tener tu archivo de excepciones
 
-// 🟢 URL BASE: Apuntando a tu servidor Node.js
-const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1/leagues'; 
+import 'package:futbol_pro/core/consts.dart';
+const String _kBaseUrl = '${AppConsts.baseUrl}/leagues';
 
 abstract class LeagueRemoteDataSource {
   Future<List<StandingModel>> fetchLeagueStandings({required String leagueId});

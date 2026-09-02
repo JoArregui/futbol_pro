@@ -35,12 +35,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required String nickname,
+    String? name,
   }) async {
     try {
       final params = RegisterParams(
         email: email,
         password: password,
         nickname: nickname,
+        name: name,
       );
       final player = await remoteDataSource.register(params);
       return Right(player);

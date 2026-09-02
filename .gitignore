@@ -72,3 +72,14 @@ Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Server (Node.js) — no commitear secretos ni deps
+server/node_modules/
+server/.env
+server/*.log
+
+# Legacy backend duplicado (ahora en /server)
+lib/backend/
+
+# Env files
+.env

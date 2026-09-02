@@ -4,29 +4,22 @@ import 'package:http/http.dart' as http; // 🟢 NUEVA DEPENDENCIA: HTTP
 import 'dart:convert'; // Necesario para JSON
 
 import 'package:futbol_pro/core/errors/exceptions.dart';
+import 'package:futbol_pro/core/consts.dart';
+import '../../domain/entities/chat_room.dart';
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
 
-// URL base de tu API REST
-const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1'; 
-const String _kChatUrl = '$_kBaseUrl/chats';
+const String _kBaseUrl = AppConsts.baseUrl;
+const String _kChatUrl = '${AppConsts.baseUrl}/chats';
 
 
 abstract class ChatRemoteDataSource {
-  // 🔄 CAMBIO: De Stream a Future para API REST
   Future<List<MessageModel>> getMessages(String roomId);
-  
-  Future<void> sendMessage({
-    required String roomId,
-    required String senderId,
-    required String senderName,
-    required String text,
-  });
-  
+  Future<void> sendMessage({required String roomId, required String senderId, required String senderName, required String text});
   Future<void> markMessagesAsRead(String roomId, String userId);
-  
-  // 🔄 CAMBIO: De Stream a Future para API REST
-  Future<List<ChatRoomModel>> getChatRooms(String userId); 
+  Future<List<ChatRoomModel>> getChatRooms(String userId);
+  Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId});
+  Future<List<Map<String, dynamic>>> searchUsers({required String query, required String excludeUid});
 }
 
 // ----------------------------------------------------
@@ -109,10 +102,34 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   }
 
   
+  Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId}) async {
+    final url = Uri.parse(_kChatUrl);
+    final res = await client.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'type': type, 'memberIds': memberIds, if (relatedEntityId != null) 'relatedEntityId': relatedEntityId}));
+    if (res.statusCode == 201 || res.statusCode == 200) {
+      final j = jsonDecode(res.body);
+      // Si solo devuelve id, construir room mínimo
+      if (j['title'] == null) {
+        return ChatRoomModel(id: j['id'].toString(), type: ChatRoomType.private, title: title, memberIds: memberIds);
+      }
+      return ChatRoomModel.fromJson(j);
+    }
+    throw ServerException(message: 'Error crear chat: ${res.statusCode}');
+  }
+
+  Future<List<Map<String, dynamic>>> searchUsers({required String query, required String excludeUid}) async {
+    final url = Uri.parse('${AppConsts.baseUrl}/users/search?q=${Uri.encodeComponent(query)}&excludeUid=$excludeUid');
+    final res = await client.get(url);
+    if (res.statusCode == 200) {
+      final List<dynamic> list = jsonDecode(res.body);
+      return list.cast<Map<String, dynamic>>();
+    }
+    throw ServerException(message: 'Error búsqueda: ${res.statusCode}');
+  }
+
   /// Obtiene la lista de salas de chat del usuario
   @override
   Future<List<ChatRoomModel>> getChatRooms(String userId) async {
-    final url = Uri.parse('$_kBaseUrl/users/$userId/chats'); 
+    final url = Uri.parse('$_kChatUrl/$userId/chats'); 
 
     try {
       final response = await client.get(url);

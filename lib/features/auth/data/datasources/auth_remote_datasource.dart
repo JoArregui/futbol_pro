@@ -1,18 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // Necesario para jsonEncode y jsonDecode
-
+import 'package:futbol_pro/core/consts.dart';
+import 'package:futbol_pro/core/errors/exceptions.dart';
+import 'package:futbol_pro/core/storage/secure_storage_service.dart';
 import '../../../match_scheduling/domain/entities/player.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/register_user.dart';
-import 'package:futbol_pro/core/errors/exceptions.dart';
-import 'dart:async';
-
-
-// ===============================================
-// URL BASE DE TU API REST (Node.js/Express)
-// ===============================================
-// Usamos 10.0.2.2 como alias de localhost para el emulador de Android.
-const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1/auth'; 
+const String _kBaseUrl = '${AppConsts.baseUrl}/auth';
 
 
 abstract class AuthRemoteDataSource {
@@ -26,16 +21,17 @@ abstract class AuthRemoteDataSource {
 
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  
-  // ❌ Eliminada la dependencia 'final FirebaseFirestore firestore;'
   final http.Client client;
+  final SecureStorageService secureStorage;
 
-  // Variables para mantener el estado del usuario (usadas en getCurrentUserId/Name)
   String _currentUserId = '';
   String _currentUserName = '';
+  bool _storageLoaded = false;
 
-  // Constructor simplificado
-  AuthRemoteDataSourceImpl({required this.client});
+  AuthRemoteDataSourceImpl({
+    required this.client,
+    required this.secureStorage,
+  });
 
 
   // ===============================================
@@ -56,14 +52,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        // La API devuelve un JSON con los datos del Player
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        final player = Player.fromJson(jsonResponse); 
-
-        // Actualizamos el estado local
+        final player = Player.fromJson(jsonResponse);
         _currentUserId = player.id;
-        _currentUserName = player.name; 
-
+        _currentUserName = player.name;
+        await secureStorage.persistUser(
+          userId: player.id,
+          userName: player.name,
+          userJson: jsonEncode(player.toJson()),
+        );
         return player;
       } else if (response.statusCode == 401) {
         // 401 Unauthorized: Credenciales incorrectas
@@ -98,14 +95,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }),
       );
 
-      if (response.statusCode == 201) { // Código 201 Created
+      if (response.statusCode == 201) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        final player = Player.fromJson(jsonResponse); 
-        
-        // Actualizamos el estado local después del registro exitoso
+        final player = Player.fromJson(jsonResponse);
         _currentUserId = player.id;
         _currentUserName = player.name;
-
+        await secureStorage.persistUser(
+          userId: player.id,
+          userName: player.name,
+          userJson: jsonEncode(player.toJson()),
+        );
         return player;
       } else if (response.statusCode == 409) {
         // 409 Conflict: Email/Apodo ya registrado (debería manejarlo la API)
@@ -118,28 +117,49 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  // ===============================================
-  // MÉTODOS DE ESTADO (MOCK)
-  // ===============================================
-  
   @override
   Future<Player> getAuthenticatedPlayer() async {
-    // Implementación MOCK temporal: Si tenemos un ID, simulamos devolver el Player
+    if (!_storageLoaded) {
+      final storedId = await secureStorage.getUserId();
+      final storedName = await secureStorage.getUserName();
+      if (storedId != null && storedId.isNotEmpty) {
+        _currentUserId = storedId;
+        _currentUserName = storedName ?? '';
+      }
+      _storageLoaded = true;
+    }
     if (_currentUserId.isNotEmpty) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      // NOTA: En una app real, aquí harías una llamada GET a /api/v1/user/$_currentUserId
-      throw const UnauthenticatedException(); // Mantenemos el throw para forzar el re-login en el inicio.
+      final cached = await secureStorage.getUserJson();
+      if (cached != null) {
+        try {
+          return Player.fromJson(jsonDecode(cached));
+        } catch (_) {}
+      }
+      // Fallback: intenta refrescar desde API si hay ID pero no JSON
+      try {
+        final url = Uri.parse('${AppConsts.baseUrl}/users/$_currentUserId/profile');
+        final response = await client.get(url, headers: {'Content-Type': 'application/json'});
+        if (response.statusCode == 200) {
+          return Player.fromJson(jsonDecode(response.body));
+        }
+      } catch (_) {}
+      // Si no se pudo refrescar, devuelve player mínimo con datos cacheados
+      return Player(
+        id: _currentUserId,
+        name: _currentUserName,
+        nickname: _currentUserName,
+        profileImageUrl: '',
+      );
     }
     throw const UnauthenticatedException();
   }
 
   @override
   Future<void> logout() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    // NOTA: En una app real, harías una llamada al backend para invalidar el token/sesión.
     _currentUserId = '';
-    _currentUserName = ''; 
-    return;
+    _currentUserName = '';
+    _storageLoaded = true;
+    await secureStorage.clear();
   }
 
   @override

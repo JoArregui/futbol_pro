@@ -77,18 +77,37 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<Either<Failure, List<ChatRoom>>> getChatRooms(String userId) async {
     try {
-      // 1. Llama al nuevo método Future
       final roomModels = await remoteDataSource.getChatRooms(userId);
-
-      // 2. Mapea los modelos a entidades
       final entities = roomModels.map<ChatRoom>((model) => model).toList();
-
       return Right(entities);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return const Left(
-          ServerFailure('Error desconocido al obtener las salas de chat.'));
+      return const Left(ServerFailure('Error desconocido al obtener las salas de chat.'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ChatRoom>> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId}) async {
+    try {
+      final model = await remoteDataSource.createChat(title: title, type: type, memberIds: memberIds, relatedEntityId: relatedEntityId);
+      return Right(model);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return const Left(ServerFailure('Error al crear chat.'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Map<String, dynamic>>>> searchUsers({required String query, required String excludeUid}) async {
+    try {
+      final res = await remoteDataSource.searchUsers(query: query, excludeUid: excludeUid);
+      return Right(res);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return const Left(ServerFailure('Error búsqueda usuarios.'));
     }
   }
 }

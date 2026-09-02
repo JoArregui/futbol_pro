@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:cloud_firestore/cloud_firestore.dart'; // Mantenido por si otras features lo usan
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'storage/secure_storage_service.dart';
 
 // Auth Feature
 import '../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -29,7 +31,10 @@ import '../features/chat/domain/usecases/get_messages.dart';
 import '../features/chat/domain/usecases/send_message.dart';
 import '../features/chat/domain/usecases/mark_as_read.dart';
 import '../features/chat/domain/usecases/get_chat_rooms.dart';
+import '../features/chat/domain/usecases/create_chat.dart';
+import '../features/chat/domain/usecases/search_users.dart';
 import '../features/chat/presentation/bloc/chat_bloc.dart';
+import 'services/socket_service.dart';
 
 // Core Services
 // Asegúrate de tener una implementación llamada NotificationServiceImpl
@@ -71,15 +76,12 @@ Future<void> init() async {
     // 1. Core (External)
     // ===========================================
     print('📦 Registrando dependencias Core...');
-    // Instancias externas
     sl.registerLazySingleton(() => http.Client());
     sl.registerLazySingleton(() => FirebaseFirestore.instance);
-
-    // Core (Services)
-    // Asumiendo que existe NotificationServiceImpl
-    sl.registerLazySingleton<NotificationService>(
-        () => NotificationServiceImpl(), 
-    );
+    sl.registerLazySingleton(() => const FlutterSecureStorage());
+    sl.registerLazySingleton(() => SecureStorageService(storage: sl()));
+    sl.registerLazySingleton<NotificationService>(() => NotificationServiceImpl());
+    sl.registerLazySingleton(() => SocketService());
     print('✅ Core registrado correctamente');
 
     // ===========================================
@@ -87,14 +89,13 @@ Future<void> init() async {
     // ===========================================
     print('🔐 Registrando Auth Feature...');
 
-    // Data Sources
     sl.registerLazySingleton<AuthRemoteDataSource>(
-        // 🟢 CORREGIDO: Solo se pasa http.Client
         () => AuthRemoteDataSourceImpl(
-            client: sl<http.Client>(),        
-        ), 
+            client: sl<http.Client>(),
+            secureStorage: sl<SecureStorageService>(),
+        ),
     );
-    print('  ✅ AuthRemoteDataSource registrado');
+    print('  ✅ AuthRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<AuthRepository>(
@@ -144,14 +145,13 @@ Future<void> init() async {
     sl.registerLazySingleton(() => CreateProfile(sl<ProfileRepository>())); 
     print('  ✅ UseCases registrados');
 
-    // Presentation (BLoC)
-    // ⚠️ NOTA: Asumo que getCurrentUserId() está disponible en AuthRepository
+    // Presentation (BLoC) — lazy via AuthRepository
     sl.registerFactory(
         () => ProfileBloc(
             getProfile: sl<GetProfile>(),
             updateProfile: sl<UpdateProfile>(),
             createProfile: sl<CreateProfile>(),
-            currentUserId: sl<AuthRepository>().getCurrentUserId(),
+            authRepository: sl<AuthRepository>(),
         ),
     );
     print('✅ Profile Feature registrado');
@@ -176,23 +176,24 @@ Future<void> init() async {
     );
     print('  ✅ ChatRepository registrado');
 
-    // Domain (Use Cases)
     sl.registerLazySingleton(() => GetMessages(sl<ChatRepository>()));
     sl.registerLazySingleton(() => SendMessage(sl<ChatRepository>()));
     sl.registerLazySingleton(() => MarkAsRead(sl<ChatRepository>()));
     sl.registerLazySingleton(() => GetChatRooms(sl<ChatRepository>()));
-    print('  ✅ UseCases registrados');
+    sl.registerLazySingleton(() => CreateChat(sl<ChatRepository>()));
+    sl.registerLazySingleton(() => SearchUsers(sl<ChatRepository>()));
+    print('  ✅ UseCases registrados');
 
-    // Presentation (BLoC)
-    // ⚠️ NOTA: Asumo que getCurrentUserId() y getCurrentUserName() están disponibles en AuthRepository
     sl.registerFactory(
         () => ChatBloc(
             getMessages: sl<GetMessages>(),
             sendMessage: sl<SendMessage>(),
             markAsRead: sl<MarkAsRead>(),
             getChatRooms: sl<GetChatRooms>(),
-            currentUserId: sl<AuthRepository>().getCurrentUserId(),
-            currentUserName: sl<AuthRepository>().getCurrentUserName(), 
+            createChat: sl<CreateChat>(),
+            searchUsers: sl<SearchUsers>(),
+            authRepository: sl<AuthRepository>(),
+            socketService: sl<SocketService>(),
         ),
     );
     print('✅ Chat Feature registrado');

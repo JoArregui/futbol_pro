@@ -26,66 +26,51 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(AuthUnauthenticated());
-    } catch (_) {
-      emit(AuthUnauthenticated());
-    }
+    final result = await repository.getAuthenticatedPlayer();
+    result.fold(
+      (failure) => emit(AuthUnauthenticated()),
+      (player) => emit(AuthAuthenticated(player.id)),
+    );
   }
 
   Future<void> _onLoginRequested(
       LoginRequested event, Emitter<AuthState> emit) async {
-    if (state is AuthLoading || state is AuthAuthenticated) {
-      return;
-    }
-
+    if (state is AuthLoading) return;
     emit(AuthLoading());
-
-    const String demoEmail = 'demo@futbolpro.com';
-    const String demoPassword = 'demo123';
-
-    if (event.email == demoEmail && event.password == demoPassword) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      print('✅ Login de Demo exitoso. Emitiendo AuthAuthenticated.');
-      emit(const AuthAuthenticated('demo-user-id-001'));
-      return;
-    }
-
-    try {
-      await Future.delayed(const Duration(seconds: 1));
-      emit(const AuthAuthenticated('prod-user-123'));
-    } catch (e) {
-      emit(AuthError('Fallo en el login: ${e.toString()}'));
-
-      emit(AuthUnauthenticated());
-    }
+    final result = await loginUser(
+      LoginParams(email: event.email, password: event.password),
+    );
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (player) => emit(AuthAuthenticated(player.id)),
+    );
   }
 
   Future<void> _onRegisterRequested(
       RegisterRequested event, Emitter<AuthState> emit) async {
-    if (state is AuthLoading || state is AuthAuthenticated) {
-      return;
-    }
-
+    if (state is AuthLoading) return;
     emit(AuthLoading());
-    try {
-      await Future.delayed(const Duration(seconds: 1));
-      emit(const AuthAuthenticated('new-user-456'));
-    } catch (e) {
-      emit(AuthError('Fallo en el registro: ${e.toString()}'));
-      emit(AuthUnauthenticated());
-    }
+    final result = await registerUser(
+      RegisterParams(
+        email: event.email,
+        password: event.password,
+        nickname: event.nickname,
+        name: event.name,
+      ),
+    );
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (player) => emit(AuthAuthenticated(player.id)),
+    );
   }
 
   Future<void> _onLogoutRequested(
       LogoutRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(AuthUnauthenticated());
-    } catch (e) {
-      emit(AuthError('Fallo en el logout: ${e.toString()}'));
-    }
+    final result = await repository.logout();
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (_) => emit(AuthUnauthenticated()),
+    );
   }
 }

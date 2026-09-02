@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // Importar Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/message.dart';
 
 class MessageModel extends Message {
@@ -8,67 +8,77 @@ class MessageModel extends Message {
     required super.senderName,
     required super.text,
     required super.timestamp,
+    super.status = MessageStatus.sent,
+    super.type = MessageType.text,
+    super.replyToId,
+    super.imageUrl,
   });
 
-  // 🟢 CORRECCIÓN: Mapeo desde DocumentSnapshot de Firestore
   factory MessageModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final timestamp = data['timestamp'] as Timestamp?;
-
     return MessageModel(
       id: doc.id,
       senderId: data['senderId'] as String,
       senderName: data['senderName'] as String,
       text: data['text'] as String,
-      // Convertir Timestamp a DateTime
       timestamp: timestamp?.toDate() ?? DateTime.now(),
     );
   }
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
-    final timestampData = json['timestamp'];
+    final ts = json['timestamp'];
     DateTime timestamp;
-
-    if (timestampData is int) {
-      // Si el timestamp es un int (millisecondsSinceEpoch)
-      timestamp = DateTime.fromMillisecondsSinceEpoch(timestampData);
-    } else if (timestampData is double) {
-      // Si el timestamp es un double (error en tu código anterior, ajustado a int)
-      timestamp = DateTime.fromMillisecondsSinceEpoch(timestampData.toInt());
-    } else if (timestampData is Timestamp) {
-      // Si el timestamp es un Timestamp de Firestore
-      timestamp = timestampData.toDate();
+    if (ts is int) {
+      timestamp = DateTime.fromMillisecondsSinceEpoch(ts);
+    } else if (ts is double) {
+      timestamp = DateTime.fromMillisecondsSinceEpoch(ts.toInt());
+    } else if (ts is String) {
+      timestamp = DateTime.tryParse(ts) ?? DateTime.now();
+    } else if (ts is Timestamp) {
+      timestamp = ts.toDate();
     } else {
       timestamp = DateTime.now();
     }
+    MessageStatus status = MessageStatus.sent;
+    final s = json['status'] as String?;
+    if (s != null) status = MessageStatus.values.firstWhere((e) => e.name == s, orElse: () => MessageStatus.sent);
 
     return MessageModel(
-      id: json['id'] as String,
-      senderId: json['senderId'] as String,
-      senderName: json['senderName'] as String,
-      text: json['text'] as String,
+      id: (json['id'] ?? json['id_mensaje'] ?? '').toString(),
+      senderId: (json['senderId'] ?? json['id_emisor_fk'] ?? '').toString(),
+      senderName: (json['senderName'] ?? json['nombre_emisor'] ?? 'Usuario').toString(),
+      text: (json['text'] ?? json['texto'] ?? '').toString(),
       timestamp: timestamp,
+      status: status,
+      type: json['imageUrl'] != null ? MessageType.image : MessageType.text,
+      imageUrl: json['imageUrl'] as String?,
+      replyToId: json['replyToId'] as String?,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'senderId': senderId,
-      'senderName': senderName,
-      'text': text,
-      // 🟢 CORRECCIÓN: Guardar como millisecondsSinceEpoch (o usar FieldValue.serverTimestamp() en el envío)
-      'timestamp': timestamp.millisecondsSinceEpoch,
-    };
-  }
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'senderId': senderId,
+        'senderName': senderName,
+        'text': text,
+        'timestamp': timestamp.millisecondsSinceEpoch,
+        'status': status.name,
+        'type': type.name,
+        if (replyToId != null) 'replyToId': replyToId,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+      };
 
-  factory MessageModel.fromEntity(Message entity) {
-    return MessageModel(
-      id: entity.id,
-      senderId: entity.senderId,
-      senderName: entity.senderName,
-      text: entity.text,
-      timestamp: entity.timestamp,
-    );
-  }
+  factory MessageModel.fromEntity(Message entity) => MessageModel(
+        id: entity.id,
+        senderId: entity.senderId,
+        senderName: entity.senderName,
+        text: entity.text,
+        timestamp: entity.timestamp,
+        status: entity.status,
+        type: entity.type,
+        replyToId: entity.replyToId,
+        imageUrl: entity.imageUrl,
+      );
 }

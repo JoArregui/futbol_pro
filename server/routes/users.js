@@ -83,7 +83,53 @@ router.put('/:uid/profile', async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor.' });
     }
 });
-// La ruta POST createProfileInitial no es estrictamente necesaria aquí, ya que 
-// el AuthRemoteDataSource.register() ya inserta el perfil.
+// ===================================
+// RUTA 3: GET /api/v1/users/search?q=&excludeUid=
+// ===================================
+router.get('/search/all', async (req, res) => {
+    const { q = '', excludeUid } = req.query;
+    try {
+        let sql = `SELECT uid as id, nombre, apodo, url_avatar, email FROM perfiles WHERE 1=1`;
+        const params = [];
+        if (q) {
+            sql += ` AND (nombre LIKE ? OR apodo LIKE ? OR email LIKE ?)`;
+            const like = `%${q}%`;
+            params.push(like, like, like);
+        }
+        if (excludeUid) {
+            sql += ` AND uid != ?`;
+            params.push(excludeUid);
+        }
+        sql += ` LIMIT 20`;
+        const [rows] = await pool.execute(sql, params);
+        res.status(200).json(rows);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error' });
+    }
+});
+
+router.get('/search', async (req, res) => {
+    const { q = '', excludeUid } = req.query;
+    try {
+        let sql = `SELECT uid as id, nombre, apodo, url_avatar, email FROM perfiles WHERE 1=1`;
+        const params = [];
+        if (q) {
+            sql += ` AND (nombre LIKE ? OR apodo LIKE ? OR email LIKE ?)`;
+            const like = `%${q}%`;
+            params.push(like, like, like);
+        }
+        if (excludeUid) {
+            sql += ` AND uid != ?`;
+            params.push(excludeUid);
+        }
+        sql += ` LIMIT 20`;
+        const [rows] = await pool.execute(sql, params);
+        res.status(200).json(rows);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error' });
+    }
+});
 
 module.exports = router;

@@ -67,9 +67,48 @@ class ChatMarkAsRead extends ChatEvent {
 
 class ChatRoomsReceived extends ChatEvent {
   final List<ChatRoom> rooms;
-
   const ChatRoomsReceived(this.rooms);
-
   @override
   List<Object> get props => [rooms];
+}
+
+class ChatCreateRequested extends ChatEvent {
+  final String title;
+  final String type;
+  final List<String> memberIds;
+  const ChatCreateRequested({required this.title, required this.type, required this.memberIds});
+  @override
+  List<Object> get props => [title, type, memberIds];
+}
+
+class ChatSearchRequested extends ChatEvent {
+  final String query;
+  const ChatSearchRequested(this.query);
+  @override
+  List<Object> get props => [query];
+}
+
+class ChatTypingChanged extends ChatEvent {
+  final String roomId;
+  final bool isTyping;
+  const ChatTypingChanged({required this.roomId, required this.isTyping});
+  @override
+  List<Object> get props => [roomId, isTyping];
+}
+
+class ChatSocketMessageReceived extends ChatEvent {
+  final Message message;
+  final String roomId;
+  const ChatSocketMessageReceived({required this.message, required this.roomId});
+  @override
+  List<Object> get props => [message, roomId];
+}
+
+class ChatSocketTypingReceived extends ChatEvent {
+  final String roomId;
+  final String userId;
+  final bool isTyping;
+  const ChatSocketTypingReceived({required this.roomId, required this.userId, required this.isTyping});
+  @override
+  List<Object> get props => [roomId, userId, isTyping];
 }

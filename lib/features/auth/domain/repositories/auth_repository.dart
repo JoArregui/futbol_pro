@@ -12,6 +12,7 @@ abstract class AuthRepository {
     required String email,
     required String password,
     required String nickname,
+    String? name,
   });
 
   Future<Either<Failure, Player>> getAuthenticatedPlayer();

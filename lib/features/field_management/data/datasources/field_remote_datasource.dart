@@ -3,8 +3,8 @@ import 'dart:convert'; // Necesario para jsonEncode y jsonDecode
 import '../../../../core/errors/exceptions.dart';
 import '../models/field_model.dart';
 
-// 🟢 URL BASE REAL: Apuntando a tu servidor Node.js (Puerto 3000)
-const String _kBaseUrl = 'http://10.0.2.2:3000/api/v1/fields'; 
+import '../../../../core/consts.dart';
+const String _kBaseUrl = '${AppConsts.baseUrl}/fields';
 
 abstract class FieldRemoteDataSource {
   Future<List<FieldModel>> getAvailableFields({

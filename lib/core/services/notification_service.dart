@@ -1,48 +1,128 @@
-import 'dart:async'; // Necesario para Future y StreamController si se añaden
+import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Interfaz para el servicio de gestión de notificaciones.
 abstract class NotificationService {
-  /// Inicializa la configuración del servicio de notificaciones (e.g., Firebase).
   Future<void> initialize();
-
-  /// Se suscribe a un tópico específico para recibir notificaciones dirigidas.
   Future<void> subscribeToTopic(String topic);
-
-  // Opcionales que podrías necesitar:
-  // Future<String?> getToken();
-  // Future<void> unsubscribeFromTopic(String topic);
-  // Stream<RemoteMessage> get onMessage; // Para escuchar mensajes entrantes.
+  Future<void> unsubscribeFromTopic(String topic);
+  Future<String?> getToken();
+  Stream<RemoteMessage> get onMessage;
+  Stream<RemoteMessage> get onMessageOpenedApp;
 }
 
-/// Implementación concreta del servicio de notificaciones.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Background handler debe ser top-level
+  // ignore: avoid_print
+  print('🔔 [BG] Mensaje recibido: ${message.messageId}');
+}
+
+/// Implementación real con Firebase Messaging + local notifications.
 class NotificationServiceImpl implements NotificationService {
-  
-  // Puedes añadir dependencias aquí si fueran necesarias (e.g., FirebaseMessaging instance)
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _local =
+      FlutterLocalNotificationsPlugin();
+
+  final StreamController<RemoteMessage> _onMessageCtrl =
+      StreamController<RemoteMessage>.broadcast();
+
+  bool _initialized = false;
+
+  @override
+  Stream<RemoteMessage> get onMessage => _onMessageCtrl.stream;
+
+  @override
+  Stream<RemoteMessage> get onMessageOpenedApp =>
+      FirebaseMessaging.onMessageOpenedApp;
 
   @override
   Future<void> initialize() async {
-    // 
+    if (_initialized) return;
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await _local.initialize(initSettings);
 
+    const channel = AndroidNotificationChannel(
+      'futbol_pro_default',
+      'Futbol Pro',
+      description: 'Notificaciones generales',
+      importance: Importance.high,
+    );
+    await _local
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
 
-    // Implementación real de la inicialización (e.g., configurar Firebase Messaging)
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+    // ignore: avoid_print
+    print('🔔 Permiso notificaciones: ${settings.authorizationStatus}');
+
+    FirebaseMessaging.onMessage.listen((message) async {
+      _onMessageCtrl.add(message);
+      final notification = message.notification;
+      if (notification != null) {
+        await _local.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              channelDescription: channel.description,
+              importance: Importance.high,
+              priority: Priority.high,
+            ),
+            iOS: const DarwinNotificationDetails(),
+          ),
+        );
+      }
+    });
+
+    _initialized = true;
+    // ignore: avoid_print
     print('✅ NotificationService: Inicializado.');
-    // Simulación:
-    await Future.delayed(const Duration(milliseconds: 100)); 
   }
 
   @override
   Future<void> subscribeToTopic(String topic) async {
-    // Implementación real para suscribirse al tópico (e.g., FirebaseMessaging.subscribeToTopic)
     if (topic.isEmpty) {
-      print('⚠️ NotificationService: El tópico está vacío, omitiendo suscripción.');
+      // ignore: avoid_print
+      print('⚠️ NotificationService: Tópico vacío, omitiendo.');
       return;
     }
-    print('➡️ NotificationService: Suscribiendo al tópico: $topic');
-    // Simulación:
-    await Future.delayed(const Duration(milliseconds: 50));
-    print('✅ NotificationService: Suscripción a "$topic" completada.');
+    final sanitized = topic.replaceAll(RegExp(r'[^a-zA-Z0-9-_.~%]'), '_');
+    await _messaging.subscribeToTopic(sanitized);
+    // ignore: avoid_print
+    print('✅ NotificationService: Suscrito a "$sanitized".');
   }
 
-  // Si añades métodos opcionales en la interfaz, debes implementarlos aquí.
+  @override
+  Future<void> unsubscribeFromTopic(String topic) async {
+    if (topic.isEmpty) return;
+    await _messaging.unsubscribeFromTopic(topic);
+  }
+
+  @override
+  Future<String?> getToken() => _messaging.getToken();
+
+  void dispose() => _onMessageCtrl.close();
 }

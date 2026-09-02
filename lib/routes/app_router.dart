@@ -9,6 +9,7 @@ import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/chat/presentation/pages/chat_list_page.dart';
 import '../features/chat/presentation/pages/chat_room_page.dart';
+import '../features/chat/presentation/pages/new_chat_page.dart';
 import '../features/field_management/presentation/pages/field_search_page.dart';
 import '../features/league_management/presentation/pages/standings_page.dart';
 import '../features/main_page/presentation/pages/home_page.dart';
@@ -30,7 +31,8 @@ class AppRouter {
       ShellRoute(
         builder: (context, state, child) {
           final hideNavBar = state.matchedLocation.contains('room') ||
-              state.matchedLocation.contains('match_detail');
+              state.matchedLocation.contains('match_detail') ||
+              state.matchedLocation.contains('/chat/new');
           return MainScaffold(
             hideBottomBar: hideNavBar,
             child: child,
@@ -71,10 +73,16 @@ class AppRouter {
             builder: (context, state) => const ChatListPage(),
             routes: [
               GoRoute(
+                path: 'new',
+                name: 'newChat',
+                builder: (context, state) => const NewChatPage(),
+              ),
+              GoRoute(
                 path: ':roomId',
                 name: 'chatRoom',
                 builder: (context, state) {
                   final roomId = state.pathParameters['roomId'] ?? 'unknown';
+                  if (roomId == 'new') return const NewChatPage();
                   return ChatRoomPage(chatRoomId: roomId);
                 },
               ),

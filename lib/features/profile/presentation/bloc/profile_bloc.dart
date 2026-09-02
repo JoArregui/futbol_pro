@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/usecases/get_profile.dart';
 import '../../domain/usecases/update_profile.dart';
-import '../../domain/usecases/create_profile.dart'; // 🚀 Nuevo UseCase
+import '../../domain/usecases/create_profile.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 
 part 'profile_event.dart';
 part 'profile_state.dart';
@@ -11,15 +12,17 @@ part 'profile_state.dart';
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final GetProfile getProfile;
   final UpdateProfile updateProfile;
-  final CreateProfile createProfile; // 🚀 Inyectado
-  final String currentUserId; 
+  final CreateProfile createProfile;
+  final AuthRepository authRepository;
+
+  String get currentUserId => authRepository.getCurrentUserId();
 
   ProfileBloc({
     required this.getProfile,
     required this.updateProfile,
-    required this.createProfile, // 🚀 Añadido
-    required this.currentUserId,
-  }) : super(const ProfileInitial()) { 
+    required this.createProfile,
+    required this.authRepository,
+  }) : super(const ProfileInitial()) {
     on<ProfileLoadRequested>(_onProfileLoadRequested);
     on<ProfileUpdated>(_onProfileUpdated);
   }
