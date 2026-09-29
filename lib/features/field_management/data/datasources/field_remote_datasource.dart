@@ -5,7 +5,7 @@ import '../../domain/entities/booking.dart';
 import '../models/field_model.dart';
 
 import '../../../../core/consts.dart';
-final String _kBaseUrl = '${AppConsts.effectiveBaseUrl}/fields';
+String get _kBaseUrl => '${AppConsts.effectiveBaseUrl}/fields';
 
 abstract class FieldRemoteDataSource {
   Future<List<FieldModel>> getAvailableFields({

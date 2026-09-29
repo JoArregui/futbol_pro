@@ -5,7 +5,7 @@ import '../models/user_profile_model.dart';
 import 'package:futbol_pro/core/errors/exceptions.dart'; 
 
 import 'package:futbol_pro/core/consts.dart';
-final String _kBaseUrl = '${AppConsts.effectiveBaseUrl}/users';
+String get _kBaseUrl => '${AppConsts.effectiveBaseUrl}/users';
 
 abstract class ProfileRemoteDataSource {
   Future<UserProfileModel> fetchUserProfile(String uid);

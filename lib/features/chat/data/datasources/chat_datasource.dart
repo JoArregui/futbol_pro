@@ -9,7 +9,7 @@ import '../../domain/entities/chat_room.dart';
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
 
-final String _kChatUrl = '${AppConsts.effectiveBaseUrl}/chats';
+String get _kChatUrl => '${AppConsts.effectiveBaseUrl}/chats';
 
 
 abstract class ChatRemoteDataSource {

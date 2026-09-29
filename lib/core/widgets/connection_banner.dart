@@ -40,10 +40,19 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
 
   void _useLanIp() {
     // IP detectada en tu PC ahora mismo
-    const lanIp = 'http://192.168.3.58:3000/api/v1';
-    AppConsts.overrideUrl = lanIp;
+    const lanIp = 'http://192.168.3.53:3000/api/v1';
+    AppConsts.overrideUrl = _normalizeApiUrl(lanIp);
     _check();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('API cambiada a $lanIp'), backgroundColor: const Color(0xFF25D366)));
+  }
+
+  void _useUsb() {
+    const usbUrl = 'http://127.0.0.1:3000/api/v1';
+    AppConsts.overrideUrl = usbUrl;
+    _check();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('API configurada por USB (adb reverse)'), backgroundColor: Color(0xFF25D366)),
+    );
   }
 
   void _showEditDialog() {
@@ -53,9 +62,32 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
       content: TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'http://IP:3000/api/v1', border: OutlineInputBorder()), keyboardType: TextInputType.url),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-        ElevatedButton(onPressed: () { AppConsts.overrideUrl = ctrl.text.trim(); Navigator.pop(context); _check(); }, child: const Text('Guardar')),
+        ElevatedButton(onPressed: () {
+          final value = _normalizeApiUrl(ctrl.text);
+          if (value == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Introduce una URL válida, por ejemplo http://192.168.3.58:3000/api/v1')),
+            );
+            return;
+          }
+          AppConsts.overrideUrl = value;
+          Navigator.pop(context);
+          _check();
+        }, child: const Text('Guardar')),
       ],
     ));
+  }
+
+  String? _normalizeApiUrl(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+    final uri = Uri.tryParse(value);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
+    final path = uri.path.isEmpty || uri.path == '/'
+        ? '/api/v1'
+        : uri.path.replaceFirst(RegExp(r'/+$'), '');
+    final port = uri.hasPort ? uri.port : 3000;
+    return uri.replace(port: port, path: path).toString();
   }
 
   @override
@@ -85,13 +117,20 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
           if (isFail) ...[
             const SizedBox(height: 8),
             SizedBox(width: double.infinity, child: ElevatedButton.icon(
-              onPressed: _useLanIp,
-              icon: const Icon(Icons.wifi, size: 16),
-              label: const Text('Usar IP física 192.168.3.58', style: TextStyle(fontSize: 12)),
+              onPressed: _useUsb,
+              icon: const Icon(Icons.usb, size: 16),
+              label: const Text('Usar conexión USB', style: TextStyle(fontSize: 12)),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF075E54), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
             )),
             const SizedBox(height: 4),
-            Text('Si estás en móvil físico, 10.0.2.2 solo funciona en emulador. Pulsa el botón.', style: TextStyle(fontSize: 10, color: Colors.grey.shade700)),
+            SizedBox(width: double.infinity, child: ElevatedButton.icon(
+              onPressed: _useLanIp,
+              icon: const Icon(Icons.wifi, size: 16),
+              label: const Text('Usar IP física 192.168.3.53', style: TextStyle(fontSize: 12)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF075E54), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
+            )),
+            const SizedBox(height: 4),
+            Text('USB requiere adb reverse. La IP física requiere que ambos dispositivos estén en la misma red.', style: TextStyle(fontSize: 10, color: Colors.grey.shade700)),
           ],
         ],
       ),

@@ -229,6 +229,12 @@ class _EmptyLeagues extends StatelessWidget {
             FilledButton(
                 onPressed: onRetry,
                 child: const Text('Reintentar')),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/tournaments'),
+              icon: const Icon(Icons.emoji_events_outlined),
+              label: const Text('Abrir Torneos'),
+            ),
           ],
         ),
       ),

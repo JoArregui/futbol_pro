@@ -6,7 +6,7 @@ import '../../domain/entities/league_detail.dart';
 import 'package:futbol_pro/core/errors/exceptions.dart'; // Asegúrate de tener tu archivo de excepciones
 
 import 'package:futbol_pro/core/consts.dart';
-final String _kBaseUrl = '${AppConsts.effectiveBaseUrl}/leagues';
+String get _kBaseUrl => '${AppConsts.effectiveBaseUrl}/leagues';
 
 abstract class LeagueRemoteDataSource {
   Future<List<StandingModel>> fetchLeagueStandings({required String leagueId});

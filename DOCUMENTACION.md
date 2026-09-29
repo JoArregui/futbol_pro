@@ -1,9 +1,9 @@
 # Futbol Pro — Documentación Completa
 
-> **Proyecto:** Futbol Pro `1.0.0+1` — Flutter 3.x + Node.js/Express + MySQL + Firebase + Socket.IO  
-> **Fecha:** 02/09/2026  
+> **Proyecto:** Futbol Pro `1.0.0+1` — Flutter 3.x + Node.js/Express + MySQL + Firebase + Socket.IO + PayPal  
+> **Fecha:** 29/09/2026  
 > **Autor:** Equipo Futbol Pro / Auditoría Muse Spark  
-> **Incluye:** 8 correcciones de arquitectura + Chat Full WhatsApp Clone (Socket.IO, ticks, grupos)
+> **Incluye:** 8 correcciones de arquitectura + Chat Full WhatsApp Clone (Socket.IO, ticks, grupos) + Integración PayPal
 
 ---
 
@@ -59,7 +59,7 @@ Futbol Pro es una app social para futbolistas amateurs: perfil, partidos amistos
 | Firebase | `firebase_core` 4.2.1, `firebase_messaging` 16.0.4, `cloud_firestore` 6.1.0, `firebase_storage` 13.0.4 | — | Iniciado en `main.dart` |
 | Notif local | `flutter_local_notifications` | 19.5.0 | Canal `futbol_pro_default` |
 | Formato | `intl` 0.20.2 | — | `HH:mm`, fechas |
-| Backend | Node 18+, Express 4.18.2, `mysql2/promise` 3.9.7, `socket.io` 4.7.5, `bcrypt` 5.1.1, `cors`, `dotenv` | — | `server/` |
+| Backend | Node 18+, Express 4.18.2, `mysql2/promise` 3.9.7, `socket.io` 4.7.5, `bcrypt` 5.1.1, `cors`, `dotenv`, PayPal SDK | — | `server/` |
 | Tests | `bloc_test` 10.0.0, `mocktail` 1.0.5 | — | 11 tests |
 
 ---
@@ -378,6 +378,8 @@ Tras auditoría se ejecutó `git rm --cached -r lib/backend` y `git rm --cached 
 
 **Chat implementado:** entidades extendidas, socket.io server+client, datasource `createChat/searchUsers`, bloc typing/socket, UI WhatsApp completa, ruteo `/chat/new`.
 
+**PayPal:** integración en `server/services/paypal.js`, rutas `server/routes/admin.js`, flujo de pagos en dashboard.
+
 **Próximos:** adjuntos imagen (usar `image_picker` + `firebase_storage` → `imageUrl` en `Message`), notas de voz, cifrado, paginación `LIMIT 50` → infinite scroll, `intl` locale `es_ES` inicializar en `main.dart`.
 
 **Troubleshooting:**
@@ -392,4 +394,3 @@ Tras auditoría se ejecutó `git rm --cached -r lib/backend` y `git rm --cached 
 ## Licencia y Contacto
 
 Privado — `publish_to: none`. Dudas: abrir issue en repo interno o contactar owner `masai-app` Firebase.
-
