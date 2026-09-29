@@ -17,14 +17,14 @@ android {
         // Habilitar el desugaring para compatibilidad (¡CORRECCIÓN CLAVE 1!)
         isCoreLibraryDesugaringEnabled = true 
         
-        // Apuntamos a Java 21 (LTS)
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        // Apuntamos a Java 17 para evitar errores de compilación por compatibilidad del JDK
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        // JVM target para Kotlin compilado a bytecode Java 21
-        jvmTarget = "21"
+        // JVM target para Kotlin compilado a bytecode Java 17
+        jvmTarget = "17"
     }
 
     defaultConfig {

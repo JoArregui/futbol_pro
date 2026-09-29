@@ -1,6 +1,10 @@
 const express = require('express');
 const pool = require('../db');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
+
+// Seguridad: nunca anónimo — todo acceso requiere JWT válido.
+router.use(requireAuth);
 
 // ===================================
 // RUTA 1: GET /api/v1/users/:userId/chats
@@ -111,6 +115,7 @@ router.get('/:roomId/messages', async (req, res) => {
                 id_emisor_fk AS senderId,
                 nombre_emisor AS senderName,
                 texto AS text,
+                image_url AS imageUrl,
                 timestamp
             FROM
                 mensajes
@@ -139,12 +144,15 @@ router.get('/:roomId/messages', async (req, res) => {
 // Envía un nuevo mensaje, inserta en 'mensajes' y actualiza 'chats'.
 router.post('/:roomId/messages', async (req, res) => {
     const { roomId } = req.params;
-    const { senderId, senderName, text } = req.body;
+    const { senderId, senderName, text = '', imageUrl = null } = req.body;
     let connection;
 
-    // Validación básica
-    if (!senderId || !text) {
-        return res.status(400).json({ message: 'Faltan senderId o text.' });
+    // Validación básica (texto y/o imagen)
+    if (!senderId || (!text && !imageUrl)) {
+        return res.status(400).json({ message: 'Faltan senderId o contenido (text/imageUrl).' });
+    }
+    if (imageUrl && (typeof imageUrl !== 'string' || imageUrl.length > 2048)) {
+        return res.status(400).json({ message: 'imageUrl inválida.' });
     }
 
     try {
@@ -157,10 +165,10 @@ router.post('/:roomId/messages', async (req, res) => {
 
         // 1. Insertar el mensaje
         const insertMsgSql = `
-            INSERT INTO mensajes (id_mensaje, id_chat_fk, id_emisor_fk, nombre_emisor, texto, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO mensajes (id_mensaje, id_chat_fk, id_emisor_fk, nombre_emisor, texto, timestamp, image_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
-        await connection.execute(insertMsgSql, [messageId, roomId, senderId, senderName, text, now]);
+        await connection.execute(insertMsgSql, [messageId, roomId, senderId, senderName, text, now, imageUrl]);
         
         // 2. Actualizar la sala de chat (último mensaje y actividad)
         const updateChatSql = `
@@ -176,11 +184,12 @@ router.post('/:roomId/messages', async (req, res) => {
             senderId,
             senderName,
             text,
+            imageUrl,
             // Usamos getTime() para que Dart lo reconozca como int
             timestamp: now.getTime(),
         });
         await connection.execute(updateChatSql, [lastMessageData, now, roomId]);
-        
+
         await connection.commit();
         // Emitir por Socket.IO a la sala
         try {
@@ -191,13 +200,14 @@ router.post('/:roomId/messages', async (req, res) => {
                     senderId,
                     senderName,
                     text,
+                    imageUrl,
                     timestamp: now.getTime(),
                     roomId,
                 });
                 // Notificar lista de chats para actualizar lastMessage
                 const [members] = await pool.execute(`SELECT id_miembro_fk FROM chats_miembros WHERE id_chat_fk = ?`, [roomId]);
                 for (const m of members) {
-                    io.to(`user_${m.id_miembro_fk}`).emit('chat_updated', { roomId, lastMessage: { id: messageId, senderId, senderName, text, timestamp: now.getTime() } });
+                    io.to(`user_${m.id_miembro_fk}`).emit('chat_updated', { roomId, lastMessage: { id: messageId, senderId, senderName, text, imageUrl, timestamp: now.getTime() } });
                 }
             }
         } catch (_) {}

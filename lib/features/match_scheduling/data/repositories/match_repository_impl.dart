@@ -2,6 +2,8 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/match.dart';
+import '../../domain/entities/match_result.dart';
+import '../../domain/entities/match_split.dart';
 import '../../domain/repositories/match_repository.dart';
 import '../../domain/usecases/generate_balanced_teams.dart';
 import '../datasources/match_remote_datasource.dart';
@@ -56,12 +58,28 @@ class MatchRepositoryImpl implements MatchRepository {
   Future<Either<Failure, Match>> scheduleFriendlyMatch({
     required DateTime time,
     required String fieldId,
+    String title = 'Amistoso',
+    String mode = 'open',
+    bool needsReferee = false,
+    String? description,
+    String? organizerTeamName,
+    String? opponentTeamName,
+    int? maxPlayers,
+    double? costeTotal,
   }) async {
     try {
       final MatchModel matchModel =
           await remoteDataSource.scheduleFriendlyMatch(
         time: time,
         fieldId: fieldId,
+        title: title,
+        mode: mode,
+        needsReferee: needsReferee,
+        description: description,
+        organizerTeamName: organizerTeamName,
+        opponentTeamName: opponentTeamName,
+        maxPlayers: maxPlayers,
+        costeTotal: costeTotal,
       );
       return Right(matchModel);
     } catch (e) {
@@ -107,6 +125,72 @@ class MatchRepositoryImpl implements MatchRepository {
         teamB: teamPair.teamB.toModel(),
       );
       return Right(matchModel);
+    } catch (e) {
+      return _handleException(e);
+    }
+  }
+
+  @override
+  Future<Either<Failure, MatchResult>> submitResult({
+    required String matchId,
+    required int golesA,
+    required int golesB,
+    String ganador = 'empate',
+    List<ScorerEntry> goleadores = const [],
+    List<String> teamAIds = const [],
+    List<String> teamBIds = const [],
+    String? mvpId,
+  }) async {
+    try {
+      final result = await remoteDataSource.submitResult(
+        matchId: matchId,
+        golesA: golesA,
+        golesB: golesB,
+        ganador: ganador,
+        goleadores: goleadores,
+        teamAIds: teamAIds,
+        teamBIds: teamBIds,
+        mvpId: mvpId,
+      );
+      return Right(result);
+    } catch (e) {
+      return _handleException(e);
+    }
+  }
+
+  @override
+  Future<Either<Failure, MatchResult>> confirmResult({
+    required String matchId,
+  }) async {
+    try {
+      final result = await remoteDataSource.confirmResult(matchId: matchId);
+      return Right(result);
+    } catch (e) {
+      return _handleException(e);
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> reportNoShow({
+    required String matchId,
+    required String playerId,
+  }) async {
+    try {
+      final count = await remoteDataSource.reportNoShow(
+          matchId: matchId, playerId: playerId);
+      return Right(count);
+    } catch (e) {
+      return _handleException(e);
+    }
+  }
+
+  @override
+  Future<Either<Failure, MatchSplit>> getSplit({
+    required String matchId,
+  }) async {
+    try {
+      final split = await remoteDataSource.getSplit(matchId: matchId);
+      return Right(split);
     } catch (e) {
       return _handleException(e);
     }

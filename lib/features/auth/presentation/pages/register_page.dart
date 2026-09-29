@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:futbol_pro/features/auth/presentation/bloc/auth_bloc.dart';
-
+import '../../../../core/widgets/connection_banner.dart';
 import '../../../../routes/app_routes.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -63,15 +63,20 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
+            final isConnection = state.message.contains('No se pudo conectar') || state.message.contains('Timeout');
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error al registrar: ${state.message}')),
+              SnackBar(
+                content: Text(isConnection ? '${state.message}\n→ Ejecuta `npm run dev` en server/ y verifica API_URL.' : 'Error al registrar: ${state.message}'),
+                backgroundColor: Colors.redAccent,
+                duration: const Duration(seconds: 5),
+                action: isConnection ? SnackBarAction(label: 'Reintentar', textColor: Colors.white, onPressed: _onRegisterPressed) : null,
+              ),
             );
           }
           if (state is AuthAuthenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Registro exitoso. ¡Bienvenido!')),
+              const SnackBar(content: Text('Registro exitoso. ¡Bienvenido!'), backgroundColor: Color(0xFF25D366)),
             );
-
             context.go(AppRoutes.home);
           }
         },
@@ -84,6 +89,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  const ConnectionBanner(),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(

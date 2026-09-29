@@ -1,10 +1,11 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // Necesario para jsonEncode y jsonDecode
 import '../../../../core/errors/exceptions.dart';
+import '../../domain/entities/booking.dart';
 import '../models/field_model.dart';
 
 import '../../../../core/consts.dart';
-const String _kBaseUrl = '${AppConsts.baseUrl}/fields';
+final String _kBaseUrl = '${AppConsts.effectiveBaseUrl}/fields';
 
 abstract class FieldRemoteDataSource {
   Future<List<FieldModel>> getAvailableFields({
@@ -12,13 +13,18 @@ abstract class FieldRemoteDataSource {
     required DateTime endTime,
   });
 
-  Future<bool> reserveField({
+  /// Reserva y devuelve la economía (total servidor + seña + pago).
+  Future<BookingInfo> reserveField({
     required String fieldId,
     required DateTime startTime,
     required DateTime endTime,
     required String userId,
-    required double totalCost,
   });
+
+  /// Captura y verifica la orden PayPal en el servidor.
+  Future<bool> confirmPago({required String pagoId, required String orderId});
+
+  Future<List<BookingInfo>> misReservas();
 }
 
 class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
@@ -64,14 +70,14 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
 
   // ==================================================
   // RESERVAR CAMPO (POST a la API)
+  // El coste lo calcula el servidor; aquí solo viaja el rango horario.
   // ==================================================
   @override
-  Future<bool> reserveField({
+  Future<BookingInfo> reserveField({
     required String fieldId,
     required DateTime startTime,
     required DateTime endTime,
     required String userId,
-    required double totalCost,
   }) async {
     final url = Uri.parse('$_kBaseUrl/$fieldId/reserve');
 
@@ -79,24 +85,67 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
       final response = await client.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        // 1. Codificar el cuerpo de la petición con los detalles de la reserva
         body: jsonEncode({
           'startTime': startTime.toUtc().toIso8601String(),
           'endTime': endTime.toUtc().toIso8601String(),
           'userId': userId,
-          'totalCost': totalCost,
         }),
       );
 
-      if (response.statusCode == 201) { // 201 Created (Reserva exitosa)
-        return true;
+      if (response.statusCode == 201) {
+        return BookingInfo.fromJson(
+            Map<String, dynamic>.from(jsonDecode(response.body) as Map));
       } else if (response.statusCode == 409) {
-        // 409 Conflict (El backend ya verificó que el campo está ocupado)
-        throw const ServerException(message: 'El campo ya está reservado en ese horario.');
+        throw const ServerException(
+            message: 'El campo ya está reservado en ese horario.');
+      } else if (response.statusCode == 403) {
+        throw const ServerException(message: 'No tienes permiso.');
       } else {
-        // Otros errores, como 400 Bad Request o 500 Internal Server Error
-        throw ServerException(message: 'Error al reservar campo: ${response.statusCode}');
+        throw ServerException(
+            message: 'Error al reservar campo: ${response.statusCode}');
       }
+    } on ServerException {
+      rethrow;
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión al servidor: $e');
+    }
+  }
+
+  @override
+  Future<bool> confirmPago({required String pagoId, required String orderId}) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$_kBaseUrl/pagos/$pagoId/confirm'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'orderId': orderId}),
+      );
+      if (response.statusCode == 200) return true;
+      throw ServerException(
+          message: 'Error al confirmar pago: ${response.statusCode}');
+    } on ServerException {
+      rethrow;
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión al servidor: $e');
+    }
+  }
+
+  @override
+  Future<List<BookingInfo>> misReservas() async {
+    try {
+      final response = await client.get(
+          Uri.parse('$_kBaseUrl/mis-reservas'),
+          headers: {'Content-Type': 'application/json'});
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list
+            .map((j) =>
+                BookingInfo.fromJson(Map<String, dynamic>.from(j as Map)))
+            .toList();
+      }
+      throw ServerException(
+          message: 'Error al obtener reservas: ${response.statusCode}');
+    } on ServerException {
+      rethrow;
     } on Exception catch (e) {
       throw ServerException(message: 'Fallo de conexión al servidor: $e');
     }

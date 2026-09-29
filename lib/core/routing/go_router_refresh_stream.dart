@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
-/// Un 'Listenable' que convierte un Stream<T> en una notificación de cambio,
-/// ideal para usar con el parámetro 'refreshListenable' de GoRouter.
+/// Un [Listenable] que convierte un Stream en una notificación de cambio,
+/// ideal para usar con el parámetro refreshListenable de GoRouter.
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
 

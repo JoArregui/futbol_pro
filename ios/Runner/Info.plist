@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Desbloquea Futbol Pro con tu identidad. Nunca entramos de forma anónima.</string>
 </dict>
 </plist>

@@ -1,6 +1,10 @@
 const express = require('express');
-const pool = require('../db'); 
+const pool = require('../db');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
+
+// Seguridad: nunca anónimo — todo acceso requiere JWT válido.
+router.use(requireAuth);
 
 // ===================================
 // RUTA 1: GET /api/v1/users/:uid/profile
@@ -37,26 +41,41 @@ router.get('/:uid/profile', async (req, res) => {
 });
 
 
+// Columnas editables por el usuario (whitelist: evita inyección por nombre
+// de columna y evita tocar uid/email/role desde aquí).
+const PROFILE_EDITABLE = new Set([
+  'nombre', 'apodo', 'bio', 'url_avatar', 'nombre_db', 'apodo_db',
+]);
+// Mapeo camelCase Flutter -> snake_case DB (solo claves permitidas).
+function mapProfileKey(key) {
+  if (key === 'urlAvatar') return 'url_avatar';
+  if (key === 'name') return 'nombre';
+  if (key === 'nickname') return 'apodo';
+  if (key === 'bio') return 'bio';
+  if (['nombre', 'apodo', 'url_avatar'].includes(key)) return key;
+  return null; // no permitido
+}
+
 // ===================================
 // RUTA 2: PUT /api/v1/users/:uid/profile
+// Solo el dueño o superadmin. Columnas con whitelist.
 // ===================================
-// Actualizar campos específicos del perfil.
 router.put('/:uid/profile', async (req, res) => {
     const { uid } = req.params;
-    const data = req.body;
-    
-    // Construir la consulta de actualización dinámicamente
+    const me = String(req.user.sub);
+    if (me !== String(uid) && req.user.role !== 'superadmin') {
+        return res.status(403).json({ message: 'No tienes permiso.' });
+    }
+    const data = req.body || {};
+
+    // Construir la consulta de actualización dinámicamente (solo whitelist)
     const fields = [];
     const values = [];
 
-    // Iterar sobre los datos recibidos (e.g., nombre, apodo, bio, url_avatar)
     for (const key in data) {
-        // Mapea las claves de Flutter (camelCase) a las de MySQL (snake_case) si es necesario
-        let dbKey = key; 
-        if (key === 'urlAvatar') dbKey = 'url_avatar';
-        if (key === 'fechaCreacion') dbKey = 'fecha_creacion'; 
-
-        fields.push(`${dbKey} = ?`);
+        const dbKey = mapProfileKey(key);
+        if (!dbKey || !PROFILE_EDITABLE.has(dbKey)) continue;
+        fields.push(`"${dbKey}" = ?`);
         values.push(data[key]);
     }
     

@@ -12,11 +12,19 @@ import '../features/chat/presentation/pages/chat_room_page.dart';
 import '../features/chat/presentation/pages/new_chat_page.dart';
 import '../features/field_management/presentation/pages/field_search_page.dart';
 import '../features/league_management/presentation/pages/standings_page.dart';
+import '../features/league_management/presentation/pages/tournaments_page.dart';
+import '../features/league_management/presentation/pages/league_detail_page.dart';
 import '../features/main_page/presentation/pages/home_page.dart';
+import '../features/match_scheduling/presentation/pages/create_match_page.dart';
 import '../features/match_scheduling/presentation/pages/match_detail_page.dart';
 import '../features/match_scheduling/presentation/pages/match_list_page.dart';
+import '../features/admin/presentation/bloc/admin_bloc.dart';
+import '../features/match_scheduling/presentation/bloc/match_detail_bloc.dart';
+import '../features/admin/presentation/pages/admin_panel_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../presentation/widgets/main_scaffold.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../core/injection_container.dart';
 
 class AppRouter {
   final AuthBloc authBloc;
@@ -44,12 +52,20 @@ class AppRouter {
             builder: (context, state) => const MatchListPage(),
             routes: [
               GoRoute(
+                path: 'new',
+                name: 'matchNew',
+                builder: (context, state) => const CreateMatchPage(),
+              ),
+              GoRoute(
                 path: 'match_detail/:matchId',
                 name: 'matchDetail',
                 builder: (context, state) {
                   final matchId =
                       state.pathParameters['matchId'] ?? 'default_id';
-                  return MatchDetailPage(matchId: matchId);
+                  return BlocProvider(
+                    create: (_) => sl<MatchDetailBloc>(),
+                    child: MatchDetailPage(matchId: matchId),
+                  );
                 },
               ),
             ],
@@ -60,9 +76,25 @@ class AppRouter {
           ),
           GoRoute(
             path: AppRoutes.standings,
-            builder: (context, state) => const StandingsPage(
-              currentLeagueId: 'default_league_id',
-            ),
+            builder: (context, state) => const StandingsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.tournaments,
+            builder: (context, state) => const TournamentsPage(),
+            routes: [
+              GoRoute(
+                path: ':leagueId',
+                name: 'leagueDetail',
+                builder: (context, state) {
+                  final leagueId =
+                      state.pathParameters['leagueId'] ?? '';
+                  final leagueName =
+                      state.uri.queryParameters['name'] ?? 'Liga';
+                  return LeagueDetailPage(
+                      leagueId: leagueId, leagueName: leagueName);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: AppRoutes.fields,
@@ -92,6 +124,13 @@ class AppRouter {
             path: AppRoutes.profile,
             builder: (context, state) => const ProfilePage(),
           ),
+          GoRoute(
+            path: AppRoutes.admin,
+            builder: (context, state) => BlocProvider(
+              create: (_) => sl<AdminBloc>(),
+              child: const AdminPanelPage(),
+            ),
+          ),
         ],
       ),
       GoRoute(
@@ -104,20 +143,30 @@ class AppRouter {
       ),
     ],
     // FUNCIÓN DE REDIRECCIÓN: maneja la lógica de autenticación
+    // Nunca anónima: sin AuthAuthenticated no se entra a nada protegido.
     redirect: (BuildContext context, GoRouterState state) {
       final authState = authBloc.state;
       final isAuthenticated = authState is AuthAuthenticated;
-      final isLoggingInOrUp = state.fullPath == AppRoutes.login ||
-          state.fullPath == AppRoutes.register;
+      final needsBiometric = authState is AuthBiometricRequired;
+      final loc = state.matchedLocation;
+      final isLoggingInOrUp = loc == AppRoutes.login || loc == AppRoutes.register;
+
+      if (needsBiometric) {
+        // Con biometría pendiente, forzar al login (pantalla de huella).
+        return isLoggingInOrUp ? null : AppRoutes.login;
+      }
 
       if (isAuthenticated) {
-        // Si ya estás autenticado y tratas de ir a login/register, ve a home.
-        return isLoggingInOrUp ? AppRoutes.home : null;
+        if (isLoggingInOrUp) return AppRoutes.home;
+        // Guard superadmin (authState ya es AuthAuthenticated aquí)
+        final role = authState.role;
+        if (loc.startsWith(AppRoutes.admin) && role != 'superadmin') {
+          return AppRoutes.home;
+        }
+        return null;
       } else {
         // Si NO estás autenticado y tratas de ir a una página protegida (que no es login/register), ve a login.
-        final isProtected = !isLoggingInOrUp;
-
-        return isProtected ? AppRoutes.login : null;
+        return isLoggingInOrUp ? null : AppRoutes.login;
       }
     },
     errorBuilder: (context, state) => Scaffold(

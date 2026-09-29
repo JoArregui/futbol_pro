@@ -10,6 +10,9 @@ abstract class NotificationService {
   Future<String?> getToken();
   Stream<RemoteMessage> get onMessage;
   Stream<RemoteMessage> get onMessageOpenedApp;
+
+  /// Notificación local inmediata (p. ej. mensaje de otra sala por socket).
+  Future<void> showLocal({required String title, required String body});
 }
 
 @pragma('vm:entry-point')
@@ -123,6 +126,26 @@ class NotificationServiceImpl implements NotificationService {
 
   @override
   Future<String?> getToken() => _messaging.getToken();
+
+  @override
+  Future<void> showLocal({required String title, required String body}) async {
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'futbol_pro_default',
+        'Futbol Pro',
+        channelDescription: 'Notificaciones generales',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+    await _local.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      details,
+    );
+  }
 
   void dispose() => _onMessageCtrl.close();
 }

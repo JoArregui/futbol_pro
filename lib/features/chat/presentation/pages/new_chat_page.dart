@@ -55,6 +55,7 @@ class _NewChatPageState extends State<NewChatPage> {
       ),
     );
     if (name == null || name.isEmpty) return;
+    if (!mounted) return;
     final bloc = context.read<ChatBloc>();
     final ids = [bloc.currentUserId, ..._groupUsers.map((u) => u['id']?.toString() ?? '')];
     bloc.add(ChatCreateRequested(title: name, type: 'general', memberIds: ids));

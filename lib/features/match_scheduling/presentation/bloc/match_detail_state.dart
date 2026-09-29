@@ -4,20 +4,50 @@ abstract class MatchDetailState extends Equatable {
   const MatchDetailState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class MatchDetailInitial extends MatchDetailState {}
 
 class MatchDetailLoading extends MatchDetailState {}
 
-class MatchDetailLoaded extends MatchDetailState {
+/// Cargando una acción (proponer/confirmar/reportar) conservando el detalle.
+class MatchDetailActionRunning extends MatchDetailState {
   final Match match;
 
-  const MatchDetailLoaded({required this.match});
+  const MatchDetailActionRunning({required this.match});
 
   @override
   List<Object> get props => [match];
+}
+
+class MatchDetailLoaded extends MatchDetailState {
+  final Match match;
+
+  /// Mensaje de éxito transitorio (propuesta, confirmación, no-show).
+  final String? notice;
+
+  /// Error de la última acción sin perder el detalle cargado.
+  final String? error;
+
+  /// División de cuenta (se carga bajo demanda).
+  final MatchSplit? split;
+
+  const MatchDetailLoaded(
+      {required this.match, this.notice, this.error, this.split});
+
+  MatchDetailLoaded copyWith(
+      {Match? match, String? notice, String? error, MatchSplit? split}) {
+    return MatchDetailLoaded(
+      match: match ?? this.match,
+      notice: notice ?? this.notice,
+      error: error,
+      split: split ?? this.split,
+    );
+  }
+
+  @override
+  List<Object?> get props => [match, notice, error, split];
 }
 
 class MatchDetailError extends MatchDetailState {

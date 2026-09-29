@@ -5,26 +5,36 @@ import '../bloc/profile_bloc.dart';
 import '../widgets/profile_loaded_view.dart';
 import '../widgets/profile_error_view.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final bloc = context.read<ProfileBloc>();
-    
-    // 🚀 Importante: El email y el nickname deben venir del BLoC de Autenticación.
-    // Usamos valores placeholder aquí para simular el evento de carga/creación.
-    const String userEmailPlaceholder = 'usuario.autenticado@ejemplo.com'; 
-    const String userNicknamePlaceholder = 'NuevoUser'; 
-    
-    // Disparar la carga del perfil con la información necesaria para la creación
-    // (Solo se crea si el fetch falla con "Usuario no encontrado").
-    bloc.add(ProfileLoadRequested(
-      bloc.currentUserId, 
-      email: userEmailPlaceholder, 
-      nickname: userNicknamePlaceholder
-    ));
+  State<ProfilePage> createState() => _ProfilePageState();
+}
 
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Carga única (antes se disparaba en cada build). Usa los datos reales
+    // de la sesión para el fallback de creación: el backend ya crea el
+    // perfil en /auth/register, así que esto casi siempre hace fetch.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final bloc = context.read<ProfileBloc>();
+      final fallbackName = bloc.currentUserName.isNotEmpty
+          ? bloc.currentUserName
+          : 'Jugador';
+      bloc.add(ProfileLoadRequested(
+        bloc.currentUserId,
+        email: '',
+        nickname: fallbackName,
+      ));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

@@ -15,3 +15,40 @@ class MatchDetailLoadRequested extends MatchDetailEvent {
   @override
   List<Object> get props => [matchId];
 }
+
+class MatchResultProposeRequested extends MatchDetailEvent {
+  final SubmitResultParams params;
+
+  const MatchResultProposeRequested(this.params);
+
+  @override
+  List<Object> get props => [params];
+}
+
+class MatchResultConfirmRequested extends MatchDetailEvent {
+  final String matchId;
+
+  const MatchResultConfirmRequested(this.matchId);
+
+  @override
+  List<Object> get props => [matchId];
+}
+
+class MatchNoShowReported extends MatchDetailEvent {
+  final String matchId;
+  final String playerId;
+
+  const MatchNoShowReported({required this.matchId, required this.playerId});
+
+  @override
+  List<Object> get props => [matchId, playerId];
+}
+
+class MatchSplitRequested extends MatchDetailEvent {
+  final String matchId;
+
+  const MatchSplitRequested(this.matchId);
+
+  @override
+  List<Object> get props => [matchId];
+}

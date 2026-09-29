@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/models/match_model.dart';
-import '../../domain/entities/team.dart';
 import '../../domain/entities/match.dart';
+import '../../domain/entities/match_result.dart';
+import '../../domain/usecases/submit_match_result.dart';
+import '../bloc/match_detail_bloc.dart';
 
 class MatchDetailView extends StatelessWidget {
   final Match match;
@@ -20,16 +23,6 @@ class MatchDetailView extends StatelessWidget {
 
     final String timeFormatted =
         DateFormat('dd MMM yyyy - HH:mm').format(match.scheduledTime);
-
-    // Obtener la información de los jugadores de los equipos
-    String getPlayerList(Team? team) {
-      if (team == null || team.players.isEmpty) return 'No asignado';
-      // Muestra los apodos de los jugadores
-      return team.players.map((p) => p.nickname).join(', ');
-    }
-
-    final String teamAPlayers = getPlayerList(matchModel?.teamA);
-    final String teamBPlayers = getPlayerList(matchModel?.teamB);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
@@ -63,36 +56,17 @@ class MatchDetailView extends StatelessWidget {
             value: '${match.playerIds.length} jugadores',
           ),
           const Divider(height: 30),
+          _ResultSection(matchModel: matchModel),
+          const Divider(height: 30),
           Text(
-            'Asignación de Equipos',
+            'Participantes',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold, color: Colors.deepPurple),
           ),
           const SizedBox(height: 15),
-          _buildTeamCard(
-            context,
-            teamName: 'Equipo A',
-            rating: matchModel?.teamA?.combinedRating,
-            players: teamAPlayers,
-            color: Colors.blue.shade50,
-            iconColor: Colors.blue.shade700,
-          ),
-          const SizedBox(height: 10),
-          _buildTeamCard(
-            context,
-            teamName: 'Equipo B',
-            rating: matchModel?.teamB?.combinedRating,
-            players: teamBPlayers,
-            color: Colors.red.shade50,
-            iconColor: Colors.red.shade700,
-          ),
-          const SizedBox(height: 30),
-          Center(
-            child: Text(
-                'Las acciones de Unirse/Generar Equipos se gestionan con MatchBloc en otros widgets.',
-                style: TextStyle(
-                    color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
-          ),
+          _ParticipantsCard(matchModel: matchModel),
+          const Divider(height: 30),
+          const _SplitSection(),
         ],
       ),
     );
@@ -161,63 +135,537 @@ class MatchDetailView extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildTeamCard(BuildContext context,
-      {required String teamName,
-      double? rating,
-      required String players,
-      required Color color,
-      required Color iconColor}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: iconColor.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.shield, color: iconColor, size: 28),
-              const SizedBox(width: 8),
-              Text(
-                teamName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: iconColor,
-                ),
+/// Sección de resultado: marcador confirmado/propuesto o formulario.
+class _ResultSection extends StatelessWidget {
+  final MatchModel? matchModel;
+  const _ResultSection({required this.matchModel});
+
+  @override
+  Widget build(BuildContext context) {
+    final model = matchModel;
+    final result = model?.result;
+    final myId = context.read<MatchDetailBloc>().currentUserId;
+    final isParticipant =
+        model?.participants.any((p) => p.id == myId) ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Resultado',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold, color: Colors.deepPurple),
+        ),
+        const SizedBox(height: 12),
+        if (result != null)
+          _ResultCard(result: result, participants: model!.participants)
+        else
+          const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Aún no hay resultado propuesto.'),
+            ),
+          ),
+        const SizedBox(height: 12),
+        if (result != null && !result.isConfirmed)
+          if (result.propuestoPor == myId)
+            const Card(
+              color: Color(0xFFFFF8E1),
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Text(
+                    'Propuesta enviada. Debe confirmarla otro participante.'),
               ),
-              const Spacer(),
-              if (rating != null)
+            )
+          else if (isParticipant)
+            FilledButton.icon(
+              onPressed: () => context
+                  .read<MatchDetailBloc>()
+                  .add(MatchResultConfirmRequested(model!.id)),
+              icon: const Icon(Icons.verified),
+              label: const Text('Confirmar resultado'),
+            ),
+        if (result == null && isParticipant)
+          _ProposeForm(matchId: model!.id, participants: model.participants),
+      ],
+    );
+  }
+}
+
+class _ResultCard extends StatelessWidget {
+  final MatchResult result;
+  final List<MatchParticipant> participants;
+  const _ResultCard({required this.result, required this.participants});
+
+  String _name(String id) {
+    final p = participants.where((e) => e.id == id);
+    if (p.isEmpty) return id;
+    final v = p.first;
+    return v.nickname.isNotEmpty ? v.nickname : v.name;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      color: result.isConfirmed
+          ? const Color(0xFFE8F5E9)
+          : const Color(0xFFFFF8E1),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
                 Text(
-                  'Rating: ${rating.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: iconColor.withOpacity(0.8),
-                    fontWeight: FontWeight.w500,
+                  result.scoreLine(),
+                  style: const TextStyle(
+                      fontSize: 32, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(width: 12),
+                Chip(
+                  label: Text(
+                      result.isConfirmed ? 'Confirmado' : 'Propuesto',
+                      style: const TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+            if (result.mvpId != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber),
+                  const SizedBox(width: 6),
+                  Text('MVP: ${_name(result.mvpId!)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+            if (result.goleadores.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text('Goleadores:',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              ...result.goleadores.map((g) => Text(
+                  '• ${_name(g.playerId)} (${g.goles})')),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Formulario de propuesta: marcador + ganador + MVP + goleadores.
+class _ProposeForm extends StatefulWidget {
+  final String matchId;
+  final List<MatchParticipant> participants;
+  const _ProposeForm({required this.matchId, required this.participants});
+
+  @override
+  State<_ProposeForm> createState() => _ProposeFormState();
+}
+
+class _ProposeFormState extends State<_ProposeForm> {
+  int _golesA = 0;
+  int _golesB = 0;
+  String _ganador = 'empate';
+  String? _mvpId;
+  final List<_ScorerRow> _scorers = [];
+
+  void _submit() {
+    context.read<MatchDetailBloc>().add(
+          MatchResultProposeRequested(
+            SubmitResultParams(
+              matchId: widget.matchId,
+              golesA: _golesA,
+              golesB: _golesB,
+              ganador: _ganador,
+              mvpId: _mvpId,
+              goleadores: _scorers
+                  .where((s) => s.playerId != null)
+                  .map((s) =>
+                      ScorerEntry(playerId: s.playerId!, goles: s.goles))
+                  .toList(),
+            ),
+          ),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Proponer resultado',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _ScoreStepper(
+                      label: 'Equipo A',
+                      value: _golesA,
+                      onChanged: (v) => setState(() => _golesA = v)),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text('-',
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                ),
+                Expanded(
+                  child: _ScoreStepper(
+                      label: 'Equipo B',
+                      value: _golesB,
+                      onChanged: (v) => setState(() => _golesB = v)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _LabeledDropdown<String>(
+              label: 'Ganador',
+              value: _ganador,
+              items: const [
+                DropdownMenuItem(value: 'empate', child: Text('Empate')),
+                DropdownMenuItem(value: 'A', child: Text('Equipo A')),
+                DropdownMenuItem(value: 'B', child: Text('Equipo B')),
+              ],
+              onChanged: (v) => setState(() => _ganador = v ?? 'empate'),
+            ),
+            const SizedBox(height: 12),
+            _LabeledDropdown<String>(
+              label: 'MVP (opcional)',
+              value: _mvpId,
+              items: [
+                const DropdownMenuItem(
+                    value: null, child: Text('Sin MVP')),
+                ...widget.participants.map((p) => DropdownMenuItem(
+                      value: p.id,
+                      child: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
+                    )),
+              ],
+              onChanged: (v) => setState(() => _mvpId = v),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('Goleadores',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () =>
+                      setState(() => _scorers.add(_ScorerRow())),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Añadir'),
+                ),
+              ],
+            ),
+            ..._scorers.asMap().entries.map((e) => _ScorerRowWidget(
+                  key: ValueKey(e.key),
+                  row: e.value,
+                  participants: widget.participants,
+                  onRemove: () => setState(() => _scorers.removeAt(e.key)),
+                  onChanged: () => setState(() {}),
+                )),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.send),
+                label: const Text('Enviar propuesta'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScorerRow {
+  String? playerId;
+  int goles = 1;
+}
+
+class _ScorerRowWidget extends StatelessWidget {
+  final _ScorerRow row;
+  final List<MatchParticipant> participants;
+  final VoidCallback onRemove;
+  final VoidCallback onChanged;
+  const _ScorerRowWidget(
+      {super.key,
+      required this.row,
+      required this.participants,
+      required this.onRemove,
+      required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: _LabeledDropdown<String>(
+              label: 'Jugador',
+              value: row.playerId,
+              items: participants
+                  .map((p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text(
+                            p.nickname.isNotEmpty ? p.nickname : p.name,
+                            overflow: TextOverflow.ellipsis),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                row.playerId = v;
+                onChanged();
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _LabeledDropdown<int>(
+              label: 'Goles',
+              value: row.goles,
+              items: List.generate(9, (i) => i + 1)
+                  .map((n) =>
+                      DropdownMenuItem(value: n, child: Text('$n')))
+                  .toList(),
+              onChanged: (v) {
+                row.goles = v ?? 1;
+                onChanged();
+              },
+            ),
+          ),
+          IconButton(
+              onPressed: onRemove, icon: const Icon(Icons.delete_outline)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dropdown con etiqueta y borde (DropdownButtonFormField.value está
+/// deprecado: se usa DropdownButton dentro de un InputDecorator).
+class _LabeledDropdown<T> extends StatelessWidget {
+  final String label;
+  final T? value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
+  const _LabeledDropdown(
+      {required this.label,
+      required this.value,
+      required this.items,
+      required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return InputDecorator(
+      decoration:
+          InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          items: items,
+          isExpanded: true,
+          isDense: true,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _ScoreStepper extends StatelessWidget {
+  final String label;
+  final int value;
+  final ValueChanged<int> onChanged;
+  const _ScoreStepper(
+      {required this.label, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: value > 0 ? () => onChanged(value - 1) : null,
+              icon: const Icon(Icons.remove_circle_outline),
+            ),
+            Text('$value',
+                style: const TextStyle(
+                    fontSize: 28, fontWeight: FontWeight.bold)),
+            IconButton(
+              onPressed: value < 99 ? () => onChanged(value + 1) : null,
+              icon: const Icon(Icons.add_circle_outline),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// División de cuenta entre participantes (carga bajo demanda).
+class _SplitSection extends StatelessWidget {
+  const _SplitSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MatchDetailBloc, MatchDetailState>(
+      builder: (context, state) {
+        final loaded = state is MatchDetailLoaded ? state : null;
+        final split = loaded?.split;
+        final model = loaded?.match is MatchModel
+            ? loaded!.match as MatchModel
+            : null;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Dividir cuenta',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold, color: Colors.deepPurple),
+            ),
+            const SizedBox(height: 8),
+            if (model?.costeTotal != null)
+              Text(
+                  'Coste total: \$${model!.costeTotal!.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            if (split == null)
+              OutlinedButton.icon(
+                onPressed: loaded == null
+                    ? null
+                    : () => context
+                        .read<MatchDetailBloc>()
+                        .add(MatchSplitRequested(loaded.match.id)),
+                icon: const Icon(Icons.payments_outlined),
+                label: const Text('Calcular por persona'),
+              )
+            else if (!split.hasCost)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                      'Este partido no tiene coste registrado. Al crearlo puedes indicar el total.'),
+                ),
+              )
+            else
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '\$${split.perPerson.toStringAsFixed(2)} por persona '
+                        '(${split.participants} jugadores)',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      ...split.detail.map((d) => Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(d.name)),
+                                Text(
+                                    '\$${d.amount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          )),
+                    ],
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Jugadores:',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: iconColor.withOpacity(0.9),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            players,
-            style: const TextStyle(
-              fontSize: 14,
-            ),
-          ),
-        ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ParticipantsCard extends StatelessWidget {
+  final MatchModel? matchModel;
+  const _ParticipantsCard({required this.matchModel});
+
+  @override
+  Widget build(BuildContext context) {
+    final participants = matchModel?.participants ?? const [];
+    if (participants.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('Sin participantes todavía.'),
+        ),
+      );
+    }
+    final myId = context.read<MatchDetailBloc>().currentUserId;
+    return Card(
+      child: Column(
+        children: participants
+            .map((p) => ListTile(
+                  leading: CircleAvatar(
+                      child: Text((p.nickname.isNotEmpty
+                              ? p.nickname
+                              : p.name)
+                          .characters
+                          .firstOrNull
+                          ?.toUpperCase() ??
+                          '?')),
+                  title: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
+                  subtitle: Text(
+                      '${p.played} PJ • ${p.wins} V • ${p.mvpCount} MVP${p.noShows > 0 ? ' • ${p.noShows} ausencias' : ''}'),
+                  trailing: p.id == myId
+                      ? null
+                      : IconButton(
+                          tooltip: 'Reportar no-show',
+                          icon: const Icon(Icons.flag_outlined,
+                              color: Colors.orange),
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Reportar no-show'),
+                              content: Text(
+                                  '¿Confirmas que ${p.nickname} no asistió?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Cancelar')),
+                                FilledButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    context.read<MatchDetailBloc>().add(
+                                          MatchNoShowReported(
+                                              matchId: matchModel!.id,
+                                              playerId: p.id),
+                                        );
+                                  },
+                                  child: const Text('Reportar'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ))
+            .toList(),
       ),
     );
   }

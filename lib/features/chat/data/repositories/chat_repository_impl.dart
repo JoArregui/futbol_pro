@@ -1,58 +1,74 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dartz/dartz.dart';
 import 'package:futbol_pro/core/errors/exceptions.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
-import 'dart:async';
 import '../../domain/repositories/chat_repository.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/entities/chat_room.dart';
 import '../datasources/chat_datasource.dart';
+import '../datasources/chat_local_datasource.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource remoteDataSource;
+  final ChatLocalDataSource localDataSource;
+  final Connectivity connectivity;
 
-  ChatRepositoryImpl({required this.remoteDataSource});
+  ChatRepositoryImpl({required this.remoteDataSource, required this.localDataSource, Connectivity? connectivity})
+      : connectivity = connectivity ?? Connectivity();
+
+  Future<bool> get _isOnline async {
+    final res = await connectivity.checkConnectivity();
+    return res.contains(ConnectivityResult.mobile) || res.contains(ConnectivityResult.wifi) || res.contains(ConnectivityResult.ethernet);
+  }
 
   // ===============================================
   // 🔄 CORREGIDO: De Stream a Future para API REST
   // ===============================================
   @override
   Future<Either<Failure, List<Message>>> getMessages(String roomId) async {
-    try {
-      // 1. Llama al nuevo método Future
-      final messageModels = await remoteDataSource.getMessages(roomId);
-
-      // 2. Mapea los modelos a entidades
-      final entities = messageModels.map<Message>((model) => model).toList();
-
-      return Right(entities);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } catch (e) {
-      return const Left(
-          ServerFailure('Error desconocido al obtener los mensajes.'));
+    final online = await _isOnline;
+    if (online) {
+      try {
+        final models = await remoteDataSource.getMessages(roomId);
+        final entities = models.map<Message>((m) => m).toList();
+        // cache híbrido: guarda en Isar
+        await localDataSource.cacheMessages(roomId, entities);
+        return Right(entities);
+      } on ServerException catch (e) {
+        // fallback a caché
+        final cached = await localDataSource.getCachedMessages(roomId);
+        if (cached.isNotEmpty) return Right(cached);
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      final cached = await localDataSource.getCachedMessages(roomId);
+      if (cached.isNotEmpty) return Right(cached);
+      return const Left(CacheFailure('Sin conexión y sin mensajes en caché'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> sendMessage({
-    required String roomId,
-    required String senderId,
-    required String senderName,
-    required String text,
-  }) async {
-    try {
-      await remoteDataSource.sendMessage(
-        roomId: roomId,
+  Future<Either<Failure, void>> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl}) async {
+    final online = await _isOnline;
+    final tempMsg = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
         senderId: senderId,
         senderName: senderName,
         text: text,
-      );
+        timestamp: DateTime.now(),
+        status: online ? MessageStatus.sent : MessageStatus.sending,
+        type: imageUrl != null ? MessageType.image : MessageType.text,
+        imageUrl: imageUrl);
+    // guarda optimista en Isar
+    await localDataSource.cacheMessage(roomId, tempMsg);
+    if (!online) return const Left(CacheFailure('Mensaje guardado offline, se enviará al reconectar'));
+    try {
+      await remoteDataSource.sendMessage(roomId: roomId, senderId: senderId, senderName: senderName, text: text, imageUrl: imageUrl);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return const Left(
-          ServerFailure('Error desconocido al enviar el mensaje.'));
+      return const Left(ServerFailure('Error desconocido al enviar el mensaje.'));
     }
   }
 
@@ -76,14 +92,22 @@ class ChatRepositoryImpl implements ChatRepository {
   // ===============================================
   @override
   Future<Either<Failure, List<ChatRoom>>> getChatRooms(String userId) async {
-    try {
-      final roomModels = await remoteDataSource.getChatRooms(userId);
-      final entities = roomModels.map<ChatRoom>((model) => model).toList();
-      return Right(entities);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } catch (e) {
-      return const Left(ServerFailure('Error desconocido al obtener las salas de chat.'));
+    final online = await _isOnline;
+    if (online) {
+      try {
+        final models = await remoteDataSource.getChatRooms(userId);
+        final entities = models.map<ChatRoom>((m) => m).toList();
+        await localDataSource.cacheChatRooms(userId, entities);
+        return Right(entities);
+      } on ServerException catch (e) {
+        final cached = await localDataSource.getCachedChatRooms(userId);
+        if (cached.isNotEmpty) return Right(cached);
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      final cached = await localDataSource.getCachedChatRooms(userId);
+      if (cached.isNotEmpty) return Right(cached);
+      return const Left(CacheFailure('Sin conexión y sin chats en caché'));
     }
   }
 

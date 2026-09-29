@@ -45,15 +45,23 @@ dependencies:
   flutter_local_notifications: ^19.5.0
   badges: ^3.1.2
   flutter_secure_storage: ^9.2.4
+  local_auth: ^2.3.0
   socket_io_client: ^3.1.2
   cached_network_image: ^3.4.1
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  connectivity_plus: ^6.0.5
+  path_provider: ^2.1.5
+  sentry_flutter: ^8.14.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  bloc_test: ^10.0.0
   mocktail: ^1.0.4
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.13
 
 # The following section is specific to Flutter packages.
 flutter:

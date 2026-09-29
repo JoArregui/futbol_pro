@@ -11,7 +11,7 @@ class SendMessage implements UseCase<void, SendParams> {
 
   @override
   Future<Either<Failure, void>> call(SendParams params) async {
-    if (params.content.trim().isEmpty) {
+    if (params.content.trim().isEmpty && params.imageUrl == null) {
       return const Left(ValidationFailure('El mensaje no puede estar vacío.'));
     }
 
@@ -20,6 +20,7 @@ class SendMessage implements UseCase<void, SendParams> {
       senderId: params.senderId,
       senderName: params.senderName,
       text: params.content,
+      imageUrl: params.imageUrl,
     );
   }
 }
@@ -30,14 +31,16 @@ class SendParams extends Equatable {
   final String content;
 
   final String senderName;
+  final String? imageUrl;
 
   const SendParams({
     required this.roomId,
     required this.senderId,
     required this.content,
     required this.senderName,
+    this.imageUrl,
   });
 
   @override
-  List<Object> get props => [roomId, senderId, content, senderName];
+  List<Object?> get props => [roomId, senderId, content, senderName, imageUrl];
 }

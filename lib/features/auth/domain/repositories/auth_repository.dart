@@ -19,7 +19,17 @@ abstract class AuthRepository {
 
   Future<Either<Failure, void>> logout();
 
+  Future<bool> refreshSession();
+
   String getCurrentUserId();
   
   String getCurrentUserName();
+
+  String getCurrentUserRole();
+
+  Future<String?> getAuthToken();
+
+  Future<bool> isBiometricEnabled();
+
+  Future<void> setBiometricEnabled(bool v);
 }

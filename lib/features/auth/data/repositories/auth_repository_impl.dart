@@ -77,6 +77,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<bool> refreshSession() => remoteDataSource.refreshSession();
+
+  @override
   String getCurrentUserId() {
     return remoteDataSource.getCurrentUserId();
   }
@@ -85,4 +88,17 @@ class AuthRepositoryImpl implements AuthRepository {
   String getCurrentUserName() {
     return remoteDataSource.getCurrentUserName();
   }
+
+  @override
+  String getCurrentUserRole() => remoteDataSource.getCurrentUserRole();
+
+  @override
+  Future<String?> getAuthToken() => remoteDataSource.getAuthToken();
+
+  @override
+  Future<bool> isBiometricEnabled() => remoteDataSource.isBiometricEnabled();
+
+  @override
+  Future<void> setBiometricEnabled(bool v) =>
+      remoteDataSource.setBiometricEnabled(v);
 }

@@ -7,11 +7,41 @@ abstract class MatchEvent extends Equatable {
 class ScheduleFriendlyMatchEvent extends MatchEvent {
   final DateTime time;
   final String fieldId;
+  final String title;
+  final String mode;
+  final bool needsReferee;
+  final String? description;
+  final String? organizerTeamName;
+  final String? opponentTeamName;
+  final int? maxPlayers;
+  final double? costeTotal;
 
-  const ScheduleFriendlyMatchEvent({required this.time, required this.fieldId});
+  const ScheduleFriendlyMatchEvent({
+    required this.time,
+    required this.fieldId,
+    this.title = 'Amistoso',
+    this.mode = 'open',
+    this.needsReferee = false,
+    this.description,
+    this.organizerTeamName,
+    this.opponentTeamName,
+    this.maxPlayers,
+    this.costeTotal,
+  });
 
   @override
-  List<Object> get props => [time, fieldId];
+  List<Object?> get props => [
+        time,
+        fieldId,
+        title,
+        mode,
+        needsReferee,
+        description,
+        organizerTeamName,
+        opponentTeamName,
+        maxPlayers,
+        costeTotal,
+      ];
 }
 
 class PlayerJoinsMatchEvent extends MatchEvent {

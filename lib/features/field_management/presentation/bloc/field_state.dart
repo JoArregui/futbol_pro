@@ -32,10 +32,30 @@ class FieldError extends FieldState {
 class FieldNoData extends FieldState {}
 
 class FieldReservedSuccess extends FieldState {
-  final String fieldName;
+  final BookingInfo booking;
 
-  const FieldReservedSuccess({required this.fieldName});
+  String get fieldName => booking.fieldName;
+
+  const FieldReservedSuccess({required this.booking});
 
   @override
-  List<Object> get props => [fieldName];
+  List<Object> get props => [booking];
+}
+
+class PagoConfirmado extends FieldState {
+  final String reservaId;
+
+  const PagoConfirmado({required this.reservaId});
+
+  @override
+  List<Object> get props => [reservaId];
+}
+
+class MisReservasLoaded extends FieldState {
+  final List<BookingInfo> reservas;
+
+  const MisReservasLoaded({required this.reservas});
+
+  @override
+  List<Object> get props => [reservas];
 }

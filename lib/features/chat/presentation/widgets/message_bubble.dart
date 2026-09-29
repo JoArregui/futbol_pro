@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/message.dart';
+import 'chat_colors.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -27,7 +29,7 @@ class MessageBubble extends StatelessWidget {
         break;
       case MessageStatus.read:
         icon = Icons.done_all;
-        color = const Color(0xFF53BDEB);
+        color = ChatColors.tickRead;
         break;
       case MessageStatus.failed:
         icon = Icons.error_outline;
@@ -56,19 +58,59 @@ class MessageBubble extends StatelessWidget {
             Container(
               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFF005C4B) : Colors.white,
+                color: isMe
+                    ? ChatColors.myBubble
+                    : ChatColors.otherBubble(context),
                 borderRadius: BorderRadius.circular(8).copyWith(
                   topRight: Radius.circular(isMe ? 0 : 8),
                   topLeft: Radius.circular(isMe ? 8 : 0),
                 ),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 1, offset: const Offset(0, 1))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 1, offset: const Offset(0, 1))],
               ),
               padding: const EdgeInsets.fromLTRB(8, 6, 6, 4),
               child: Stack(
                 children: [
                   Padding(
                     padding: EdgeInsets.only(right: isMe ? 56 : 38, bottom: 2),
-                    child: Text(message.text, style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontSize: 15, height: 1.3)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (message.imageUrl != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: CachedNetworkImage(
+                                imageUrl: message.imageUrl!,
+                                width: 220,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(
+                                  width: 220,
+                                  height: 140,
+                                  color: Colors.black12,
+                                  child: const Center(
+                                      child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2))),
+                                ),
+                                errorWidget: (_, __, ___) => Container(
+                                  width: 220,
+                                  height: 80,
+                                  color: Colors.black12,
+                                  child: const Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (message.text.isNotEmpty)
+                          Text(message.text, style: TextStyle(color: isMe ? Colors.white : ChatColors.otherText(context), fontSize: 15, height: 1.3)),
+                      ],
+                    ),
                   ),
                   Positioned(
                     right: 0,
@@ -76,7 +118,7 @@ class MessageBubble extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(time, style: TextStyle(color: isMe ? Colors.white70 : Colors.grey.shade600, fontSize: 11)),
+                        Text(time, style: TextStyle(color: isMe ? Colors.white70 : ChatColors.subtle(context), fontSize: 11)),
                         if (isMe) ...[const SizedBox(width: 4), _tick(message.status)],
                       ],
                     ),

@@ -77,6 +77,9 @@ Android Studio will place build artifacts here
 server/node_modules/
 server/.env
 server/*.log
+server/*.db
+server/*.db-shm
+server/*.db-wal
 
 # Legacy backend duplicado (ahora en /server)
 lib/backend/

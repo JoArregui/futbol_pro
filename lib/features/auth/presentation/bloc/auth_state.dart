@@ -12,9 +12,19 @@ class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
   final String userId;
-  const AuthAuthenticated(this.userId);
+  final String role;
+  const AuthAuthenticated(this.userId, {this.role = 'player'});
+  bool get isSuperAdmin => role == 'superadmin';
   @override
-  List<Object> get props => [userId];
+  List<Object> get props => [userId, role];
+}
+
+class AuthBiometricRequired extends AuthState {
+  final String userId;
+  final String role;
+  const AuthBiometricRequired(this.userId, {this.role = 'player'});
+  @override
+  List<Object> get props => [userId, role];
 }
 
 class AuthUnauthenticated extends AuthState {}

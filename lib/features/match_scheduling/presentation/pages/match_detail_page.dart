@@ -45,11 +45,27 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
         title: const Text('Detalle del Partido'),
         centerTitle: true,
       ),
-      body: BlocBuilder<MatchDetailBloc, MatchDetailState>(
-        builder: (context, state) {
-          if (state is MatchDetailLoading) {
-            return const Center(child: CircularProgressIndicator());
+      body: BlocListener<MatchDetailBloc, MatchDetailState>(
+        listener: (context, state) {
+          if (state is MatchDetailLoaded && state.notice != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.notice!)),
+            );
           }
+          if (state is MatchDetailLoaded && state.error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(state.error!),
+                  backgroundColor: Colors.redAccent),
+            );
+          }
+        },
+        child: BlocBuilder<MatchDetailBloc, MatchDetailState>(
+          builder: (context, state) {
+            if (state is MatchDetailLoading ||
+                state is MatchDetailActionRunning) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
           if (state is MatchDetailError) {
             return Center(
@@ -79,12 +95,13 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
             );
           }
 
-          if (state is MatchDetailLoaded) {
-            return MatchDetailView(match: state.match);
-          }
+            if (state is MatchDetailLoaded) {
+              return MatchDetailView(match: state.match);
+            }
 
-          return const Center(child: Text('Esperando datos del partido...'));
-        },
+            return const Center(child: Text('Esperando datos del partido...'));
+          },
+        ),
       ),
     );
   }

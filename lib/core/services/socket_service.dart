@@ -7,7 +7,7 @@ class SocketService {
 
   void connect({required String userId}) {
     if (_socket != null && _socket!.connected) return;
-    final base = AppConsts.baseUrl.replaceAll('/api/v1', '');
+    final base = AppConsts.effectiveBaseUrl.replaceAll('/api/v1', '');
     _socket = io.io(base, io.OptionBuilder().setTransports(['websocket']).enableAutoConnect().build());
     _socket!.onConnect((_) {
       _socket!.emit('join_user', userId);

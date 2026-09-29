@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'storage/secure_storage_service.dart';
+import 'network/authenticated_client.dart';
+import 'db/isar_service.dart';
+import '../features/chat/data/datasources/chat_local_datasource.dart';
 
 // Auth Feature
 import '../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -46,6 +50,8 @@ import '../features/field_management/data/repositories/field_repository_impl.dar
 import '../features/field_management/domain/repositories/field_repository.dart';
 import '../features/field_management/domain/usecases/get_available_fields.dart';
 import '../features/field_management/domain/usecases/reserve_field.dart';
+import '../features/field_management/domain/usecases/confirm_pago.dart';
+import '../features/field_management/domain/usecases/get_mis_reservas.dart';
 import '../features/field_management/presentation/bloc/field_bloc.dart';
 
 // League Management Feature
@@ -53,10 +59,16 @@ import '../features/league_management/data/datasources/league_remote_datasource.
 import '../features/league_management/data/repositories/league_repository_impl.dart';
 import '../features/league_management/domain/repositories/league_repository.dart';
 import '../features/league_management/domain/usecases/get_league_standings.dart';
+import '../features/league_management/domain/usecases/get_tournaments.dart';
+import '../features/league_management/domain/usecases/register_team.dart';
+import '../features/league_management/domain/usecases/create_league.dart';
+import '../features/league_management/domain/usecases/get_league_detail.dart';
+import '../features/league_management/domain/usecases/generate_fixture.dart';
 import '../features/league_management/presentation/bloc/league_bloc.dart';
 
 // Match Scheduling Feature
 import '../features/match_scheduling/data/datasources/match_remote_datasource.dart';
+import '../features/match_scheduling/data/datasources/referee_remote_datasource.dart';
 import '../features/match_scheduling/data/repositories/match_repository_impl.dart';
 import '../features/match_scheduling/domain/repositories/match_repository.dart';
 import '../features/match_scheduling/domain/usecases/get_match_details.dart';
@@ -64,30 +76,52 @@ import '../features/match_scheduling/domain/usecases/schedule_friendly_match.dar
 import '../features/match_scheduling/domain/usecases/join_match.dart';
 import '../features/match_scheduling/domain/usecases/generate_balanced_teams.dart';
 import '../features/match_scheduling/domain/usecases/update_match_with_teams.dart';
+import '../features/match_scheduling/domain/usecases/submit_match_result.dart';
+import '../features/match_scheduling/domain/usecases/confirm_match_result.dart';
+import '../features/match_scheduling/domain/usecases/report_no_show.dart';
+import '../features/match_scheduling/domain/usecases/get_match_split.dart';
 import '../features/match_scheduling/presentation/bloc/match_bloc.dart';
+import '../features/match_scheduling/presentation/bloc/match_detail_bloc.dart';
+
+// Admin Feature (superadmin)
+import '../features/admin/data/datasources/admin_remote_datasource.dart';
+import '../features/admin/data/repositories/admin_repository_impl.dart';
+import '../features/admin/domain/repositories/admin_repository.dart';
+import '../features/admin/presentation/bloc/admin_bloc.dart';
 
 
 final sl = GetIt.instance; // sl = Service Locator
 
 Future<void> init() async {
-    print('🚀 Iniciando registro de dependencias...');
+    debugPrint('🚀 Iniciando registro de dependencias...');
 
     // ===========================================
     // 1. Core (External)
     // ===========================================
-    print('📦 Registrando dependencias Core...');
-    sl.registerLazySingleton(() => http.Client());
+    debugPrint('📦 Registrando dependencias Core...');
     sl.registerLazySingleton(() => FirebaseFirestore.instance);
     sl.registerLazySingleton(() => const FlutterSecureStorage());
     sl.registerLazySingleton(() => SecureStorageService(storage: sl()));
+    // Cliente HTTP autenticado: inyecta JWT en cada petición (nunca anónimo).
+    // Debe ir tras SecureStorageService porque lo lee de forma lazy.
+    sl.registerLazySingleton<http.Client>(
+      () => AuthenticatedClient(
+        inner: http.Client(),
+        storage: sl<SecureStorageService>(),
+      ),
+    );
     sl.registerLazySingleton<NotificationService>(() => NotificationServiceImpl());
     sl.registerLazySingleton(() => SocketService());
-    print('✅ Core registrado correctamente');
+    final isarService = IsarService();
+    await isarService.init();
+    sl.registerSingleton<IsarService>(isarService);
+    sl.registerLazySingleton<ChatLocalDataSource>(() => ChatLocalDataSourceImpl(sl<IsarService>()));
+    debugPrint('✅ Core registrado correctamente (Isar + Storage + Socket)');
 
     // ===========================================
     // 2. Feature - Auth
     // ===========================================
-    print('🔐 Registrando Auth Feature...');
+    debugPrint('🔐 Registrando Auth Feature...');
 
     sl.registerLazySingleton<AuthRemoteDataSource>(
         () => AuthRemoteDataSourceImpl(
@@ -95,19 +129,19 @@ Future<void> init() async {
             secureStorage: sl<SecureStorageService>(),
         ),
     );
-    print('  ✅ AuthRemoteDataSource registrado');
+    debugPrint('  ✅ AuthRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<AuthRepository>(
         () => AuthRepositoryImpl(remoteDataSource: sl<AuthRemoteDataSource>()),
     );
-    print('  ✅ AuthRepository registrado');
+    debugPrint('  ✅ AuthRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => SubscribeToNotifications(sl<NotificationService>()));
     sl.registerLazySingleton(() => LoginUser(sl<AuthRepository>()));
     sl.registerLazySingleton(() => RegisterUser(sl<AuthRepository>()));
-    print('  ✅ UseCases registrados');
+    debugPrint('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(
@@ -117,12 +151,12 @@ Future<void> init() async {
             repository: sl<AuthRepository>(),
         ),
     );
-    print('  ✅ AuthBloc registrado');
+    debugPrint('  ✅ AuthBloc registrado');
 
     // ===========================================
     // 3. Feature - Profile Management
     // ===========================================
-    print('👤 Registrando Profile Feature...');
+    debugPrint('👤 Registrando Profile Feature...');
 
     // Data Sources
     sl.registerLazySingleton<ProfileRemoteDataSource>(
@@ -131,19 +165,19 @@ Future<void> init() async {
             client: sl<http.Client>(),
         ),
     );
-    print('  ✅ ProfileRemoteDataSource registrado');
+    debugPrint('  ✅ ProfileRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<ProfileRepository>(
         () => ProfileRepositoryImpl(remoteDataSource: sl<ProfileRemoteDataSource>()),
     );
-    print('  ✅ ProfileRepository registrado');
+    debugPrint('  ✅ ProfileRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => GetProfile(sl<ProfileRepository>()));
     sl.registerLazySingleton(() => UpdateProfile(sl<ProfileRepository>()));
     sl.registerLazySingleton(() => CreateProfile(sl<ProfileRepository>())); 
-    print('  ✅ UseCases registrados');
+    debugPrint('  ✅ UseCases registrados');
 
     // Presentation (BLoC) — lazy via AuthRepository
     sl.registerFactory(
@@ -154,12 +188,12 @@ Future<void> init() async {
             authRepository: sl<AuthRepository>(),
         ),
     );
-    print('✅ Profile Feature registrado');
+    debugPrint('✅ Profile Feature registrado');
 
     // ===========================================
     // 4. Feature - Chat Management 💬
     // ===========================================
-    print('💬 Registrando Chat Feature...');
+    debugPrint('💬 Registrando Chat Feature...');
 
     // Data Sources
     sl.registerLazySingleton<ChatRemoteDataSource>(
@@ -168,13 +202,12 @@ Future<void> init() async {
             client: sl<http.Client>(), 
         ), 
     );
-    print('  ✅ ChatRemoteDataSource registrado');
+    debugPrint('  ✅ ChatRemoteDataSource registrado');
 
-    // Data (Repositories)
     sl.registerLazySingleton<ChatRepository>(
-        () => ChatRepositoryImpl(remoteDataSource: sl<ChatRemoteDataSource>()),
+        () => ChatRepositoryImpl(remoteDataSource: sl<ChatRemoteDataSource>(), localDataSource: sl<ChatLocalDataSource>()),
     );
-    print('  ✅ ChatRepository registrado');
+    debugPrint('  ✅ ChatRepository registrado (híbrido Isar+Server)');
 
     sl.registerLazySingleton(() => GetMessages(sl<ChatRepository>()));
     sl.registerLazySingleton(() => SendMessage(sl<ChatRepository>()));
@@ -182,7 +215,7 @@ Future<void> init() async {
     sl.registerLazySingleton(() => GetChatRooms(sl<ChatRepository>()));
     sl.registerLazySingleton(() => CreateChat(sl<ChatRepository>()));
     sl.registerLazySingleton(() => SearchUsers(sl<ChatRepository>()));
-    print('  ✅ UseCases registrados');
+    debugPrint('  ✅ UseCases registrados');
 
     sl.registerFactory(
         () => ChatBloc(
@@ -194,26 +227,30 @@ Future<void> init() async {
             searchUsers: sl<SearchUsers>(),
             authRepository: sl<AuthRepository>(),
             socketService: sl<SocketService>(),
+            notifications: sl<NotificationService>(),
         ),
     );
-    print('✅ Chat Feature registrado');
+    debugPrint('✅ Chat Feature registrado');
 
     // ===========================================
     // 5. Feature - Match Scheduling
     // ===========================================
-    print('⚽ Registrando Match Scheduling Feature...');
+    debugPrint('⚽ Registrando Match Scheduling Feature...');
 
     // Data Sources
     sl.registerLazySingleton<MatchRemoteDataSource>(
         () => MatchRemoteDataSourceImpl(client: sl<http.Client>()),
     );
-    print('  ✅ MatchRemoteDataSource registrado');
+    sl.registerLazySingleton<RefereeRemoteDataSource>(
+        () => RefereeRemoteDataSource(client: sl<http.Client>()),
+    );
+    debugPrint('  ✅ MatchRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<MatchRepository>(
         () => MatchRepositoryImpl(remoteDataSource: sl<MatchRemoteDataSource>()),
     );
-    print('  ✅ MatchRepository registrado');
+    debugPrint('  ✅ MatchRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => ScheduleFriendlyMatch(sl<MatchRepository>()));
@@ -222,7 +259,11 @@ Future<void> init() async {
     sl.registerLazySingleton(() => GetMatchDetails(sl<MatchRepository>()));
     sl.registerLazySingleton(() => UpdateMatchWithTeams(sl<MatchRepository>()));
     sl.registerLazySingleton(() => GetUpcomingMatches(sl<MatchRepository>()));
-    print('  ✅ UseCases registrados');
+    sl.registerLazySingleton(() => SubmitMatchResult(sl<MatchRepository>()));
+    sl.registerLazySingleton(() => ConfirmMatchResult(sl<MatchRepository>()));
+    sl.registerLazySingleton(() => ReportNoShow(sl<MatchRepository>()));
+    sl.registerLazySingleton(() => GetMatchSplit(sl<MatchRepository>()));
+    debugPrint('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(
@@ -235,65 +276,113 @@ Future<void> init() async {
             getUpcomingMatches: sl<GetUpcomingMatches>(),
         ),
     );
-    print('✅ Match Scheduling Feature registrado');
+    sl.registerFactory(
+        () => MatchDetailBloc(
+            getMatchDetails: sl<GetMatchDetails>(),
+            submitMatchResult: sl<SubmitMatchResult>(),
+            confirmMatchResult: sl<ConfirmMatchResult>(),
+            reportNoShow: sl<ReportNoShow>(),
+            getMatchSplit: sl<GetMatchSplit>(),
+            authRepository: sl<AuthRepository>(),
+        ),
+    );
+    debugPrint('✅ Match Scheduling Feature registrado');
 
     // ===========================================
     // 6. Feature - Field Management
     // ===========================================
-    print('🏟️ Registrando Field Management Feature...');
+    debugPrint('🏟️ Registrando Field Management Feature...');
 
     // Data Sources
     sl.registerLazySingleton<FieldRemoteDataSource>(
         () => FieldRemoteDataSourceImpl(client: sl<http.Client>()),
     );
-    print('  ✅ FieldRemoteDataSource registrado');
+    debugPrint('  ✅ FieldRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<FieldRepository>(
         () => FieldRepositoryImpl(remoteDataSource: sl<FieldRemoteDataSource>()),
     );
-    print('  ✅ FieldRepository registrado');
+    debugPrint('  ✅ FieldRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => GetAvailableFields(sl<FieldRepository>()));
     sl.registerLazySingleton(
         () => ReserveField(sl<FieldRepository>()),
     );
-    print('  ✅ UseCases registrados');
+    sl.registerLazySingleton(() => ConfirmPago(sl<FieldRepository>()));
+    sl.registerLazySingleton(() => GetMisReservas(sl<FieldRepository>()));
+    debugPrint('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
     sl.registerFactory(
         () => FieldBloc(
             getAvailableFields: sl<GetAvailableFields>(),
             reserveField: sl<ReserveField>(),
+            confirmPago: sl<ConfirmPago>(),
+            getMisReservas: sl<GetMisReservas>(),
         ),
     );
-    print('✅ Field Management Feature registrado');
+    debugPrint('✅ Field Management Feature registrado');
 
     // ===========================================
     // 7. Feature - League Management
     // ===========================================
-    print('🏆 Registrando League Management Feature...');
+    debugPrint('🏆 Registrando League Management Feature...');
 
     // Data Sources
     sl.registerLazySingleton<LeagueRemoteDataSource>(
         () => LeagueRemoteDataSourceImpl(client: sl<http.Client>()),
     );
-    print('  ✅ LeagueRemoteDataSource registrado');
+    debugPrint('  ✅ LeagueRemoteDataSource registrado');
 
     // Data (Repositories)
     sl.registerLazySingleton<LeagueRepository>(
         () => LeagueRepositoryImpl(remoteDataSource: sl<LeagueRemoteDataSource>()),
     );
-    print('  ✅ LeagueRepository registrado');
+    debugPrint('  ✅ LeagueRepository registrado');
 
     // Domain (Use Cases)
     sl.registerLazySingleton(() => GetLeagueStandings(sl<LeagueRepository>()));
-    print('  ✅ UseCases registrados');
+    sl.registerLazySingleton(() => GetTournaments(sl<LeagueRepository>()));
+    sl.registerLazySingleton(() => RegisterTeam(sl<LeagueRepository>()));
+    sl.registerLazySingleton(() => CreateLeague(sl<LeagueRepository>()));
+    sl.registerLazySingleton(() => GetLeagueDetail(sl<LeagueRepository>()));
+    sl.registerLazySingleton(() => GenerateFixture(sl<LeagueRepository>()));
+    debugPrint('  ✅ UseCases registrados');
 
     // Presentation (BLoC)
-    sl.registerFactory(() => LeagueBloc(getLeagueStandings: sl<GetLeagueStandings>()));
-    print('✅ League Management Feature registrado');
+    sl.registerFactory(() => LeagueBloc(
+        getLeagueStandings: sl<GetLeagueStandings>(),
+        getTournaments: sl<GetTournaments>(),
+        registerTeam: sl<RegisterTeam>(),
+        createLeague: sl<CreateLeague>(),
+        getLeagueDetail: sl<GetLeagueDetail>(),
+        generateFixture: sl<GenerateFixture>()));
+    debugPrint('✅ League Management Feature registrado');
 
-    print('🎉 Todas las dependencias registradas exitosamente!');
+    // ===========================================
+    // 8. Feature - Admin (superadmin)
+    // ===========================================
+    debugPrint('🛡️ Registrando Admin Feature...');
+    sl.registerLazySingleton<AdminRemoteDataSource>(
+        () => AdminRemoteDataSource(
+            client: sl<http.Client>(),
+            authRepository: sl<AuthRepository>()));
+    sl.registerLazySingleton<AdminRepository>(
+        () => AdminRepositoryImpl(remote: sl<AdminRemoteDataSource>()));
+    sl.registerFactory(() => AdminBloc(repository: sl<AdminRepository>()));
+    debugPrint('✅ Admin Feature registrado');
+
+    // Rotación transparente de JWT: ante un 401, el cliente pide un par
+    // nuevo con el refresh token y reintenta una vez (sin bucles: el propio
+    // AuthenticatedClient excluye /auth/refresh del reintento).
+    final authClient = sl<http.Client>();
+    if (authClient is AuthenticatedClient) {
+      authClient.onUnauthorized =
+          () => sl<AuthRemoteDataSource>().refreshSession();
+      debugPrint('✅ Rotación JWT conectada (401 → refresh → retry)');
+    }
+
+    debugPrint('🎉 Todas las dependencias registradas exitosamente!');
 }

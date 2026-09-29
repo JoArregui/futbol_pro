@@ -20,7 +20,17 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
     
-    // Evaluación de dependencias dentro del mismo bloque
+    // Inyección de namespace para plugins antiguos (se ejecuta antes de evaluar las dependencias)
+    plugins.withId("com.android.library") {
+        val androidExtension = extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+        if (androidExtension != null && androidExtension.namespace == null) {
+            androidExtension.namespace = project.group.toString().ifEmpty {
+                "com.example.${project.name.replace("-", "_")}"
+            }
+        }
+    }
+
+    // Evaluación de dependencias
     project.evaluationDependsOn(":app")
 }
 

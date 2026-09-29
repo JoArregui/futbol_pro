@@ -61,7 +61,7 @@ class _DateChip extends StatelessWidget {
         child: Center(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: const Color(0xFFE1F2FA), borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 1)]),
+            decoration: BoxDecoration(color: const Color(0xFFE1F2FA), borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 1)]),
             child: Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF54656F), fontWeight: FontWeight.w500)),
           ),
         ),

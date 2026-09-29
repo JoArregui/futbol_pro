@@ -9,13 +9,12 @@ import '../../domain/entities/chat_room.dart';
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
 
-const String _kBaseUrl = AppConsts.baseUrl;
-const String _kChatUrl = '${AppConsts.baseUrl}/chats';
+final String _kChatUrl = '${AppConsts.effectiveBaseUrl}/chats';
 
 
 abstract class ChatRemoteDataSource {
   Future<List<MessageModel>> getMessages(String roomId);
-  Future<void> sendMessage({required String roomId, required String senderId, required String senderName, required String text});
+  Future<void> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl});
   Future<void> markMessagesAsRead(String roomId, String userId);
   Future<List<ChatRoomModel>> getChatRooms(String userId);
   Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId});
@@ -60,6 +59,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required String senderId,
     required String senderName,
     required String text,
+    String? imageUrl,
   }) async {
     final url = Uri.parse('$_kChatUrl/$roomId/messages');
 
@@ -71,6 +71,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           'senderId': senderId,
           'senderName': senderName,
           'text': text,
+          if (imageUrl != null) 'imageUrl': imageUrl,
         }),
       );
 
@@ -102,6 +103,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   }
 
   
+  @override
   Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId}) async {
     final url = Uri.parse(_kChatUrl);
     final res = await client.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'type': type, 'memberIds': memberIds, if (relatedEntityId != null) 'relatedEntityId': relatedEntityId}));
@@ -116,8 +118,9 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     throw ServerException(message: 'Error crear chat: ${res.statusCode}');
   }
 
+  @override
   Future<List<Map<String, dynamic>>> searchUsers({required String query, required String excludeUid}) async {
-    final url = Uri.parse('${AppConsts.baseUrl}/users/search?q=${Uri.encodeComponent(query)}&excludeUid=$excludeUid');
+    final url = Uri.parse('${AppConsts.effectiveBaseUrl}/users/search?q=${Uri.encodeComponent(query)}&excludeUid=$excludeUid');
     final res = await client.get(url);
     if (res.statusCode == 200) {
       final List<dynamic> list = jsonDecode(res.body);

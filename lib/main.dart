@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'firebase_options.dart';
 
 // Injection Container
@@ -23,24 +25,43 @@ import 'features/field_management/presentation/bloc/field_bloc.dart';
 import 'features/league_management/presentation/bloc/league_bloc.dart';
 
 
-void main() async {
+/// DSN de Sentry (compile-time). Sin DSN no se envía nada:
+/// `flutter run --dart-define=SENTRY_DSN=https://...`
+const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
+
+Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Reporte global de errores: siempre a consola, a Sentry solo con DSN.
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    if (_sentryDsn.isNotEmpty) {
+      Sentry.captureException(details.exception, stackTrace: details.stack);
+    }
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('❌ Unhandled async: $error');
+    if (_sentryDsn.isNotEmpty) {
+      Sentry.captureException(error, stackTrace: stack);
+    }
+    return true;
+  };
+
   try {
-    print('🔥 Inicializando Firebase...');
+    debugPrint('🔥 Inicializando Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('✅ Firebase inicializado correctamente');
+    debugPrint('✅ Firebase inicializado correctamente');
 
-    print('🔔 Inicializando NotificationService...');
+    debugPrint('🔔 Inicializando NotificationService...');
     final notificationService = NotificationServiceImpl();
     await notificationService.initialize();
-    print('✅ NotificationService inicializado');
+    debugPrint('✅ NotificationService inicializado');
 
-    print('🔧 Inicializando dependency injection...');
+    debugPrint('🔧 Inicializando dependency injection...');
     await di.init();
-    print('✅ Dependency injection inicializado');
+    debugPrint('✅ Dependency injection inicializado');
 
     // ✅ CORRECCIÓN: Instanciamos el AuthBloc y el AppRouter aquí para pasarlos a MyApp
     final authBloc = sl<AuthBloc>();
@@ -48,9 +69,12 @@ void main() async {
 
     runApp(MyApp(authBloc: authBloc, appRouter: appRouter));
   } catch (e, stackTrace) {
-    print('❌ Error durante la inicialización: $e');
-    print('Stack trace: $stackTrace');
-    
+    debugPrint('❌ Error durante la inicialización: $e');
+    debugPrint('Stack trace: $stackTrace');
+    if (_sentryDsn.isNotEmpty) {
+      await Sentry.captureException(e, stackTrace: stackTrace);
+    }
+
     // Mostrar error en pantalla
     runApp(MaterialApp(
       home: Scaffold(
@@ -79,6 +103,19 @@ void main() async {
       ),
     ));
   }
+}
+
+void main() async {
+  if (_sentryDsn.isEmpty) {
+    return _bootstrap();
+  }
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = _sentryDsn;
+      options.tracesSampleRate = 0.2;
+    },
+    appRunner: _bootstrap,
+  );
 }
 
 class MyApp extends StatelessWidget {

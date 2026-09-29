@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/biometric_auth_service.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../domain/entities/user_profile.dart';
 import '../bloc/profile_bloc.dart';
 
@@ -76,7 +78,11 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
             
             // Sección de Estadísticas
             _buildStatsSection(),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+
+            // Seguridad: biometría opcional
+            const _BiometricTile(),
+            const SizedBox(height: 16),
 
             // Botón de Guardar
             ElevatedButton(
@@ -229,6 +235,71 @@ class _StatItem extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
+    );
+  }
+}
+
+/// Seguridad: activar / desactivar desbloqueo con huella (opcional).
+class _BiometricTile extends StatefulWidget {
+  const _BiometricTile();
+
+  @override
+  State<_BiometricTile> createState() => _BiometricTileState();
+}
+
+class _BiometricTileState extends State<_BiometricTile> {
+  bool? _available;
+  bool _enabled = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final svc = BiometricAuthService();
+    final available = await svc.isAvailable();
+    bool enabled = false;
+    if (mounted) {
+      try {
+        enabled = await context.read<AuthBloc>().repository.isBiometricEnabled();
+      } catch (_) {}
+      setState(() {
+        _available = available;
+        _enabled = enabled;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const SizedBox.shrink();
+    if (_available != true) {
+      return const Card(
+        child: ListTile(
+          leading: Icon(Icons.fingerprint),
+          title: Text('Huella no disponible'),
+          subtitle: Text('Este dispositivo no tiene biometría.'),
+        ),
+      );
+    }
+    return Card(
+      child: SwitchListTile(
+        secondary: const Icon(Icons.fingerprint, color: Colors.teal),
+        title: const Text('Desbloquear con huella'),
+        subtitle: const Text('Opcional. El password siempre se pide el primer login.'),
+        value: _enabled,
+        onChanged: (v) {
+          context.read<AuthBloc>().add(BiometricEnrollmentRequested(v));
+          setState(() => _enabled = v);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(v ? 'Huella activada' : 'Huella desactivada')),
+          );
+        },
+      ),
     );
   }
 }

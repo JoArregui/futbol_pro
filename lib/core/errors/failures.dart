@@ -44,19 +44,19 @@ class NotFoundFailure extends Failure {
 extension FailureExtension on Failure {
   String get errorMessage {
     switch (runtimeType) {
-      case ServerFailure:
+      case ServerFailure _:
         return 'Error del servidor: $message';
-      case CacheFailure:
+      case CacheFailure _:
         return 'Error de almacenamiento local: $message';
-      case NetworkFailure:
+      case NetworkFailure _:
         return 'Sin conexión a internet. Verifica tu conexión.';
-      case AuthenticationFailure:
+      case AuthenticationFailure _:
         return 'Error de autenticación: $message';
-      case ValidationFailure:
+      case ValidationFailure _:
         return message;
-      case PermissionFailure:
+      case PermissionFailure _:
         return 'Permiso denegado: $message';
-      case NotFoundFailure:
+      case NotFoundFailure _:
         return 'No encontrado: $message';
       default:
         return 'Error inesperado: $message';

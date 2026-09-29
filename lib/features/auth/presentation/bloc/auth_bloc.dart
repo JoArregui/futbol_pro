@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/services/biometric_auth_service.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/register_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -12,24 +13,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUser loginUser;
   final RegisterUser registerUser;
   final AuthRepository repository;
+  final BiometricAuthService biometricService;
 
   AuthBloc({
     required this.loginUser,
     required this.registerUser,
     required this.repository,
-  }) : super(AuthInitial()) {
+    BiometricAuthService? biometricService,
+  }) : biometricService = biometricService ?? BiometricAuthService(),
+       super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<BiometricUnlockRequested>(_onBiometricUnlock);
+    on<BiometricEnrollmentRequested>(_onBiometricEnroll);
   }
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     final result = await repository.getAuthenticatedPlayer();
-    result.fold(
-      (failure) => emit(AuthUnauthenticated()),
-      (player) => emit(AuthAuthenticated(player.id)),
+    await result.fold(
+      (failure) async => emit(AuthUnauthenticated()),
+      (player) async {
+        // Si el usuario activó biometría, exigir desbloqueo local.
+        final enabled = await repository.isBiometricEnabled();
+        if (enabled) {
+          final available = await biometricService.isAvailable();
+          if (available) {
+            emit(AuthBiometricRequired(player.id, role: player.role));
+            return;
+          }
+        }
+        emit(AuthAuthenticated(player.id, role: player.role));
+      },
     );
   }
 
@@ -42,7 +59,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) => emit(AuthError(failure.message)),
-      (player) => emit(AuthAuthenticated(player.id)),
+      (player) => emit(AuthAuthenticated(player.id, role: player.role)),
     );
   }
 
@@ -60,8 +77,45 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) => emit(AuthError(failure.message)),
-      (player) => emit(AuthAuthenticated(player.id)),
+      (player) => emit(AuthAuthenticated(player.id, role: player.role)),
     );
+  }
+
+  Future<void> _onBiometricUnlock(
+      BiometricUnlockRequested event, Emitter<AuthState> emit) async {
+    final current = state;
+    String userId = '';
+    String role = 'player';
+    if (current is AuthBiometricRequired) {
+      userId = current.userId;
+      role = current.role;
+    } else {
+      final res = await repository.getAuthenticatedPlayer();
+      final player = res.fold((_) => null, (p) => p);
+      if (player == null) {
+        emit(AuthUnauthenticated());
+        return;
+      }
+      userId = player.id;
+      role = player.role;
+    }
+    final ok = await biometricService.authenticate(
+        reason: 'Desbloquea Futbol Pro con tu huella');
+    if (ok) {
+      emit(AuthAuthenticated(userId, role: role));
+    } else {
+      emit(AuthBiometricRequired(userId, role: role));
+    }
+  }
+
+  Future<void> _onBiometricEnroll(
+      BiometricEnrollmentRequested event, Emitter<AuthState> emit) async {
+    if (event.enabled) {
+      final ok = await biometricService.authenticate(
+          reason: 'Activa el desbloqueo con huella');
+      if (!ok) return;
+    }
+    await repository.setBiometricEnabled(event.enabled);
   }
 
   Future<void> _onLogoutRequested(

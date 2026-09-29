@@ -57,7 +57,6 @@ class MessageModel extends Message {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() => {
         'id': id,
         'senderId': senderId,

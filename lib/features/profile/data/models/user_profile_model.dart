@@ -51,7 +51,6 @@ class UserProfileModel extends UserProfile {
   }
 
   // Conversión a Map para serialización a JSON (para POST/PUT)
-  @override
   Map<String, dynamic> toMap() {
     return {
       'uid': uid, // Incluir UID para las rutas de la API

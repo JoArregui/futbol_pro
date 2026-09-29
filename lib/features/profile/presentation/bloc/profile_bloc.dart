@@ -17,6 +17,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   String get currentUserId => authRepository.getCurrentUserId();
 
+  /// Nombre real del usuario en sesión (para creación de perfil fallback,
+  /// en lugar de placeholders quemados en la UI).
+  String get currentUserName => authRepository.getCurrentUserName();
+
   ProfileBloc({
     required this.getProfile,
     required this.updateProfile,

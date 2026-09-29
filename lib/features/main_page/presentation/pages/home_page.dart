@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../domain/entities/app_section.dart';
 
 // Lista estática de secciones
@@ -37,6 +39,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final isSuperAdmin =
+        authState is AuthAuthenticated && authState.isSuperAdmin;
+    final sections = [
+      ..._sections,
+      if (isSuperAdmin)
+        const AppSection(
+          title: 'Panel Admin',
+          icon: Icons.admin_panel_settings,
+          routePath: AppRoutes.admin,
+        ),
+    ];
     return GridView.builder(
       padding: const EdgeInsets.all(16.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -46,9 +60,9 @@ class HomePage extends StatelessWidget {
 
         childAspectRatio: 1.1,
       ),
-      itemCount: _sections.length,
+      itemCount: sections.length,
       itemBuilder: (context, index) {
-        final section = _sections[index];
+        final section = sections[index];
         return _SectionCard(section: section);
       },
     );

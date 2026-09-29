@@ -89,7 +89,7 @@ class _ChatListPageState extends State<ChatListPage> with SingleTickerProviderSt
                 if (s is ChatRoomsLoaded) {
                   final filtered = _filter(s.rooms);
                   if (filtered.isEmpty) {
-                    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.chat_bubble_outline, size: 64, color: Color(0xFF667781)), const SizedBox(height: 12), Text(_query.isNotEmpty ? 'Sin resultados para \"$_query\"' : s.rooms.isEmpty ? 'No tienes chats. ¡Crea uno!' : 'Sin chats en esta pestaña', style: const TextStyle(color: Color(0xFF667781))), const SizedBox(height: 12), if (s.rooms.isEmpty) ElevatedButton.icon(onPressed: () => context.push('/chat/new'), icon: const Icon(Icons.chat), label: const Text('Nuevo chat'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366), foregroundColor: Colors.white))]));
+                    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.chat_bubble_outline, size: 64, color: Color(0xFF667781)), const SizedBox(height: 12), Text(_query.isNotEmpty ? 'Sin resultados para "$_query"' : s.rooms.isEmpty ? 'No tienes chats. ¡Crea uno!' : 'Sin chats en esta pestaña', style: const TextStyle(color: Color(0xFF667781))), const SizedBox(height: 12), if (s.rooms.isEmpty) ElevatedButton.icon(onPressed: () => context.push('/chat/new'), icon: const Icon(Icons.chat), label: const Text('Nuevo chat'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366), foregroundColor: Colors.white))]));
                   }
                   return RefreshIndicator(
                     onRefresh: () async => context.read<ChatBloc>().add(ChatRoomsSubscriptionRequested()),

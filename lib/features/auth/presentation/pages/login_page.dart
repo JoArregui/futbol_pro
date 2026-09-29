@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:futbol_pro/features/auth/presentation/bloc/auth_bloc.dart';
-
+import '../../../../core/widgets/connection_banner.dart';
 import '../../../../routes/app_routes.dart';
 
 class LoginPage extends StatefulWidget {
@@ -45,12 +45,16 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
+            final isConn = state.message.contains('No se pudo conectar') || state.message.contains('Timeout');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('Error al iniciar sesión: ${state.message}')),
+                content: Text(isConn ? '${state.message}\n→ Verifica server npm run dev' : 'Error al iniciar sesión: ${state.message}'),
+                backgroundColor: Colors.redAccent,
+                duration: const Duration(seconds: 5),
+              ),
             );
           }
-          
+
           if (state is AuthAuthenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Inicio de sesión exitoso.')),
@@ -58,7 +62,56 @@ class _LoginPageState extends State<LoginPage> {
             // La navegación a AppRoutes.home la maneja el 'redirect' del GoRouter.
           }
         },
-        child: Center(
+        child: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            // Desbloqueo biométrico obligatorio si está activado
+            if (authState is AuthBiometricRequired) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.fingerprint,
+                          size: 80, color: Colors.teal),
+                      const SizedBox(height: 16),
+                      const Text('Sesión protegida',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Usa tu huella para entrar. Nunca entramos de forma anónima.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: () => context
+                            .read<AuthBloc>()
+                            .add(const BiometricUnlockRequested()),
+                        icon: const Icon(Icons.fingerprint),
+                        label: const Text('Desbloquear con huella'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () => context
+                            .read<AuthBloc>()
+                            .add(const LogoutRequested()),
+                        child: const Text('Usar otra cuenta'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return _loginForm(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _loginForm(BuildContext context) {
+    return Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Form(
@@ -67,8 +120,10 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  const ConnectionBanner(),
+                  const SizedBox(height: 8),
                   const Text(
-                    'Credenciales Demo: test@pro.com / 123456', 
+                    'Acceso seguro con contraseña. Opcional: activa la huella en tu perfil.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -134,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () {
-                      // ✅ CORRECCIÓN: Usar push() o replace() en lugar de go() 
+                      // ✅ CORRECCIÓN: Usar push() o replace() en lugar de go()
                       // para navegar a una ruta hermana (registro) desde el login.
                       context.push(AppRoutes.register);
                     },
@@ -144,8 +199,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 }

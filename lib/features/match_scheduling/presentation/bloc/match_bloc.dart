@@ -82,6 +82,14 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
       ScheduleFriendlyMatchParams(
         time: event.time,
         fieldId: event.fieldId,
+        title: event.title,
+        mode: event.mode,
+        needsReferee: event.needsReferee,
+        description: event.description,
+        organizerTeamName: event.organizerTeamName,
+        opponentTeamName: event.opponentTeamName,
+        maxPlayers: event.maxPlayers,
+        costeTotal: event.costeTotal,
       ),
     );
 

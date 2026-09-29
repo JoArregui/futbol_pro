@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/chat_bloc.dart';
+import '../widgets/chat_colors.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/message_list.dart';
 
@@ -32,7 +33,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           final isGroup = state.room.isGroup;
           return Scaffold(
             appBar: AppBar(
-              backgroundColor: const Color(0xFF075E54),
+              backgroundColor: ChatColors.bar(context),
               foregroundColor: Colors.white,
               leadingWidth: 30,
               leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.canPop() ? context.pop() : context.go('/chat')),
@@ -52,7 +53,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               actions: [IconButton(icon: const Icon(Icons.videocam), onPressed: () {}), IconButton(icon: const Icon(Icons.call), onPressed: () {}), PopupMenuButton(itemBuilder: (_) => const [PopupMenuItem(value: 'info', child: Text('Ver info'))])],
             ),
             body: Container(
-              decoration: const BoxDecoration(color: Color(0xFFE5DDD5)),
+              decoration:
+                  BoxDecoration(color: ChatColors.roomBackground(context)),
               child: Column(
                 children: [
                   Expanded(
@@ -65,8 +67,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           );
         }
         return Scaffold(
-          appBar: AppBar(backgroundColor: const Color(0xFF075E54), foregroundColor: Colors.white, leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.canPop() ? context.pop() : context.go('/home')), title: const Text('Sala de Chat')),
-          body: Center(child: (state is ChatLoading) ? const CircularProgressIndicator(color: Color(0xFF075E54)) : (state is ChatError) ? Text('Error: ${state.message}') : const Text('Cargando sala...')),
+          appBar: AppBar(backgroundColor: ChatColors.bar(context), foregroundColor: Colors.white, leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.canPop() ? context.pop() : context.go('/home')), title: const Text('Sala de Chat')),
+          body: Center(child: (state is ChatLoading) ? CircularProgressIndicator(color: ChatColors.bar(context)) : (state is ChatError) ? Text('Error: ${state.message}') : const Text('Cargando sala...')),
         );
       },
     );

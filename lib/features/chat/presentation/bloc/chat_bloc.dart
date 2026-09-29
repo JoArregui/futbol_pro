@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
+import 'package:futbol_pro/core/services/notification_service.dart';
 import 'package:futbol_pro/core/services/socket_service.dart';
 import '../../domain/entities/chat_room.dart';
 import '../../domain/entities/message.dart';
@@ -25,6 +26,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final SearchUsers searchUsers;
   final AuthRepository authRepository;
   final SocketService socketService;
+  final NotificationService? notifications;
   Timer? _typingTimer;
 
   String get currentUserId => authRepository.getCurrentUserId();
@@ -39,6 +41,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     required this.searchUsers,
     required this.authRepository,
     required this.socketService,
+    this.notifications,
   }) : super(ChatInitial()) {
     on<ChatRoomsSubscriptionRequested>(_onRoomsFetchRequested);
     on<ChatRoomsReceived>(_onRoomsReceived);
@@ -59,8 +62,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (currentUserId.isEmpty) return;
     try {
       socketService.connect(userId: currentUserId);
-      socketService.onNewMessage((data) {
+    socketService.onNewMessage((data) {
         final roomId = data['roomId']?.toString() ?? '';
+        final imageUrl = data['imageUrl']?.toString();
         final msg = Message(
           id: data['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
           senderId: data['senderId']?.toString() ?? '',
@@ -68,6 +72,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           text: data['text']?.toString() ?? '',
           timestamp: DateTime.fromMillisecondsSinceEpoch((data['timestamp'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch),
           status: MessageStatus.delivered,
+          type: imageUrl != null ? MessageType.image : MessageType.text,
+          imageUrl: imageUrl,
         );
         add(ChatSocketMessageReceived(message: msg, roomId: roomId));
       });
@@ -209,6 +215,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         senderId: currentUserId,
         content: event.content,
         senderName: currentUserName,
+        imageUrl: event.imageUrl,
       ),
     );
 
@@ -267,6 +274,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     } else {
       // actualizar lista en background
       add(ChatRoomsSubscriptionRequested());
+      // Aviso local si el mensaje es de otro y no estoy en esa sala.
+      if (event.message.senderId != currentUserId) {
+        final preview = event.message.imageUrl != null
+            ? '📷 ${event.message.text.isNotEmpty ? event.message.text : 'Foto'}'
+            : event.message.text;
+        notifications?.showLocal(
+          title: event.message.senderName.isNotEmpty
+              ? event.message.senderName
+              : 'Nuevo mensaje',
+          body: preview.length > 120 ? '${preview.substring(0, 120)}…' : preview,
+        );
+      }
     }
   }
 

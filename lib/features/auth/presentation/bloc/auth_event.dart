@@ -40,3 +40,12 @@ class RegisterRequested extends AuthEvent {
 class LogoutRequested extends AuthEvent {
   const LogoutRequested();
 }
+
+class BiometricUnlockRequested extends AuthEvent {
+  const BiometricUnlockRequested();
+}
+
+class BiometricEnrollmentRequested extends AuthEvent {
+  final bool enabled;
+  const BiometricEnrollmentRequested(this.enabled);
+}
