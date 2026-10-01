@@ -178,6 +178,19 @@ function getDb() {
           FOREIGN KEY(user_id) REFERENCES auth(id_auth) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS idx_refresh_user ON refresh_tokens(user_id);
+        -- Auditoría superadmin: quién hizo qué y cuándo (SQLite, sin migración externa).
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          actor_id INTEGER NULL,
+          actor_email TEXT NULL,
+          accion TEXT NOT NULL,
+          entidad TEXT NOT NULL,
+          entidad_id TEXT NULL,
+          detalle TEXT NULL,
+          created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_audit_fecha ON audit_log(created_at);
+        CREATE INDEX IF NOT EXISTS idx_audit_entidad ON audit_log(entidad, entidad_id);
       `);
 
       // Migración de instalaciones existentes.
@@ -217,6 +230,9 @@ function getDb() {
         await ensure('reservas', 'sena_monto', "sena_monto REAL NULL");
         await ensure('perfiles', 'mvp_count', "mvp_count INTEGER DEFAULT 0");
         await ensure('perfiles', 'no_show_count', "no_show_count INTEGER DEFAULT 0");
+        await ensure('perfiles', 'posicion', "posicion TEXT NULL");
+        await ensure('perfiles', 'pierna', "pierna TEXT NULL");
+        await ensure('perfiles', 'disponible', "disponible INTEGER DEFAULT 1");
         await ensure('mensajes', 'image_url', "image_url TEXT NULL");
       } catch (_) { /* noop */ }
 
@@ -231,14 +247,19 @@ function getDb() {
         console.log('🌱 Seed: campos insertados');
       }
 
-      // Seed superadmin (admin@futbolpro.com / Admin123!) si no existe
+      // Seed superadmin solo si .env lo define explícitamente (sin default).
       try {
-        const adminEmail = process.env.SUPERADMIN_EMAIL || 'admin@futbolpro.com';
-        const adminPass = process.env.SUPERADMIN_PASSWORD || 'Admin123!';
+        const adminEmail = (process.env.SUPERADMIN_EMAIL || '').trim();
+        const adminPass = process.env.SUPERADMIN_PASSWORD || '';
         const adminName = process.env.SUPERADMIN_NAME || 'SuperAdmin';
+        if (!adminEmail || !adminPass) {
+          if (process.env.NODE_ENV === 'production') {
+            console.warn('⚠️ Sin SUPERADMIN_* en prod: no se crea superadmin seed.');
+          }
+        } else {
         const existing = await db.get('SELECT id_auth FROM auth WHERE email = ?', [adminEmail]);
         if (!existing) {
-          const bcrypt = require('bcrypt');
+          const bcrypt = require('bcryptjs');
           const hash = await bcrypt.hash(adminPass, 10);
           const r = await db.run('INSERT INTO auth (email, password, role) VALUES (?, ?, ?)', [adminEmail, hash, 'superadmin']);
           await db.run(
@@ -246,6 +267,7 @@ function getDb() {
             [r.lastID, adminEmail, 'admin', adminName]
           );
           console.log(`🌱 Seed: superadmin ${adminEmail} creado`);
+        }
         }
       } catch (e) {
         console.error('⚠️ No se pudo crear superadmin seed:', e.message);
@@ -282,8 +304,12 @@ const pool = {
       return [{ insertId: result.lastID, affectedRows: result.changes, changes: result.changes }];
     }
   },
+  // Mutex global: sqlite tiene un solo handle; serializa begin/commit.
+  // BEGIN IMMEDIATE toma el lock de escritura al empezar y evita
+  // que dos reservas lean count=0 a la vez (doble reserva).
   async getConnection() {
     const db = await getDb();
+    if (!pool._txMutex) pool._txMutex = Promise.resolve();
     let inTx = false;
     const conn = {
       async execute(sql, params = []) {
@@ -299,16 +325,26 @@ const pool = {
         }
       },
       async beginTransaction() {
-        if (!inTx) { await db.exec('BEGIN TRANSACTION'); inTx = true; }
+        if (inTx) return;
+        let release;
+        const gate = new Promise((r) => { release = r; });
+        const prev = pool._txMutex;
+        pool._txMutex = prev.then(() => gate);
+        await prev;
+        conn._releaseTx = release;
+        await db.exec('BEGIN IMMEDIATE TRANSACTION');
+        inTx = true;
       },
       async commit() {
         if (inTx) { await db.exec('COMMIT'); inTx = false; }
+        if (conn._releaseTx) { conn._releaseTx(); conn._releaseTx = null; }
       },
       async rollback() {
-        if (inTx) { await db.exec('ROLLBACK'); inTx = false; }
+        if (inTx) { try { await db.exec('ROLLBACK'); } catch (_) {} inTx = false; }
+        if (conn._releaseTx) { conn._releaseTx(); conn._releaseTx = null; }
       },
       release() {
-        // no-op for sqlite
+        if (conn._releaseTx) { conn._releaseTx(); conn._releaseTx = null; }
       },
     };
     return conn;

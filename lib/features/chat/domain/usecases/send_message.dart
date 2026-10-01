@@ -21,6 +21,7 @@ class SendMessage implements UseCase<void, SendParams> {
       senderName: params.senderName,
       text: params.content,
       imageUrl: params.imageUrl,
+      clientId: params.clientId,
     );
   }
 }
@@ -32,6 +33,8 @@ class SendParams extends Equatable {
 
   final String senderName;
   final String? imageUrl;
+  /// Id cliente (uuid local) para reconciliar el eco del socket.
+  final String? clientId;
 
   const SendParams({
     required this.roomId,
@@ -39,8 +42,9 @@ class SendParams extends Equatable {
     required this.content,
     required this.senderName,
     this.imageUrl,
+    this.clientId,
   });
 
   @override
-  List<Object?> get props => [roomId, senderId, content, senderName, imageUrl];
+  List<Object?> get props => [roomId, senderId, content, senderName, imageUrl, clientId];
 }

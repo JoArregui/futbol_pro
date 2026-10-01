@@ -16,11 +16,12 @@ router.get('/:uid/profile', async (req, res) => {
     try {
         // La tabla 'perfiles' tiene todos los datos del UserProfile
         const sql = `
-            SELECT 
-                uid, email, apodo, nombre, url_avatar, bio, fecha_creacion
-            FROM 
-                perfiles 
-            WHERE 
+            SELECT
+                uid, email, apodo, nombre, url_avatar, bio, fecha_creacion,
+                posicion, pierna, disponible
+            FROM
+                perfiles
+            WHERE
                 uid = ?;
         `;
         
@@ -43,8 +44,12 @@ router.get('/:uid/profile', async (req, res) => {
 
 // Columnas editables por el usuario (whitelist: evita inyección por nombre
 // de columna y evita tocar uid/email/role desde aquí).
+function isValidImageUrl(u) {
+  return typeof u === 'string' && u.length <= 2048 && /^https?:\/\//i.test(u);
+}
 const PROFILE_EDITABLE = new Set([
-  'nombre', 'apodo', 'bio', 'url_avatar', 'nombre_db', 'apodo_db',
+  'nombre', 'apodo', 'bio', 'url_avatar',
+  'posicion', 'pierna', 'disponible',
 ]);
 // Mapeo camelCase Flutter -> snake_case DB (solo claves permitidas).
 function mapProfileKey(key) {
@@ -52,9 +57,15 @@ function mapProfileKey(key) {
   if (key === 'name') return 'nombre';
   if (key === 'nickname') return 'apodo';
   if (key === 'bio') return 'bio';
-  if (['nombre', 'apodo', 'url_avatar'].includes(key)) return key;
+  if (key === 'position') return 'posicion';
+  if (key === 'foot') return 'pierna';
+  if (key === 'availability' || key === 'available') return 'disponible';
+  if (['nombre', 'apodo', 'url_avatar', 'posicion', 'pierna', 'disponible'].includes(key)) return key;
   return null; // no permitido
 }
+
+const POSICIONES = new Set(['Portero', 'Defensa', 'Medio', 'Delantero']);
+const PIERNAS = new Set(['diestro', 'zurdo', 'ambidiestro']);
 
 // ===================================
 // RUTA 2: PUT /api/v1/users/:uid/profile
@@ -75,8 +86,34 @@ router.put('/:uid/profile', async (req, res) => {
     for (const key in data) {
         const dbKey = mapProfileKey(key);
         if (!dbKey || !PROFILE_EDITABLE.has(dbKey)) continue;
+        let value = data[key];
+        if ((dbKey === 'nombre' || dbKey === 'apodo') && value != null) {
+          value = String(value).slice(0, 80);
+          if (!value.trim()) return res.status(400).json({ message: `${dbKey} vacío.` });
+        }
+        if (dbKey === 'bio' && value != null) {
+          value = String(value).slice(0, 500);
+        }
+        if (dbKey === 'url_avatar' && value != null && value !== '') {
+          if (!isValidImageUrl(String(value))) {
+            return res.status(400).json({ message: 'url_avatar inválida (solo https).' });
+          }
+        }
+        if (dbKey === 'posicion' && value != null && value !== '') {
+          if (!POSICIONES.has(String(value))) {
+            return res.status(400).json({ message: 'posicion inválida.' });
+          }
+        }
+        if (dbKey === 'pierna' && value != null && value !== '') {
+          if (!PIERNAS.has(String(value))) {
+            return res.status(400).json({ message: 'pierna inválida.' });
+          }
+        }
+        if (dbKey === 'disponible') {
+          value = value === true || value === 1 || value === '1' ? 1 : 0;
+        }
         fields.push(`"${dbKey}" = ?`);
-        values.push(data[key]);
+        values.push(value);
     }
     
     if (fields.length === 0) {
@@ -105,19 +142,28 @@ router.put('/:uid/profile', async (req, res) => {
 // ===================================
 // RUTA 3: GET /api/v1/users/search?q=&excludeUid=
 // ===================================
-router.get('/search/all', async (req, res) => {
+function escapeLike(s) {
+  return String(s).replace(/[\\%_]/g, (m) => `\\${m}`);
+}
+async function handleSearch(req, res) {
     const { q = '', excludeUid } = req.query;
     try {
-        let sql = `SELECT uid as id, nombre, apodo, url_avatar, email FROM perfiles WHERE 1=1`;
+        // No exponer email a no-admins (anti-enumeración).
+        const isAdmin = req.user.role === 'superadmin';
+        const cols = isAdmin
+          ? 'uid as id, nombre, apodo, url_avatar, email'
+          : 'uid as id, nombre, apodo, url_avatar';
+        let sql = `SELECT ${cols} FROM perfiles WHERE 1=1`;
         const params = [];
         if (q) {
-            sql += ` AND (nombre LIKE ? OR apodo LIKE ? OR email LIKE ?)`;
-            const like = `%${q}%`;
-            params.push(like, like, like);
+            const like = `%${escapeLike(q).slice(0, 60)}%`;
+            sql += ` AND (nombre LIKE ? ESCAPE '\\' OR apodo LIKE ? ESCAPE '\\'${isAdmin ? " OR email LIKE ? ESCAPE '\\'" : ''})`;
+            params.push(like, like);
+            if (isAdmin) params.push(like);
         }
         if (excludeUid) {
             sql += ` AND uid != ?`;
-            params.push(excludeUid);
+            params.push(String(excludeUid).slice(0, 32));
         }
         sql += ` LIMIT 20`;
         const [rows] = await pool.execute(sql, params);
@@ -126,29 +172,9 @@ router.get('/search/all', async (req, res) => {
         console.error(e);
         res.status(500).json({ message: 'Error' });
     }
-});
+}
+router.get('/search/all', handleSearch);
 
-router.get('/search', async (req, res) => {
-    const { q = '', excludeUid } = req.query;
-    try {
-        let sql = `SELECT uid as id, nombre, apodo, url_avatar, email FROM perfiles WHERE 1=1`;
-        const params = [];
-        if (q) {
-            sql += ` AND (nombre LIKE ? OR apodo LIKE ? OR email LIKE ?)`;
-            const like = `%${q}%`;
-            params.push(like, like, like);
-        }
-        if (excludeUid) {
-            sql += ` AND uid != ?`;
-            params.push(excludeUid);
-        }
-        sql += ` LIMIT 20`;
-        const [rows] = await pool.execute(sql, params);
-        res.status(200).json(rows);
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ message: 'Error' });
-    }
-});
+router.get('/search', handleSearch);
 
 module.exports = router;

@@ -1,7 +1,14 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const SECRET = process.env.JWT_SECRET || 'dev-secret-cambiar-en-produccion';
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET requerido en producción.');
+}
+if (!process.env.JWT_SECRET) {
+  // eslint-disable-next-line no-console
+  console.warn('[auth] JWT_SECRET no definido: usando secreto solo para dev/test.');
+}
+const SECRET = process.env.JWT_SECRET || 'dev-only-insecure-secret';
 const ACCESS_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
@@ -60,10 +67,20 @@ function verifyRefreshToken(token) {
 }
 
 function requireSuperAdmin(req, res, next) {
-  requireAuth(req, res, () => {
+  const h = req.headers.authorization || '';
+  const token = h.startsWith('Bearer ') ? h.slice(7) : null;
+  if (!token) return res.status(401).json({ message: 'Token requerido.' });
+  try {
+    const payload = require('jsonwebtoken').verify(token, SECRET);
+    if (payload.type && payload.type !== 'access') {
+      return res.status(401).json({ message: 'Token inválido o expirado.' });
+    }
+    req.user = payload;
     if (req.user && req.user.role === 'superadmin') return next();
     return res.status(403).json({ message: 'Solo superadmin.' });
-  });
+  } catch (_) {
+    return res.status(401).json({ message: 'Token inválido o expirado.' });
+  }
 }
 
 /**
@@ -72,16 +89,27 @@ function requireSuperAdmin(req, res, next) {
  */
 function requireOwnerOrAdmin(getOwnerId) {
   return (req, res, next) => {
-    requireAuth(req, res, () => {
+    const h = req.headers.authorization || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7) : null;
+    if (!token) return res.status(401).json({ message: 'Token requerido.' });
+    try {
+      const payload = require('jsonwebtoken').verify(token, SECRET);
+      if (payload.type && payload.type !== 'access') {
+        return res.status(401).json({ message: 'Token inválido o expirado.' });
+      }
+      req.user = payload;
       const owner = String(getOwnerId(req));
       const me = String(req.user.sub);
       if (me === owner || req.user.role === 'superadmin') return next();
       return res.status(403).json({ message: 'No tienes permiso.' });
-    });
+    } catch (_) {
+      return res.status(401).json({ message: 'Token inválido o expirado.' });
+    }
   };
 }
 
 module.exports = {
+  SECRET,
   signToken,
   signRefreshToken,
   hashToken,

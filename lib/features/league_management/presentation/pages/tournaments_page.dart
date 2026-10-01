@@ -18,7 +18,11 @@ class _TournamentsPageState extends State<TournamentsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<LeagueBloc>().add(const GetTournamentsRequested()),
+      (_) {
+        if (mounted) {
+          context.read<LeagueBloc>().add(const GetTournamentsRequested());
+        }
+      },
     );
   }
 
@@ -26,7 +30,7 @@ class _TournamentsPageState extends State<TournamentsPage> {
     final ctrl = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Inscribir equipo'),
         content: TextField(
           controller: ctrl,
@@ -36,14 +40,15 @@ class _TournamentsPageState extends State<TournamentsPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancelar')),
           FilledButton(
-              onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+              onPressed: () => Navigator.pop(dialogContext, ctrl.text.trim()),
               child: const Text('Inscribir')),
         ],
       ),
     );
+    ctrl.dispose();
     if (name == null || name.isEmpty) return;
     if (!mounted) return;
     context
@@ -56,7 +61,7 @@ class _TournamentsPageState extends State<TournamentsPage> {
     final descCtrl = TextEditingController();
     final data = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Nueva liga'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -75,10 +80,10 @@ class _TournamentsPageState extends State<TournamentsPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancelar')),
           FilledButton(
-              onPressed: () => Navigator.pop(context, {
+              onPressed: () => Navigator.pop(dialogContext, {
                     'nombre': nameCtrl.text.trim(),
                     'descripcion': descCtrl.text.trim(),
                   }),
@@ -86,6 +91,8 @@ class _TournamentsPageState extends State<TournamentsPage> {
         ],
       ),
     );
+    nameCtrl.dispose();
+    descCtrl.dispose();
     if (data == null || !mounted) {
       return;
     }

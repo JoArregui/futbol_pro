@@ -12,29 +12,53 @@ class UserProfileModel extends UserProfile {
     required super.wins,
     required super.rating,
     required super.createdAt,
+    super.position,
+    super.foot,
+    super.available = true,
   });
 
   // 🚀 NUEVA FUNCIÓN: Deserialización desde JSON (API REST)
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
     // Usamos el UID proporcionado en el JSON
-    final uid = json['uid'] as String;
-    
+    final uid = (json['uid'] ?? json['id'] ?? '').toString();
+
     // Convertir el string de fecha (ISO 8601) a DateTime
-    final createdAtString = json['createdAt'] as String? ?? DateTime.now().toIso8601String();
+    final createdAtString =
+        (json['createdAt'] ?? json['fecha_creacion'])?.toString() ??
+            DateTime.now().toIso8601String();
 
     return UserProfileModel(
       uid: uid,
-      email: json['email'] as String? ?? 'correo_no_disponible@app.com',
-      nickname: json['nickname'] as String? ?? 'NuevoJugador',
-      name: json['name'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
-      bio: json['bio'] as String?,
+      email: (json['email'] ?? 'correo_no_disponible@app.com').toString(),
+      nickname:
+          (json['nickname'] ?? json['apodo'] ?? 'NuevoJugador').toString(),
+      name: (json['name'] ?? json['nombre'])?.toString(),
+      avatarUrl: (json['avatarUrl'] ?? json['url_avatar'])?.toString(),
+      bio: json['bio']?.toString(),
       // Manejo seguro de valores numéricos desde JSON (num? -> int/double)
-      gamesPlayed: (json['gamesPlayed'] as num?)?.toInt() ?? 0,
-      wins: (json['wins'] as num?)?.toInt() ?? 0,
+      gamesPlayed: (json['gamesPlayed'] ?? json['partidos_jugados'] as num?)
+              is num
+          ? ((json['gamesPlayed'] ?? json['partidos_jugados']) as num).toInt()
+          : 0,
+      wins: (json['wins'] ?? json['victorias'] as num?) is num
+          ? ((json['wins'] ?? json['victorias']) as num).toInt()
+          : 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 1000.0,
-      createdAt: DateTime.parse(createdAtString),
+      createdAt:
+          DateTime.tryParse(createdAtString) ?? DateTime.now(),
+      position: (json['position'] ?? json['posicion'])?.toString(),
+      foot: (json['foot'] ?? json['pierna'])?.toString(),
+      available: _parseAvailable(json),
     );
+  }
+
+  static bool _parseAvailable(Map<String, dynamic> json) {
+    final v =
+        json.containsKey('available') ? json['available'] : json['disponible'];
+    if (v is bool) return v;
+    if (v is num) return v != 0;
+    if (v is String) return v != '0' && v.toLowerCase() != 'false';
+    return true;
   }
 
   // Genera un perfil inicial para un nuevo registro.
@@ -63,7 +87,10 @@ class UserProfileModel extends UserProfile {
       'wins': wins,
       'rating': rating,
       // Usar ISO 8601 String para API REST
-      'createdAt': createdAt.toIso8601String(), 
+      'createdAt': createdAt.toIso8601String(),
+      'position': position,
+      'foot': foot,
+      'available': available,
     };
   }
 }

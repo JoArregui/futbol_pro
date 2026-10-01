@@ -97,8 +97,7 @@ class MatchResult extends Equatable {
       if (raw is! List) return const [];
       return raw
           .whereType<Map<dynamic, dynamic>>()
-          .map((e) =>
-              ScorerEntry.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) => ScorerEntry.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
 

@@ -33,21 +33,29 @@ class MatchDetailLoaded extends MatchDetailState {
   /// División de cuenta (se carga bajo demanda).
   final MatchSplit? split;
 
+  /// Acta del partido (se carga bajo demanda).
+  final MatchActa? acta;
+
   const MatchDetailLoaded(
-      {required this.match, this.notice, this.error, this.split});
+      {required this.match, this.notice, this.error, this.split, this.acta});
 
   MatchDetailLoaded copyWith(
-      {Match? match, String? notice, String? error, MatchSplit? split}) {
+      {Match? match,
+      String? notice,
+      String? error,
+      MatchSplit? split,
+      MatchActa? acta}) {
     return MatchDetailLoaded(
       match: match ?? this.match,
       notice: notice ?? this.notice,
       error: error,
       split: split ?? this.split,
+      acta: acta ?? this.acta,
     );
   }
 
   @override
-  List<Object?> get props => [match, notice, error, split];
+  List<Object?> get props => [match, notice, error, split, acta];
 }
 
 class MatchDetailError extends MatchDetailState {

@@ -1,8 +1,12 @@
 import 'package:local_auth/local_auth.dart';
 
-/// Servicio de biometría (huella / Face ID).
-/// La biometría es un segundo factor LOCAL: nunca sustituye al password
-/// en el primer login, solo desbloquea la sesión ya validada con JWT.
+/// Huella / Face ID — desbloqueo rápido OPCIONAL, desactivado por defecto.
+/// Cuándo se usa:
+///  1. Siempre entras primero con email + contraseña (obligatorio).
+///  2. Solo si TÚ la activas en Perfil > "Desbloquear con huella",
+///     al volver a la app podrás usar la huella en vez de reescribir
+///     la contraseña (la sesión JWT ya validada sigue guardada).
+/// Nunca sustituye al password en el primer login ni se envía al servidor.
 class BiometricAuthService {
   final LocalAuthentication _auth = LocalAuthentication();
 

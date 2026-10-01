@@ -7,8 +7,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  # Aseguramos que se usa Flutter/Dart 3.x
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.11.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 dependencies:
@@ -30,7 +29,7 @@ dependencies:
   # ----------------------------------------
   # NAVEGACIÓN
   # ----------------------------------------
-  go_router: ^17.0.0 # Manteniendo tu restricción de versión, aunque la más nueva es 16.x
+  go_router: ^17.0.0
   
   # ----------------------------------------
   # SERVICIOS (VERSIONES CRÍTICAS ACTUALIZADAS)
@@ -62,6 +61,9 @@ dev_dependencies:
   mocktail: ^1.0.4
   isar_generator: ^3.1.0+1
   build_runner: ^2.4.13
+  # NOTA: bloc_test ^10 no se puede añadir con isar_generator 3.1 (conflicto
+  # analyzer/test_api). Pendiente migrar isar -> isar_community y entonces
+  # añadir bloc_test. Tests actuales usan emitsInOrder manual.
 
 # The following section is specific to Flutter packages.
 flutter:

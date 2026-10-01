@@ -5,8 +5,7 @@ import '../../../../core/usecases/usecase.dart';
 import '../entities/match_result.dart';
 import '../repositories/match_repository.dart';
 
-class ConfirmMatchResult
-    implements UseCase<MatchResult, ConfirmResultParams> {
+class ConfirmMatchResult implements UseCase<MatchResult, ConfirmResultParams> {
   final MatchRepository repository;
 
   ConfirmMatchResult(this.repository);

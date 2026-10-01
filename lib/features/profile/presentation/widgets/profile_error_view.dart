@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ProfileErrorView extends StatelessWidget {
   final String message;
-  
+
   const ProfileErrorView({super.key, required this.message});
 
   @override

@@ -72,13 +72,13 @@ class _MatchListPageState extends State<MatchListPage> {
               child: Text('Error al cargar partidos: ${state.message}'),
             );
           }
-          
+
           // ⚠️ Asumo que tienes un estado MatchesListLoaded que contiene List<Match>
           // Si no existe, debes implementarlo en match_state.dart y match_bloc.dart.
           // El estado MatchLoaded es para un solo partido, no para la lista.
           if (state is MatchesListLoaded) {
             final List<Match> matches = state.matches;
-            
+
             if (matches.isEmpty) {
               return Center(
                 child: Padding(

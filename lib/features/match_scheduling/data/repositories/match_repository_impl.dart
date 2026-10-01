@@ -1,7 +1,9 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/sync/outbox_service.dart';
 import '../../domain/entities/match.dart';
+import '../../domain/entities/match_acta.dart';
 import '../../domain/entities/match_result.dart';
 import '../../domain/entities/match_split.dart';
 import '../../domain/repositories/match_repository.dart';
@@ -9,16 +11,21 @@ import '../../domain/usecases/generate_balanced_teams.dart';
 import '../datasources/match_remote_datasource.dart';
 import '../models/match_model.dart';
 
-
 class MatchRepositoryImpl implements MatchRepository {
   final MatchRemoteDataSource remoteDataSource;
+  final OutboxService? outbox;
 
-  MatchRepositoryImpl({required this.remoteDataSource});
+  MatchRepositoryImpl({required this.remoteDataSource, this.outbox});
 
   Either<Failure, T> _handleException<T>(dynamic exception) {
-    if (exception is ConflictException) {
-      return const Left(
-          ValidationFailure('El partido ya está lleno o ya te has inscrito.'));
+    if (exception is ValidationException) {
+      return Left(ValidationFailure(
+          exception.message ?? 'Datos inválidos. Revisa el formulario.'));
+    } else if (exception is ConflictException) {
+      return Left(ServerFailure(
+          (exception.message?.isNotEmpty ?? false)
+              ? exception.message!
+              : 'Conflicto: ya existe o está en uso.'));
     } else if (exception is UnauthorizedException) {
       return const Left(
           AuthenticationFailure('No autorizado. Por favor, inicia sesión.'));
@@ -36,6 +43,15 @@ class MatchRepositoryImpl implements MatchRepository {
     }
   }
 
+  /// Si no hay red y hay cola, guarda la acción para reenviarla sola.
+  Future<QueuedFailure?> _queueIfOffline(
+      String kind, Map<String, dynamic> payload, Object e) async {
+    if (outbox == null || !isNetworkError(e)) return null;
+    await outbox!.enqueue(kind, payload);
+    return const QueuedFailure(
+        'Sin conexión: acción guardada, se enviará sola al volver la red.');
+  }
+
   // Soporta JoinMatch
   @override
   Future<Either<Failure, Match>> joinMatch({
@@ -49,6 +65,9 @@ class MatchRepositoryImpl implements MatchRepository {
       );
       return Right(matchModel);
     } catch (e) {
+      final queued = await _queueIfOffline(
+          'join_match', {'matchId': matchId, 'playerId': playerId}, e);
+      if (queued != null) return Left(queued);
       return _handleException(e);
     }
   }
@@ -154,6 +173,20 @@ class MatchRepositoryImpl implements MatchRepository {
       );
       return Right(result);
     } catch (e) {
+      final queued = await _queueIfOffline(
+          'submit_result',
+          {
+            'matchId': matchId,
+            'golesA': golesA,
+            'golesB': golesB,
+            'ganador': ganador,
+            'goleadores': goleadores.map((g) => g.toJson()).toList(),
+            'teamAIds': teamAIds,
+            'teamBIds': teamBIds,
+            if (mvpId != null) 'mvpId': mvpId,
+          },
+          e);
+      if (queued != null) return Left(queued);
       return _handleException(e);
     }
   }
@@ -166,6 +199,9 @@ class MatchRepositoryImpl implements MatchRepository {
       final result = await remoteDataSource.confirmResult(matchId: matchId);
       return Right(result);
     } catch (e) {
+      final queued =
+          await _queueIfOffline('confirm_result', {'matchId': matchId}, e);
+      if (queued != null) return Left(queued);
       return _handleException(e);
     }
   }
@@ -180,6 +216,9 @@ class MatchRepositoryImpl implements MatchRepository {
           matchId: matchId, playerId: playerId);
       return Right(count);
     } catch (e) {
+      final queued = await _queueIfOffline(
+          'report_no_show', {'matchId': matchId, 'playerId': playerId}, e);
+      if (queued != null) return Left(queued);
       return _handleException(e);
     }
   }
@@ -191,6 +230,18 @@ class MatchRepositoryImpl implements MatchRepository {
     try {
       final split = await remoteDataSource.getSplit(matchId: matchId);
       return Right(split);
+    } catch (e) {
+      return _handleException(e);
+    }
+  }
+
+  @override
+  Future<Either<Failure, MatchActa>> getActa({
+    required String matchId,
+  }) async {
+    try {
+      final acta = await remoteDataSource.getActa(matchId: matchId);
+      return Right(acta);
     } catch (e) {
       return _handleException(e);
     }

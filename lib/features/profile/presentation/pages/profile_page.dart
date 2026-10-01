@@ -22,9 +22,8 @@ class _ProfilePageState extends State<ProfilePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final bloc = context.read<ProfileBloc>();
-      final fallbackName = bloc.currentUserName.isNotEmpty
-          ? bloc.currentUserName
-          : 'Jugador';
+      final fallbackName =
+          bloc.currentUserName.isNotEmpty ? bloc.currentUserName : 'Jugador';
       bloc.add(ProfileLoadRequested(
         bloc.currentUserId,
         email: '',

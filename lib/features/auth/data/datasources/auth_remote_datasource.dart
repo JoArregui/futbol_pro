@@ -169,6 +169,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (_currentUserId.isEmpty || _token == null || _token!.isEmpty) {
       throw const UnauthenticatedException();
     }
+    // JWT caducado: no aceptar caché como válida; intentar rotar una vez.
+    if (_isExpired(_token!)) {
+      final ok = await refreshSession();
+      if (!ok) throw const UnauthenticatedException();
+    }
     final cached = await secureStorage.getUserJson();
     if (cached != null) {
       try {
@@ -194,6 +199,24 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } catch (_) {}
     throw const UnauthenticatedException();
+  }
+
+  /// true si el JWT expiró (decodifica `exp` sin verificar firma;
+  /// la verificación real la hace el servidor).
+  bool _isExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      var payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      payload += '=' * ((4 - payload.length % 4) % 4);
+      final json =
+          jsonDecode(String.fromCharCodes(base64Decode(payload))) as Map;
+      final exp = (json['exp'] as num?)?.toInt();
+      if (exp == null) return false;
+      return DateTime.now().millisecondsSinceEpoch ~/ 1000 >= exp;
+    } catch (_) {
+      return true;
+    }
   }
 
   @override

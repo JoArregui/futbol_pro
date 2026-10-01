@@ -14,7 +14,7 @@ String get _kChatUrl => '${AppConsts.effectiveBaseUrl}/chats';
 
 abstract class ChatRemoteDataSource {
   Future<List<MessageModel>> getMessages(String roomId);
-  Future<void> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl});
+  Future<void> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl, String? clientId});
   Future<void> markMessagesAsRead(String roomId, String userId);
   Future<List<ChatRoomModel>> getChatRooms(String userId);
   Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId});
@@ -60,6 +60,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required String senderName,
     required String text,
     String? imageUrl,
+    String? clientId,
   }) async {
     final url = Uri.parse('$_kChatUrl/$roomId/messages');
 
@@ -72,6 +73,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           'senderName': senderName,
           'text': text,
           if (imageUrl != null) 'imageUrl': imageUrl,
+          if (clientId != null) 'clientId': clientId,
         }),
       );
 
@@ -106,25 +108,33 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   @override
   Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId}) async {
     final url = Uri.parse(_kChatUrl);
-    final res = await client.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'type': type, 'memberIds': memberIds, if (relatedEntityId != null) 'relatedEntityId': relatedEntityId}));
+    final res = await client
+        .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'type': type, 'memberIds': memberIds, if (relatedEntityId != null) 'relatedEntityId': relatedEntityId}))
+        .timeout(const Duration(seconds: 15));
     if (res.statusCode == 201 || res.statusCode == 200) {
       final j = jsonDecode(res.body);
       // Si solo devuelve id, construir room mínimo
-      if (j['title'] == null) {
+      if (j is Map && j['title'] == null) {
         return ChatRoomModel(id: j['id'].toString(), type: ChatRoomType.private, title: title, memberIds: memberIds);
       }
-      return ChatRoomModel.fromJson(j);
+      return ChatRoomModel.fromJson(Map<String, dynamic>.from(j as Map));
     }
     throw ServerException(message: 'Error crear chat: ${res.statusCode}');
   }
 
   @override
   Future<List<Map<String, dynamic>>> searchUsers({required String query, required String excludeUid}) async {
-    final url = Uri.parse('${AppConsts.effectiveBaseUrl}/users/search?q=${Uri.encodeComponent(query)}&excludeUid=$excludeUid');
-    final res = await client.get(url);
+    final uri = Uri.parse('${AppConsts.effectiveBaseUrl}/users/search').replace(queryParameters: {
+      'q': query,
+      'excludeUid': excludeUid,
+    });
+    final res = await client.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
       final List<dynamic> list = jsonDecode(res.body);
-      return list.cast<Map<String, dynamic>>();
+      return list
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     }
     throw ServerException(message: 'Error búsqueda: ${res.statusCode}');
   }

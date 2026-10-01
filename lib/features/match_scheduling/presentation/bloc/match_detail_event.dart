@@ -52,3 +52,12 @@ class MatchSplitRequested extends MatchDetailEvent {
   @override
   List<Object> get props => [matchId];
 }
+
+class MatchActaRequested extends MatchDetailEvent {
+  final String matchId;
+
+  const MatchActaRequested(this.matchId);
+
+  @override
+  List<Object> get props => [matchId];
+}

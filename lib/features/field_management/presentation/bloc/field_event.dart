@@ -17,22 +17,24 @@ class GetAvailableFieldsEvent extends FieldEvent {
   List<Object> get props => [startTime, endTime];
 }
 
-
 class ReserveFieldRequested extends FieldEvent {
   final String fieldId;
   final DateTime startTime;
   final DateTime endTime;
   final String userId;
+  final String? paymentMethod;
 
   const ReserveFieldRequested({
     required this.fieldId,
     required this.startTime,
     required this.endTime,
     required this.userId,
+    this.paymentMethod,
   });
 
   @override
-  List<Object> get props => [fieldId, startTime, endTime, userId];
+  List<Object?> get props =>
+      [fieldId, startTime, endTime, userId, paymentMethod];
 }
 
 class ConfirmPagoRequested extends FieldEvent {

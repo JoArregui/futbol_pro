@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:http/http.dart' as http;
+import '../consts.dart';
+import '../errors/exceptions.dart';
 import '../storage/secure_storage_service.dart';
 
 /// Cliente HTTP que inyecta el JWT en cada petición.
@@ -33,49 +36,72 @@ class AuthenticatedClient extends http.BaseClient {
         p.endsWith('/auth/refresh');
   }
 
+  Future<bool>? _refreshing;
+
+  @override
+  void close() => _inner.close();
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    if (!request.headers.containsKey('Authorization')) {
+    // /auth/refresh nunca lleva access (evita rechazos por token caducado).
+    final isRefresh = request.url.path.endsWith('/auth/refresh');
+    if (!request.headers.containsKey('Authorization') && !isRefresh) {
       final token = await _storage.getToken();
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
       }
+    } else if (isRefresh) {
+      request.headers.remove('Authorization');
     }
-    var response = await _inner.send(request);
+    var response =
+        await _inner.send(request).timeout(AppConsts.httpTimeout);
 
-    // Rotación transparente: un solo reintento por petición.
+    // Rotación transparente con mutex: un solo refresh aunque haya N 401.
     if (response.statusCode == 401 &&
         !_isPublicAuthPath(request.url) &&
         onUnauthorized != null) {
       await response.stream.drain<void>();
       bool rotated = false;
       try {
-        rotated = await onUnauthorized!();
+        _refreshing ??= onUnauthorized!().whenComplete(() => _refreshing = null);
+        rotated = await _refreshing!;
       } catch (_) {
         rotated = false;
       }
       if (rotated) {
-        final retry = _copyRequest(request);
-        final fresh = await _storage.getToken();
-        if (fresh != null && fresh.isNotEmpty) {
-          retry.headers['Authorization'] = 'Bearer $fresh';
+        try {
+          final retry = _copyRequest(request);
+          final fresh = await _storage.getToken();
+          if (fresh != null && fresh.isNotEmpty) {
+            retry.headers['Authorization'] = 'Bearer $fresh';
+          }
+          response =
+              await _inner.send(retry).timeout(AppConsts.httpTimeout);
+        } on StateError {
+          // Multipart u otro one-shot no reintentable: no devolver el
+          // response drenado (body vacío); forzar re-login aguas arriba.
+          throw const UnauthorizedException(message: 'Sesión caducada.');
         }
-        response = await _inner.send(retry);
       }
     }
     return response;
   }
 
   /// Reconstruye la petición para el reintento (los BaseRequest son one-shot).
+  /// Solo se reintenta http.Request. MultipartRequest no se reintenta
+  /// (obligaría a reabrir files) → el llamador debe relanzar login.
   http.BaseRequest _copyRequest(http.BaseRequest original) {
+    if (original is! http.Request) {
+      throw StateError(
+          'No se puede reintentar ${original.runtimeType}: reloguear.');
+    }
     final copy = http.Request(original.method, original.url)
       ..headers.addAll(original.headers)
       ..followRedirects = original.followRedirects
       ..maxRedirects = original.maxRedirects
       ..persistentConnection = original.persistentConnection;
-    if (original is http.Request) {
-      copy.bodyBytes = original.bodyBytes;
-    }
+    copy.bodyBytes = original.bodyBytes;
+    copy.encoding = original.encoding;
     return copy;
   }
 }

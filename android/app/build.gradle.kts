@@ -29,15 +29,35 @@ android {
 
     defaultConfig {
         applicationId = "com.masai.futbol_pro" // <-- Debe coincidir con el namespace
-        minSdk = flutter.minSdkVersion
+        minSdk = 23 // local_auth + notificaciones lo exigen
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    // Firma release vía android/key.properties (no commitear).
+    // Si no existe, se usa debug solo para desarrollo local.
+    val keyPropsFile = rootProject.file("key.properties")
+    val keyProps = java.util.Properties()
+    if (keyPropsFile.exists()) keyProps.load(java.io.FileInputStream(keyPropsFile))
+    signingConfigs {
+        create("release") {
+            if (keyPropsFile.exists()) {
+                storeFile = file(keyProps["storeFile"] as String)
+                storePassword = keyProps["storePassword"] as String
+                keyAlias = keyProps["keyAlias"] as String
+                keyPassword = keyProps["keyPassword"] as String
+            }
+        }
+    }
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keyPropsFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                // Solo dev local. CI/prod debe proveer key.properties.
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

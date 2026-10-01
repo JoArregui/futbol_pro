@@ -1,6 +1,6 @@
 const express = require('express');
 const pool = require('../db');
-const bcrypt = require('bcrypt'); // 🔑 Importamos bcrypt
+const bcrypt = require('bcryptjs');
 const {
   signToken,
   signRefreshToken,
@@ -8,16 +8,30 @@ const {
   verifyRefreshToken,
   requireAuth,
 } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimit');
+const { authLimiter, sessionLimiter } = require('../middleware/rateLimit');
 const router = express.Router();
 
-// Anti-fuerza bruta en todos los endpoints públicos de auth.
-router.use(authLimiter);
+// Anti-fuerza bruta SOLO en login/register. me/refresh/logout usan sessionLimiter.
+router.post('/login', authLimiter, (req, res, next) => next());
+router.post('/register', authLimiter, (req, res, next) => next());
+router.use('/refresh', sessionLimiter);
+router.use('/me', sessionLimiter);
+router.use('/logout', sessionLimiter);
 
 const saltRounds = 10; // Factor de costo para el hasheo
-const REFRESH_DAYS = parseInt(process.env.JWT_REFRESH_DAYS || '30', 10);
+const _parsedDays = parseInt(process.env.JWT_REFRESH_DAYS || '30', 10);
+const REFRESH_DAYS = Number.isInteger(_parsedDays) && _parsedDays >= 1 && _parsedDays <= 90
+  ? _parsedDays
+  : 30;
 
-/** Emite par access+refresh y persiste el refresh hasheado. */
+function validPassword(pw) {
+  if (typeof pw !== 'string') return 'Contraseña requerida.';
+  if (pw.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+  if (Buffer.byteLength(pw, 'utf8') > 72) return 'La contraseña es demasiado larga (máx 72 bytes).';
+  return null;
+}
+
+/** Emite par access+refresh, purga expirados y topa a 10 sesiones por usuario. */
 async function issueTokenPair(userId, email, role) {
   const token = signToken({ id: userId, email, role });
   const refreshToken = signRefreshToken({ id: userId });
@@ -28,6 +42,16 @@ async function issueTokenPair(userId, email, role) {
     'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
     [userId, hashToken(refreshToken), expiresAt]
   );
+  try {
+    await pool.execute(
+      "DELETE FROM refresh_tokens WHERE expires_at < datetime('now') OR revoked = 1"
+    );
+    await pool.execute(
+      `DELETE FROM refresh_tokens WHERE user_id = ? AND id NOT IN
+       (SELECT id FROM refresh_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 10)`,
+      [userId, userId]
+    );
+  } catch (_) {}
   return { token, refreshToken };
 }
 
@@ -35,10 +59,13 @@ async function issueTokenPair(userId, email, role) {
 // RUTA: POST /api/v1/auth/register
 // ===================================
 router.post('/register', async (req, res) => {
-    const { email, password, nickname, name } = req.body;
+    let { email, password, nickname, name } = req.body || {};
+    email = (email || '').toString().trim().toLowerCase();
+    nickname = (nickname || '').toString().trim();
     if (!email || !email.includes('@')) return res.status(400).json({ message: 'Email inválido' });
-    if (!password || password.length < 6) return res.status(400).json({ message: 'Contraseña debe tener al menos 6 caracteres' });
-    if (!nickname || nickname.trim().length < 2) return res.status(400).json({ message: 'Nickname requerido (mín 2 caracteres)' });
+    const pwErr = validPassword(password);
+    if (pwErr) return res.status(400).json({ message: pwErr });
+    if (!nickname || nickname.length < 2) return res.status(400).json({ message: 'Nickname requerido (mín 2 caracteres)' });
     let connection;
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -84,7 +111,7 @@ router.post('/register', async (req, res) => {
     } catch (error) {
         if (connection) await connection.rollback();
         if (error.code === 'ER_DUP_ENTRY' || (error.message && error.message.includes('UNIQUE constraint failed')) || (error.message && error.message.includes('UNIQUE'))) {
-            return res.status(409).json({ message: 'El email o apodo ya están registrados.' });
+            return res.status(409).json({ message: 'El email ya está registrado.' });
         }
         console.error("Error en el registro:", error);
         res.status(500).json({ message: 'Error interno del servidor.' });
@@ -98,7 +125,12 @@ router.post('/register', async (req, res) => {
 // RUTA: POST /api/v1/auth/login
 // ===================================
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const rawEmail = (req.body || {}).email;
+    const password = (req.body || {}).password;
+    const email = (rawEmail || '').toString().trim().toLowerCase();
+    if (!email || !email.includes('@') || !password) {
+      return res.status(400).json({ message: 'Email y contraseña requeridos.' });
+    }
 
     try {
         // 1. Buscar credenciales en AUTH (incluye rol)
@@ -218,16 +250,38 @@ router.post('/refresh', async (req, res) => {
         if (!row || row.revoked || new Date(row.expires_at).getTime() < Date.now()) {
             return res.status(401).json({ message: 'Refresh inválido o expirado.' });
         }
-        // Rotación: revocar el usado y emitir par nuevo.
-        await pool.execute('UPDATE refresh_tokens SET revoked = 1 WHERE id = ?', [row.id]);
-        const [authRows] = await pool.execute(
-            'SELECT id_auth, email, role FROM auth WHERE id_auth = ?',
-            [row.user_id]
-        );
-        if (authRows.length === 0) {
-            return res.status(401).json({ message: 'Usuario no existe.' });
+        // Rotación atómica: el UPDATE condicional solo revoca si sigue vigente.
+        // Con el mutex global + BEGIN IMMEDIATE, dos refresh concurrentes con
+        // el mismo token no pueden pasar los dos (el segundo ve changes=0).
+        const connection = await pool.getConnection();
+        let authed = null;
+        try {
+          await connection.beginTransaction();
+          const [r] = await connection.execute(
+            'UPDATE refresh_tokens SET revoked = 1 WHERE id = ? AND revoked = 0',
+            [row.id]
+          );
+          if ((r.affectedRows ?? r.changes ?? 0) === 0) {
+            await connection.rollback();
+            return res.status(401).json({ message: 'Refresh ya usado o revocado.' });
+          }
+          const [authRows] = await connection.execute(
+              'SELECT id_auth, email, role FROM auth WHERE id_auth = ?',
+              [row.user_id]
+          );
+          if (authRows.length === 0) {
+              await connection.rollback();
+              return res.status(401).json({ message: 'Usuario no existe.' });
+          }
+          await connection.commit();
+          authed = authRows[0];
+        } catch (txErr) {
+          try { await connection.rollback(); } catch (_) {}
+          throw txErr;
+        } finally {
+          connection.release();
         }
-        const { email, role } = authRows[0];
+        const { email, role } = authed;
         const pair = await issueTokenPair(row.user_id, email, role || 'player');
         res.status(200).json({ ...pair, role: role || 'player' });
     } catch (e) {

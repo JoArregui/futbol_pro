@@ -49,7 +49,8 @@ class MatchModel extends Match {
     }
 
     final rawMode = (json['mode'] ?? json['modo'] ?? 'open').toString();
-    final mode = rawMode == 'team' ? MatchMode.teamVsTeam : MatchMode.openPlayers;
+    final mode =
+        rawMode == 'team' ? MatchMode.teamVsTeam : MatchMode.openPlayers;
     final typeStr = (json['type'] ?? json['tipo'] ?? 'friendly').toString();
 
     List<String> parsePlayers(dynamic raw) {
@@ -69,8 +70,7 @@ class MatchModel extends Match {
       if (raw is! List) return const [];
       return raw
           .whereType<Map<dynamic, dynamic>>()
-          .map((e) =>
-              MatchParticipant.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) => MatchParticipant.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
 
@@ -84,10 +84,11 @@ class MatchModel extends Match {
     MatchResult? result;
     final rawResult = json['result'];
     if (rawResult is Map) {
-      result =
-          MatchResult.fromJson(Map<String, dynamic>.from(rawResult));
+      result = MatchResult.fromJson(Map<String, dynamic>.from(rawResult));
     }
 
+    num? toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '');
     return MatchModel(
       id: (json['id'] ?? json['id_partido'] ?? '').toString(),
       title: (json['title'] ??
@@ -100,7 +101,7 @@ class MatchModel extends Match {
                     ?.toString() ??
                 '',
           ) ??
-          DateTime.now(),
+          DateTime.fromMillisecondsSinceEpoch(0),
       fieldId: (json['fieldId'] ?? json['id_campo_fk'] ?? '').toString(),
       type: typeStr == 'league' ? MatchType.league : MatchType.friendly,
       playerIds: mergedIds,
@@ -118,8 +119,8 @@ class MatchModel extends Match {
       mvpId: json['mvpId']?.toString(),
       result: result,
       participants: participants,
-      costeTotal: (json['costeTotal'] ?? json['totalCost'] as num?)
-          ?.toDouble(),
+      costeTotal:
+          toNum(json['costeTotal'] ?? json['totalCost'])?.toDouble(),
     );
   }
 

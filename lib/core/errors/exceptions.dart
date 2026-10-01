@@ -39,3 +39,7 @@ class ConflictException implements Exception {
   // 🟢 CORRECCIÓN: Ahora acepta un mensaje nombrado opcional.
   const ConflictException({this.message});
 }
+class ValidationException implements Exception {
+  final String? message;
+  const ValidationException({this.message});
+}

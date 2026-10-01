@@ -11,6 +11,9 @@ class UpdateProfile {
     String? name,
     String? bio,
     String? avatarUrl,
+    String? position,
+    String? foot,
+    bool? available,
   }) {
     if (nickname != null && nickname.isEmpty) {
       throw Exception('El nickname no puede estar vacío.');
@@ -22,6 +25,9 @@ class UpdateProfile {
       name: name,
       bio: bio,
       avatarUrl: avatarUrl,
+      position: position,
+      foot: foot,
+      available: available,
     );
   }
 }

@@ -1,21 +1,25 @@
 import 'package:equatable/equatable.dart';
 
-
 class UserProfile extends Equatable {
-  final String uid; 
+  final String uid;
   final String email;
-  final String nickname; 
-  
+  final String nickname;
+
   // Campos opcionales
-  final String? name; 
-  final String? avatarUrl; 
-  final String? bio; 
+  final String? name;
+  final String? avatarUrl;
+  final String? bio;
 
   // Métricas del juego
-  final int gamesPlayed; 
-  final int wins; 
-  final double rating; 
-  
+  final int gamesPlayed;
+  final int wins;
+  final double rating;
+
+  // Ficha deportiva (opcional, editable en Perfil)
+  final String? position; // Portero | Defensa | Medio | Delantero
+  final String? foot; // diestro | zurdo | ambidiestro
+  final bool available;
+
   // Metadatos
   final DateTime createdAt; // Fecha de creación del perfil
 
@@ -30,9 +34,11 @@ class UserProfile extends Equatable {
     required this.wins,
     required this.rating,
     required this.createdAt,
+    this.position,
+    this.foot,
+    this.available = true,
   });
 
-  
   UserProfile copyWith({
     String? uid,
     String? email,
@@ -44,6 +50,9 @@ class UserProfile extends Equatable {
     int? wins,
     double? rating,
     DateTime? createdAt,
+    String? Function()? position,
+    String? Function()? foot,
+    bool? available,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -56,6 +65,9 @@ class UserProfile extends Equatable {
       wins: wins ?? this.wins,
       rating: rating ?? this.rating,
       createdAt: createdAt ?? this.createdAt,
+      position: position != null ? position() : this.position,
+      foot: foot != null ? foot() : this.foot,
+      available: available ?? this.available,
     );
   }
 
@@ -71,5 +83,8 @@ class UserProfile extends Equatable {
         wins,
         rating,
         createdAt,
+        position,
+        foot,
+        available,
       ];
 }

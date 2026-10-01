@@ -66,6 +66,7 @@ class FieldBloc extends Bloc<FieldEvent, FieldState> {
         startTime: event.startTime,
         endTime: event.endTime,
         userId: event.userId,
+        paymentMethod: event.paymentMethod,
       ),
     );
 
@@ -84,7 +85,8 @@ class FieldBloc extends Bloc<FieldEvent, FieldState> {
       return;
     }
     emit(FieldLoading());
-    final res = await confirmPago!(ConfirmPagoParams(pagoId: event.pagoId, orderId: event.orderId));
+    final res = await confirmPago!(
+        ConfirmPagoParams(pagoId: event.pagoId, orderId: event.orderId));
     res.fold(
       (f) => emit(FieldError(message: f.errorMessage)),
       (_) => emit(PagoConfirmado(reservaId: event.reservaId)),

@@ -47,22 +47,26 @@ class ChatRoomSelectedState extends ChatState {
   final bool isSending;
   final bool isTyping; // alguien escribiendo
   final String? typingUserId;
+  final String? error;
   const ChatRoomSelectedState({
     required this.room,
     this.messages = const [],
     this.isSending = false,
     this.isTyping = false,
     this.typingUserId,
+    this.error,
   });
-  ChatRoomSelectedState copyWith({List<Message>? messages, bool? isSending, bool? isTyping, String? typingUserId}) => ChatRoomSelectedState(
+  static const _unset = Object();
+  ChatRoomSelectedState copyWith({List<Message>? messages, bool? isSending, bool? isTyping, String? typingUserId, bool clearTyping = false, Object? error = _unset}) => ChatRoomSelectedState(
         room: room,
         messages: messages ?? this.messages,
         isSending: isSending ?? this.isSending,
         isTyping: isTyping ?? this.isTyping,
-        typingUserId: typingUserId,
+        typingUserId: clearTyping ? null : (typingUserId ?? this.typingUserId),
+        error: identical(error, _unset) ? this.error : error as String?,
       );
   @override
-  List<Object?> get props => [room, messages, isSending, isTyping, typingUserId];
+  List<Object?> get props => [room, messages, isSending, isTyping, typingUserId, error];
 }
 
 class ChatSearchState extends ChatState {

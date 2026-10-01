@@ -47,5 +47,15 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Desbloquea Futbol Pro con tu identidad. Nunca entramos de forma anónima.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Futbol Pro necesita la cámara para foto de perfil y adjuntos del chat.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Futbol Pro necesita la galería para elegir avatar y fotos del chat.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Futbol Pro necesita el micrófono para notas de voz del chat.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

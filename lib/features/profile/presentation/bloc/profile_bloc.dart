@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/usecases/get_profile.dart';
 import '../../domain/usecases/update_profile.dart';
@@ -31,34 +32,40 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileUpdated>(_onProfileUpdated);
   }
 
+  bool _isNotFound(Object e) {
+    if (e is NotFoundException) return true;
+    final s = e.toString();
+    // El repo envuelve: 'Fallo en el Repositorio al obtener perfil: ...'
+    // + datasource 'Perfil de usuario no encontrado.'
+    return s.contains('Perfil de usuario no encontrado') ||
+        s.contains('NotFoundException');
+  }
+
   Future<void> _onProfileLoadRequested(
     ProfileLoadRequested event,
     Emitter<ProfileState> emit,
   ) async {
     emit(ProfileLoading());
     try {
-      final profile = await getProfile(event.uid); 
+      final profile = await getProfile(event.uid);
       emit(ProfileLoaded(profile: profile));
     } catch (e) {
-      // 🚀 Lógica de CATCH-AND-CREATE: Si el perfil no existe, créalo.
-      if (e.toString().contains('Usuario no encontrado')) {
+      if (_isNotFound(e)) {
         try {
-          // 1. Crear el perfil inicial
           final newProfile = await createProfile(
             uid: event.uid,
             email: event.email,
             nickname: event.nickname,
           );
-          // 2. Emitir el perfil recién creado
           emit(ProfileLoaded(profile: newProfile));
           return;
         } catch (createError) {
-          emit(ProfileError('Error al crear y cargar el perfil: ${createError.toString()}'));
+          emit(ProfileError(
+              'Error al crear y cargar el perfil: ${createError.toString()}'));
           return;
         }
       }
-      
-      // Error general
+
       emit(ProfileError('Error al cargar el perfil: ${e.toString()}'));
     }
   }
@@ -69,11 +76,12 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     final currentState = state;
     if (currentState is! ProfileLoaded) {
-      emit(const ProfileError('No se pudo actualizar: el perfil no estaba cargado.'));
+      emit(const ProfileError(
+          'No se pudo actualizar: el perfil no estaba cargado.'));
       return;
     }
 
-    emit(currentState.copyWith(isUpdating: true)); 
+    emit(currentState.copyWith(isUpdating: true));
 
     try {
       await updateProfile(
@@ -82,17 +90,19 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         name: event.name,
         bio: event.bio,
         avatarUrl: event.avatarUrl,
+        position: event.position,
+        foot: event.foot,
+        available: event.available,
       );
 
-      // 🚀 Cargar el perfil nuevamente para obtener la versión actualizada de Firestore
       final updatedProfile = await getProfile(event.uid);
-      
+
       emit(ProfileUpdateSuccess(profile: updatedProfile));
-      
     } catch (e) {
-      emit(ProfileError('Error al actualizar el perfil: ${e.toString()}'));
-      // Volver al estado cargado anterior si la actualización falla.
-      emit(currentState.copyWith(isUpdating: false));
+      // Un solo estado: mantiene perfil + muestra error (antes doble emit).
+      emit(currentState.copyWith(
+          isUpdating: false,
+          error: 'Error al actualizar: ${e.toString()}'));
     }
   }
 }

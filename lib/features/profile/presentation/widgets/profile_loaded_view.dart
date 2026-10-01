@@ -32,6 +32,9 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
     _nicknameController = TextEditingController(text: widget.profile.nickname);
     _nameController = TextEditingController(text: widget.profile.name ?? '');
     _bioController = TextEditingController(text: widget.profile.bio ?? '');
+    _position = widget.profile.position;
+    _foot = widget.profile.foot;
+    _available = widget.profile.available;
   }
 
   @override
@@ -41,12 +44,16 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
     _bioController.dispose();
     super.dispose();
   }
-  
+
+  String? _position;
+  String? _foot;
+  late bool _available;
+
   // Función de envío
   void _submitUpdate() {
     if (_formKey.currentState!.validate()) {
       final bloc = context.read<ProfileBloc>();
-      
+
       // Disparar el evento de actualización con los nuevos valores
       bloc.add(ProfileUpdated(
         uid: widget.profile.uid,
@@ -54,7 +61,10 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
         name: _nameController.text.trim(),
         bio: _bioController.text.trim(),
         // avatarUrl se podría manejar con un widget de selección de imagen
-        avatarUrl: widget.profile.avatarUrl, 
+        avatarUrl: widget.profile.avatarUrl,
+        position: _position,
+        foot: _foot,
+        available: _available,
       ));
     }
   }
@@ -75,7 +85,7 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
             // Campos de Edición
             _buildEditableFields(),
             const SizedBox(height: 24),
-            
+
             // Sección de Estadísticas
             _buildStatsSection(),
             const SizedBox(height: 16),
@@ -94,9 +104,11 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Guardar Cambios', style: TextStyle(fontSize: 16)),
+                  : const Text('Guardar Cambios',
+                      style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -109,10 +121,12 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
       children: [
         CircleAvatar(
           radius: 50,
-          backgroundImage: widget.profile.avatarUrl != null && widget.profile.avatarUrl!.isNotEmpty
+          backgroundImage: widget.profile.avatarUrl != null &&
+                  widget.profile.avatarUrl!.isNotEmpty
               ? NetworkImage(widget.profile.avatarUrl!)
               : null,
-          child: widget.profile.avatarUrl == null || widget.profile.avatarUrl!.isEmpty
+          child: widget.profile.avatarUrl == null ||
+                  widget.profile.avatarUrl!.isEmpty
               ? const Icon(Icons.person, size: 50)
               : null,
         ),
@@ -120,14 +134,14 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
         Text(
           '@${widget.profile.nickname}',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         Text(
           widget.profile.email,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+                color: Colors.grey[600],
+              ),
         ),
       ],
     );
@@ -137,7 +151,8 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Información Básica', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const Text('Información Básica',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         TextFormField(
           controller: _nicknameController,
@@ -174,6 +189,50 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
             alignLabelWithHint: true,
           ),
         ),
+        const SizedBox(height: 16),
+        const Text('Ficha deportiva',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          initialValue: _position,
+          decoration: const InputDecoration(
+            labelText: 'Posición',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.sports_soccer),
+          ),
+          items: const [
+            DropdownMenuItem(value: null, child: Text('Sin definir')),
+            DropdownMenuItem(value: 'Portero', child: Text('Portero')),
+            DropdownMenuItem(value: 'Defensa', child: Text('Defensa')),
+            DropdownMenuItem(value: 'Medio', child: Text('Medio')),
+            DropdownMenuItem(value: 'Delantero', child: Text('Delantero')),
+          ],
+          onChanged: (v) => setState(() => _position = v),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          initialValue: _foot,
+          decoration: const InputDecoration(
+            labelText: 'Pierna hábil',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.sports),
+          ),
+          items: const [
+            DropdownMenuItem(value: null, child: Text('Sin definir')),
+            DropdownMenuItem(value: 'diestro', child: Text('Diestro')),
+            DropdownMenuItem(value: 'zurdo', child: Text('Zurdo')),
+            DropdownMenuItem(value: 'ambidiestro', child: Text('Ambidiestro')),
+          ],
+          onChanged: (v) => setState(() => _foot = v),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          title: const Text('Disponible para jugar'),
+          subtitle:
+              const Text('Si lo desactivas, no te convocarán a amistosos.'),
+          value: _available,
+          onChanged: (v) => setState(() => _available = v),
+        ),
       ],
     );
   }
@@ -182,7 +241,8 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Estadísticas (FutbolPro)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const Text('Estadísticas (FutbolPro)',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Card(
           elevation: 2,
@@ -226,9 +286,9 @@ class _StatItem extends StatelessWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
-          ),
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
         ),
         Text(
           label,
@@ -264,7 +324,8 @@ class _BiometricTileState extends State<_BiometricTile> {
     bool enabled = false;
     if (mounted) {
       try {
-        enabled = await context.read<AuthBloc>().repository.isBiometricEnabled();
+        enabled =
+            await context.read<AuthBloc>().repository.isBiometricEnabled();
       } catch (_) {}
       setState(() {
         _available = available;
@@ -290,13 +351,15 @@ class _BiometricTileState extends State<_BiometricTile> {
       child: SwitchListTile(
         secondary: const Icon(Icons.fingerprint, color: Colors.teal),
         title: const Text('Desbloquear con huella'),
-        subtitle: const Text('Opcional. El password siempre se pide el primer login.'),
+        subtitle: const Text(
+            'Opcional y apagado por defecto. Solo sirve para entrar más rápido al volver a la app, después de haber iniciado sesión una vez con email + contraseña. No cambia tu contraseña.'),
         value: _enabled,
         onChanged: (v) {
           context.read<AuthBloc>().add(BiometricEnrollmentRequested(v));
           setState(() => _enabled = v);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(v ? 'Huella activada' : 'Huella desactivada')),
+            SnackBar(
+                content: Text(v ? 'Huella activada' : 'Huella desactivada')),
           );
         },
       ),

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
 
 const authRoutes = require('./routes/auth');
@@ -14,6 +15,8 @@ const adminRoutes = require('./routes/admin');
 const { apiLimiter } = require('./middleware/rateLimit');
 
 const app = express();
+app.set('trust proxy', 1);
+app.use(helmet());
 
 // CORS restringido: solo el/los orígenes configurados.
 // FRONTEND_ORIGIN="https://app.futbolpro.com,http://localhost:8080"

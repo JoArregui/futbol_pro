@@ -14,7 +14,8 @@ class ProfileLoadRequested extends ProfileEvent {
   final String email;
   final String nickname;
 
-  const ProfileLoadRequested(this.uid, {required this.email, required this.nickname});
+  const ProfileLoadRequested(this.uid,
+      {required this.email, required this.nickname});
 
   @override
   List<Object> get props => [uid, email, nickname];
@@ -26,6 +27,9 @@ class ProfileUpdated extends ProfileEvent {
   final String? name;
   final String? bio;
   final String? avatarUrl;
+  final String? position;
+  final String? foot;
+  final bool? available;
 
   const ProfileUpdated({
     required this.uid,
@@ -33,8 +37,12 @@ class ProfileUpdated extends ProfileEvent {
     this.name,
     this.bio,
     this.avatarUrl,
+    this.position,
+    this.foot,
+    this.available,
   });
 
   @override
-  List<Object?> get props => [uid, nickname, name, bio, avatarUrl];
+  List<Object?> get props =>
+      [uid, nickname, name, bio, avatarUrl, position, foot, available];
 }

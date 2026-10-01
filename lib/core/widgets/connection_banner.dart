@@ -13,37 +13,37 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
   bool _checking = false;
 
   Future<void> _check() async {
+    if (!mounted) return;
     setState(() { _checking = true; _status = null; });
     final url = Uri.parse('${AppConsts.effectiveBaseUrl.replaceAll('/api/v1', '')}/health');
     try {
       final res = await http.get(url).timeout(const Duration(seconds: 5));
+      if (!mounted) return;
       if (res.statusCode == 200) {
         setState(() => _status = '✅ Conectado a ${AppConsts.effectiveBaseUrl} (${res.body})');
       } else {
         setState(() => _status = '⚠️ Servidor responde ${res.statusCode} en $url');
       }
     } catch (e) {
-      // try alt
-      try {
-        final r2 = await http.get(Uri.parse('${AppConsts.effectiveBaseUrl}/users/search?q=test&excludeUid=0')).timeout(const Duration(seconds: 5));
-        setState(() => _status = '✅ API responde (${r2.statusCode}) en ${AppConsts.effectiveBaseUrl}');
-      } catch (e2) {
+      if (mounted) {
         setState(() => _status = '❌ Sin conexión a ${AppConsts.effectiveBaseUrl}\n$e\n→ Ejecuta: cd server && npm run dev');
       }
     } finally {
-      setState(() => _checking = false);
+      if (mounted) {
+        setState(() => _checking = false);
+      }
     }
   }
 
   @override
   void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _check()); }
 
-  void _useLanIp() {
-    // IP detectada en tu PC ahora mismo
-    const lanIp = 'http://192.168.3.53:3000/api/v1';
-    AppConsts.overrideUrl = _normalizeApiUrl(lanIp);
+  void _useEmulator() {
+    AppConsts.overrideUrl = 'http://10.0.2.2:3000/api/v1';
     _check();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('API cambiada a $lanIp'), backgroundColor: const Color(0xFF25D366)));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('API: emulador (10.0.2.2)'), backgroundColor: Color(0xFF25D366)));
   }
 
   void _useUsb() {
@@ -57,25 +57,38 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
 
   void _showEditDialog() {
     final ctrl = TextEditingController(text: AppConsts.effectiveBaseUrl);
-    showDialog(context: context, builder: (_) => AlertDialog(
-      title: const Text('Configurar API'),
-      content: TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'http://IP:3000/api/v1', border: OutlineInputBorder()), keyboardType: TextInputType.url),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-        ElevatedButton(onPressed: () {
-          final value = _normalizeApiUrl(ctrl.text);
-          if (value == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Introduce una URL válida, por ejemplo http://192.168.3.58:3000/api/v1')),
-            );
-            return;
-          }
-          AppConsts.overrideUrl = value;
-          Navigator.pop(context);
-          _check();
-        }, child: const Text('Guardar')),
-      ],
-    ));
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Configurar API'),
+        content: TextField(
+            controller: ctrl,
+            decoration: const InputDecoration(
+                labelText: 'http://IP-PC:3000/api/v1',
+                hintText: 'http://192.168.1.10:3000/api/v1',
+                border: OutlineInputBorder()),
+            keyboardType: TextInputType.url),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          ElevatedButton(
+              onPressed: () {
+                final value = _normalizeApiUrl(ctrl.text);
+                if (value == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'Introduce una URL válida, por ejemplo http://192.168.1.10:3000/api/v1')),
+                  );
+                  return;
+                }
+                AppConsts.overrideUrl = value;
+                Navigator.pop(context);
+                _check();
+              },
+              child: const Text('Guardar')),
+        ],
+      ),
+    ).then((_) => ctrl.dispose());
   }
 
   String? _normalizeApiUrl(String raw) {
@@ -124,9 +137,9 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
             )),
             const SizedBox(height: 4),
             SizedBox(width: double.infinity, child: ElevatedButton.icon(
-              onPressed: _useLanIp,
+              onPressed: _useEmulator,
               icon: const Icon(Icons.wifi, size: 16),
-              label: const Text('Usar IP física 192.168.3.53', style: TextStyle(fontSize: 12)),
+              label: const Text('Usar emulador (10.0.2.2)', style: TextStyle(fontSize: 12)),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF075E54), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
             )),
             const SizedBox(height: 4),

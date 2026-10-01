@@ -40,6 +40,11 @@ class NotFoundFailure extends Failure {
   const NotFoundFailure(super.message);
 }
 
+/// Acción guardada en la cola offline: se enviará sola al volver la red.
+class QueuedFailure extends Failure {
+  const QueuedFailure(super.message);
+}
+
 // Extensión para mapear excepciones a mensajes amigables
 extension FailureExtension on Failure {
   String get errorMessage {
@@ -58,6 +63,8 @@ extension FailureExtension on Failure {
         return 'Permiso denegado: $message';
       case NotFoundFailure _:
         return 'No encontrado: $message';
+      case QueuedFailure _:
+        return message;
       default:
         return 'Error inesperado: $message';
     }

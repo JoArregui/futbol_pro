@@ -7,14 +7,15 @@ import 'firebase_options.dart';
 
 // Injection Container
 import 'core/injection_container.dart' as di;
-import 'core/injection_container.dart';
 
 // Services
 import 'core/services/notification_service.dart';
+import 'core/services/socket_service.dart';
 
-// Routing & Initializer
+// Routing & theme
+import 'core/config/app_config.dart';
+import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
-import 'features/auth/presentation/widgets/auth_initializer_widget.dart';
 
 // Features
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -24,13 +25,14 @@ import 'features/match_scheduling/presentation/bloc/match_bloc.dart';
 import 'features/field_management/presentation/bloc/field_bloc.dart';
 import 'features/league_management/presentation/bloc/league_bloc.dart';
 
-
 /// DSN de Sentry (compile-time). Sin DSN no se envía nada:
 /// `flutter run --dart-define=SENTRY_DSN=https://...`
 const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint(
+      '⚙️ ${AppConfig.appName} | flavor=${AppConfig.flavor.name} | api=${AppConfig.apiUrl()}');
 
   // Reporte global de errores: siempre a consola, a Sentry solo con DSN.
   FlutterError.onError = (details) {
@@ -54,17 +56,16 @@ Future<void> _bootstrap() async {
     );
     debugPrint('✅ Firebase inicializado correctamente');
 
-    debugPrint('🔔 Inicializando NotificationService...');
-    final notificationService = NotificationServiceImpl();
-    await notificationService.initialize();
-    debugPrint('✅ NotificationService inicializado');
-
     debugPrint('🔧 Inicializando dependency injection...');
     await di.init();
     debugPrint('✅ Dependency injection inicializado');
 
+    debugPrint('🔔 Inicializando NotificationService...');
+    await di.sl<NotificationService>().initialize();
+    debugPrint('✅ NotificationService inicializado');
+
     // ✅ CORRECCIÓN: Instanciamos el AuthBloc y el AppRouter aquí para pasarlos a MyApp
-    final authBloc = sl<AuthBloc>();
+    final authBloc = di.sl<AuthBloc>();
     final appRouter = AppRouter(authBloc);
 
     runApp(MyApp(authBloc: authBloc, appRouter: appRouter));
@@ -131,54 +132,38 @@ class MyApp extends StatelessWidget {
       providers: [
         // ✅ Usamos la instancia de BLoC creada en main()
         BlocProvider<AuthBloc>.value(value: authBloc),
-        
+
         // El resto de BLoCs se obtienen del Service Locator (sl)
-        BlocProvider<ProfileBloc>(create: (_) => sl<ProfileBloc>()),
-        BlocProvider<ChatBloc>(create: (_) => sl<ChatBloc>()),
-        BlocProvider<MatchBloc>(create: (_) => sl<MatchBloc>()),
-        BlocProvider<FieldBloc>(create: (_) => sl<FieldBloc>()),
-        BlocProvider<LeagueBloc>(create: (_) => sl<LeagueBloc>()),
+        BlocProvider<ProfileBloc>(create: (_) => di.sl<ProfileBloc>()),
+        BlocProvider<ChatBloc>(create: (_) => di.sl<ChatBloc>()),
+        BlocProvider<MatchBloc>(create: (_) => di.sl<MatchBloc>()),
+        BlocProvider<FieldBloc>(create: (_) => di.sl<FieldBloc>()),
+        BlocProvider<LeagueBloc>(create: (_) => di.sl<LeagueBloc>()),
       ],
-      // 🚀 Lógica de enrutamiento basada en el estado inicial de AuthBloc
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, state) {
-          // Obtener el tema base del contexto
-          final lightTheme = ThemeData(
-            primarySwatch: Colors.blue,
-            useMaterial3: true,
-            brightness: Brightness.light,
-          );
-          final darkTheme = ThemeData(
-            primarySwatch: Colors.blue,
-            useMaterial3: true,
-            brightness: Brightness.dark,
-          );
-          
-          // 1. Si el estado es AuthInitial, mostramos el SplashScreen
-          if (state is AuthInitial) {
-            // Usamos MaterialApp simple con la pantalla de inicialización
-            return MaterialApp(
-              title: 'Futbol Pro',
-              debugShowCheckedModeBanner: false,
-              theme: lightTheme,
-              darkTheme: darkTheme,
-              themeMode: ThemeMode.system,
-              home: const AuthInitializer(), 
-            );
+      // Un solo MaterialApp.router siempre. El splash es GoRoute('/splash')
+      // vía redirect; sin Stack overlay ni reconstrucciones del Navigator.
+      // El router es `late final` estable: rebuilds del widget no pierden estado.
+      // Wiring socket↔sesión: (re)conecta al autenticar, desconecta al salir.
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            try {
+              context.read<ChatBloc>().reconnectSocket();
+            } catch (_) {}
+          } else if (state is AuthUnauthenticated) {
+            try {
+              di.sl<SocketService>().disconnect();
+            } catch (_) {}
           }
-          
-          // 2. Si el estado es conocido (Autenticado o No Autenticado), 
-          // usamos MaterialApp.router. GoRouter activa el 'redirect' 
-          // inmediatamente para llevar al usuario a la ruta correcta.
-          return MaterialApp.router(
-            title: 'Futbol Pro',
-            debugShowCheckedModeBanner: false,
-            theme: lightTheme,
-            darkTheme: darkTheme,
-            themeMode: ThemeMode.system,
-            routerConfig: appRouter.router, // ✅ Usamos GoRouter
-          );
         },
+        child: MaterialApp.router(
+          title: 'Futbol Pro',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeMode.system,
+          routerConfig: appRouter.router,
+        ),
       ),
     );
   }

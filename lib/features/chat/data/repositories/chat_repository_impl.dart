@@ -48,10 +48,13 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Either<Failure, void>> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl}) async {
+  Future<Either<Failure, void>> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl, String? clientId}) async {
     final online = await _isOnline;
+    final cid = (clientId != null && clientId.isNotEmpty)
+        ? clientId
+        : 'c${DateTime.now().microsecondsSinceEpoch}-$senderId';
     final tempMsg = Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: cid,
         senderId: senderId,
         senderName: senderName,
         text: text,
@@ -63,7 +66,7 @@ class ChatRepositoryImpl implements ChatRepository {
     await localDataSource.cacheMessage(roomId, tempMsg);
     if (!online) return const Left(CacheFailure('Mensaje guardado offline, se enviará al reconectar'));
     try {
-      await remoteDataSource.sendMessage(roomId: roomId, senderId: senderId, senderName: senderName, text: text, imageUrl: imageUrl);
+      await remoteDataSource.sendMessage(roomId: roomId, senderId: senderId, senderName: senderName, text: text, imageUrl: imageUrl, clientId: cid);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

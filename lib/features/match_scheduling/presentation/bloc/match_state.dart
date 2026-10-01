@@ -28,7 +28,6 @@ class MatchesListLoaded extends MatchState {
   List<Object> get props => [matches];
 }
 
-
 class MatchScheduledSuccess extends MatchState {
   final Match match;
   const MatchScheduledSuccess(this.match);

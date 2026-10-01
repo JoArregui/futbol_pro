@@ -13,8 +13,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<UserProfile> createProfile(
       String uid, String email, String nickname) async {
     try {
-      final newProfile =
-          UserProfileModel.initial(uid, email, nickname);
+      final newProfile = UserProfileModel.initial(uid, email, nickname);
       await remoteDataSource.createProfileInitial(newProfile);
       return newProfile;
     } catch (e) {
@@ -39,6 +38,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
     String? name,
     String? bio,
     String? avatarUrl,
+    String? position,
+    String? foot,
+    bool? available,
   }) async {
     final updateData = {
       'uid': uid,
@@ -46,6 +48,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (name != null) 'name': name,
       if (bio != null) 'bio': bio,
       if (avatarUrl != null) 'avatarUrl': avatarUrl,
+      if (position != null) 'position': position,
+      if (foot != null) 'foot': foot,
+      if (available != null) 'available': available,
     };
 
     try {

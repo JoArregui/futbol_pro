@@ -62,6 +62,30 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (currentUserId.isEmpty) return;
     try {
       socketService.connect(userId: currentUserId);
+      _registerSocketHandlers();
+      // Re-conecta con JWT cuando esté disponible (server exige auth).
+      authRepository.getAuthToken().then((t) {
+        if (t != null && t.isNotEmpty) {
+          socketService.connect(userId: currentUserId, token: t);
+          _registerSocketHandlers();
+        }
+      });
+    } catch (_) {}
+  }
+
+  /// Re-llamable tras login: el bloc se crea con userId vacío y _initSocket
+  /// sale temprano; la UI debe llamar tras AuthAuthenticated.
+  void reconnectSocket() {
+    if (currentUserId.isEmpty) return;
+    try {
+      authRepository.getAuthToken().then((t) {
+        socketService.connect(userId: currentUserId, token: t);
+        _registerSocketHandlers();
+      });
+    } catch (_) {}
+  }
+
+  void _registerSocketHandlers() {
     socketService.onNewMessage((data) {
         final roomId = data['roomId']?.toString() ?? '';
         final imageUrl = data['imageUrl']?.toString();
@@ -75,12 +99,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           type: imageUrl != null ? MessageType.image : MessageType.text,
           imageUrl: imageUrl,
         );
-        add(ChatSocketMessageReceived(message: msg, roomId: roomId));
+        final clientId = data['clientId']?.toString();
+        add(ChatSocketMessageReceived(message: msg, roomId: roomId, clientId: clientId));
       });
       socketService.onChatUpdated((_) => add(ChatRoomsSubscriptionRequested()));
       socketService.onChatCreated((_) => add(ChatRoomsSubscriptionRequested()));
-      socketService.onTyping((data) => add(ChatSocketTypingReceived(roomId: data['roomId'].toString(), userId: data['userId'].toString(), isTyping: data['isTyping'] as bool)));
-    } catch (_) {}
+      socketService.onTyping((data) {
+        final roomId = data['roomId']?.toString() ?? '';
+        final userId = data['userId']?.toString() ?? '';
+        if (roomId.isEmpty || userId.isEmpty) return;
+        final raw = data['isTyping'];
+        final isTyping = raw == true || raw == 1 || raw == '1' || raw == 'true';
+        add(ChatSocketTypingReceived(roomId: roomId, userId: userId, isTyping: isTyping));
+      });
   }
 
   // ... (Manejadores _onRoomsFetchRequested y _onRoomsReceived sin cambios)
@@ -199,7 +230,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  // 6. _onMessageSent
+  // 6. _onMessageSent — optimista + reconciliación por clientId, sin refetch.
   Future<void> _onMessageSent(
     ChatMessageSent event,
     Emitter<ChatState> emit,
@@ -207,7 +238,21 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (state is! ChatRoomSelectedState) return;
     final currentState = state as ChatRoomSelectedState;
 
-    emit(currentState.copyWith(isSending: true));
+    final clientId = 'c${DateTime.now().microsecondsSinceEpoch}-$currentUserId';
+    final optimistic = Message(
+      id: clientId,
+      senderId: currentUserId,
+      senderName: currentUserName,
+      text: event.content,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+      type: event.imageUrl != null ? MessageType.image : MessageType.text,
+      imageUrl: event.imageUrl,
+    );
+    emit(currentState.copyWith(
+        messages: [...currentState.messages, optimistic],
+        isSending: true,
+        error: null));
 
     final failureOrVoid = await sendMessage(
       SendParams(
@@ -216,18 +261,32 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         content: event.content,
         senderName: currentUserName,
         imageUrl: event.imageUrl,
+        clientId: clientId,
       ),
     );
 
     failureOrVoid.fold(
       (failure) {
-        emit(ChatError('Fallo al enviar el mensaje: ${failure.errorMessage}'));
-        emit(currentState.copyWith(isSending: false));
+        // Marca el optimista como fallido en vez de expulsar de la sala.
+        final cur = state is ChatRoomSelectedState
+            ? state as ChatRoomSelectedState
+            : currentState;
+        final updated = cur.messages
+            .map((m) => m.id == clientId
+                ? m.copyWith(status: MessageStatus.failed)
+                : m)
+            .toList();
+        emit(cur.copyWith(
+            messages: updated,
+            isSending: false,
+            error: 'Fallo al enviar: ${failure.errorMessage}'));
       },
       (_) {
-        emit(currentState.copyWith(isSending: false));
-        // 🚨 Recargar mensajes para ver el mensaje enviado (API REST)
-        add(ChatMessagesSubscriptionRequested(event.roomId));
+        // El eco del socket reconcilia el id; solo quitar el spinner.
+        if (state is ChatRoomSelectedState) {
+          emit((state as ChatRoomSelectedState)
+              .copyWith(isSending: false, error: null));
+        }
       },
     );
   }
@@ -249,9 +308,27 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
+  Timer? _searchTimer;
   Future<void> _onSearch(ChatSearchRequested event, Emitter<ChatState> emit) async {
+    // Debounce 300ms + mínimo 2 caracteres: evita tormenta de requests y
+    // que la respuesta lenta pise a la nueva (race).
+    _searchTimer?.cancel();
+    final query = event.query.trim();
+    if (query.length < 2) {
+      emit(const ChatSearchState(users: [], isSearching: false));
+      return;
+    }
+    if (currentUserId.isEmpty) {
+      emit(const ChatSearchState(users: [], isSearching: false));
+      return;
+    }
     emit(const ChatSearchState(isSearching: true));
-    final res = await searchUsers(SearchUsersParams(query: event.query, excludeUid: currentUserId));
+    final completer = Completer<void>();
+    _searchTimer = Timer(const Duration(milliseconds: 300), () => completer.complete());
+    await completer.future;
+    if (emit.isDone) return;
+    final res = await searchUsers(SearchUsersParams(query: query, excludeUid: currentUserId));
+    if (emit.isDone) return;
     res.fold(
       (f) => emit(ChatError(f.message)),
       (users) => emit(ChatSearchState(users: users, isSearching: false)),
@@ -269,6 +346,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   void _onSocketMessage(ChatSocketMessageReceived event, Emitter<ChatState> emit) {
     if (state is ChatRoomSelectedState && (state as ChatRoomSelectedState).room.id == event.roomId) {
       final cur = state as ChatRoomSelectedState;
+      // Reconciliación: si el eco trae clientId de nuestro optimista,
+      // reemplazar el temp (mismo clientId) por el id servidor en vez de duplicar.
+      if (event.clientId != null && event.clientId!.isNotEmpty) {
+        final idx = cur.messages.indexWhere((m) => m.id == event.clientId);
+        if (idx >= 0) {
+          final updated = List<Message>.from(cur.messages);
+          updated[idx] = updated[idx].copyWith(
+              id: event.message.id, status: MessageStatus.delivered);
+          emit(cur.copyWith(messages: updated));
+          return;
+        }
+      }
       final exists = cur.messages.any((m) => m.id == event.message.id);
       if (!exists) emit(cur.copyWith(messages: [...cur.messages, event.message]));
     } else {
@@ -292,14 +381,20 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   void _onSocketTyping(ChatSocketTypingReceived event, Emitter<ChatState> emit) {
     if (state is ChatRoomSelectedState && (state as ChatRoomSelectedState).room.id == event.roomId && event.userId != currentUserId) {
       final cur = state as ChatRoomSelectedState;
-      emit(cur.copyWith(isTyping: event.isTyping, typingUserId: event.isTyping ? event.userId : null));
+      if (event.isTyping) {
+        emit(cur.copyWith(isTyping: true, typingUserId: event.userId));
+      } else {
+        emit(cur.copyWith(isTyping: false, clearTyping: true));
+      }
     }
   }
 
   @override
   Future<void> close() {
     _typingTimer?.cancel();
-    socketService.dispose();
+    _searchTimer?.cancel();
+    // No destruir el singleton compartido: solo quitar listeners de este bloc.
+    // La desconexión real se hace en logout via SocketService.disconnect().
     return super.close();
   }
 }

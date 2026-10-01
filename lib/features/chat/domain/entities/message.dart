@@ -27,11 +27,12 @@ class Message extends Equatable {
   });
 
   Message copyWith({
+    String? id,
     MessageStatus? status,
     String? text,
   }) =>
       Message(
-        id: id,
+        id: id ?? this.id,
         senderId: senderId,
         senderName: senderName,
         text: text ?? this.text,

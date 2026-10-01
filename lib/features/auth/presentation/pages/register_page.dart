@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:futbol_pro/features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/connection_banner.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -18,6 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nicknameController = TextEditingController();
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -48,139 +52,140 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.login);
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(AppRoutes.login),
+        ),
+        title: const Text('Crear cuenta'),
+      ),
+      body: HeroBackground(
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text('Error: ${state.message}'),
+                    backgroundColor: AppColors.danger),
+              );
+            }
+            if (state is AuthAuthenticated) {
+              context.go(AppRoutes.home);
             }
           },
-        ),
-        centerTitle: true,
-        title: const Text('Crear Cuenta'),
-      ),
-      body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthError) {
-            final isConnection = state.message.contains('No se pudo conectar') || state.message.contains('Timeout');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isConnection ? '${state.message}\n→ Ejecuta `npm run dev` en server/ y verifica API_URL.' : 'Error al registrar: ${state.message}'),
-                backgroundColor: Colors.redAccent,
-                duration: const Duration(seconds: 5),
-                action: isConnection ? SnackBarAction(label: 'Reintentar', textColor: Colors.white, onPressed: _onRegisterPressed) : null,
-              ),
-            );
-          }
-          if (state is AuthAuthenticated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Registro exitoso. ¡Bienvenido!'), backgroundColor: Color(0xFF25D366)),
-            );
-            context.go(AppRoutes.home);
-          }
-        },
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  const ConnectionBanner(),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(22),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(
+                      child: Text('ÚNETE AL CLUB ⚽',
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5)),
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || !value.contains('@')) {
-                        return 'Ingresa un email válido.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Contraseña (mín. 6 caracteres)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock),
+                    const SizedBox(height: 6),
+                    const Center(
+                      child: Text(
+                          'Crea tu perfil de jugador en 30 segundos.',
+                          style: TextStyle(
+                              color: AppColors.textDim)),
                     ),
-                    validator: (value) {
-                      if (value == null || value.length < 6) {
-                        return 'La contraseña debe tener al menos 6 caracteres.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _nicknameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nickname / Apodo',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.tag),
+                    const SizedBox(height: 16),
+                    AppCard(
+                      child: Column(
+                        children: [
+                          const ConnectionBanner(),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon:
+                                  Icon(Icons.email_outlined),
+                            ),
+                            keyboardType:
+                                TextInputType.emailAddress,
+                            validator: (v) =>
+                                (v == null || !v.contains('@'))
+                                    ? 'Email válido.'
+                                    : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscure,
+                            decoration: InputDecoration(
+                              labelText: 'Contraseña (mín. 6)',
+                              prefixIcon: const Icon(
+                                  Icons.lock_outline_rounded),
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscure
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined),
+                                onPressed: () => setState(() =>
+                                    _obscure = !_obscure),
+                              ),
+                            ),
+                            validator: (v) =>
+                                (v == null || v.length < 6)
+                                    ? 'Mínimo 6 caracteres.'
+                                    : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _nicknameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Nickname',
+                              hintText: 'Ej: ElMatador9',
+                              prefixIcon:
+                                  Icon(Icons.tag_rounded),
+                            ),
+                            validator: (v) =>
+                                (v == null || v.isEmpty)
+                                    ? 'Obligatorio.'
+                                    : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              labelText:
+                                  'Nombre completo (opcional)',
+                              prefixIcon:
+                                  Icon(Icons.person_outline_rounded),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          BlocBuilder<AuthBloc, AuthState>(
+                            builder: (context, state) {
+                              return AppButton(
+                                label: 'Registrarme',
+                                icon: Icons
+                                    .sports_soccer_rounded,
+                                loading:
+                                    state is AuthLoading,
+                                onPressed:
+                                    state is AuthLoading
+                                        ? null
+                                        : _onRegisterPressed,
+                              );
+                            },
+                          ),
+                          AppButton.ghost(
+                            label: 'Ya tengo cuenta',
+                            onPressed: () =>
+                                context.go(AppRoutes.login),
+                          ),
+                        ],
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'El nickname es obligatorio.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre Completo (Opcional)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      final isLoading = state is AuthLoading;
-                      return ElevatedButton(
-                        onPressed: isLoading ? null : _onRegisterPressed,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Registrarme',
-                                style: TextStyle(fontSize: 18)),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      context.go(AppRoutes.login);
-                    },
-                    child: const Text('Ya tengo cuenta, Iniciar Sesión'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

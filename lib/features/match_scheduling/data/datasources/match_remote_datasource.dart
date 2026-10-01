@@ -1,15 +1,16 @@
-import 'package:http/http.dart' as http; // Necesario para la implementación de la API REST
+import 'package:http/http.dart'
+    as http; // Necesario para la implementación de la API REST
 import 'dart:convert'; // Necesario para codificar/decodificar JSON
 
 import '../models/match_model.dart';
 import '../models/team_model.dart';
+import '../../domain/entities/match_acta.dart';
 import '../../domain/entities/match_result.dart';
 import '../../domain/entities/match_split.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/consts.dart'; // 🚀 IMPORT CORREGIDO A AppConsts
 
 abstract class MatchRemoteDataSource {
-  
   /// Programa un nuevo partido amistoso.
   /// Llama al endpoint de la API REST para crear un partido.
   /// [mode]: 'open' (jugadores sueltos) | 'team' (equipo completo).
@@ -69,6 +70,9 @@ abstract class MatchRemoteDataSource {
 
   /// División de la cuenta entre participantes.
   Future<MatchSplit> getSplit({required String matchId});
+
+  /// Acta del partido (solo participantes / superadmin).
+  Future<MatchActa> getActa({required String matchId});
 }
 
 // ===============================================
@@ -80,20 +84,28 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
 
   MatchRemoteDataSourceImpl({required this.client});
 
-  // Método auxiliar para manejar respuestas de API
+  // Método auxiliar para manejar respuestas de API (con cuerpo en errores).
   dynamic _handleResponse(http.Response response) {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     } else if (response.statusCode == 400) {
-      throw ConflictException(message: response.body); 
+      throw ValidationException(
+          message: response.body.substring(
+              0, response.body.length > 500 ? 500 : response.body.length));
     } else if (response.statusCode == 401) {
-      throw UnauthorizedException();
+      throw UnauthorizedException(message: 'No autorizado.');
     } else if (response.statusCode == 403) {
-      throw ForbiddenException();
+      throw ForbiddenException(message: 'Sin permiso.');
     } else if (response.statusCode == 404) {
-      throw NotFoundException();
+      throw NotFoundException(message: 'No encontrado.');
+    } else if (response.statusCode == 409) {
+      throw ConflictException(
+          message: response.body.substring(
+              0, response.body.length > 500 ? 500 : response.body.length));
     } else {
-      throw ServerException();
+      throw ServerException(
+          message:
+              'Error ${response.statusCode}: ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
     }
   }
 
@@ -131,7 +143,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     final data = _handleResponse(response);
     return MatchModel.fromJson(Map<String, dynamic>.from(data as Map));
   }
-  
+
   @override
   Future<List<MatchModel>> getUpcomingMatches() async {
     final response = await client.get(
@@ -142,7 +154,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     final List<dynamic> jsonList = _handleResponse(response);
     return jsonList.map((json) => MatchModel.fromJson(json)).toList();
   }
-  
+
   @override
   Future<MatchModel> addPlayerToMatch({
     required String matchId,
@@ -159,7 +171,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     final data = _handleResponse(response);
     return MatchModel.fromJson(data);
   }
-  
+
   @override
   Future<MatchModel> getMatchById(String matchId) async {
     final response = await client.get(
@@ -170,7 +182,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     final data = _handleResponse(response);
     return MatchModel.fromJson(data);
   }
-  
+
   @override
   Future<MatchModel> updateMatchTeams({
     required String matchId,
@@ -252,5 +264,15 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     );
     final data = _handleResponse(response);
     return MatchSplit.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  @override
+  Future<MatchActa> getActa({required String matchId}) async {
+    final response = await client.get(
+      Uri.parse('${AppConsts.effectiveBaseUrl}/matches/$matchId/acta'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    final data = _handleResponse(response);
+    return MatchActa.fromJson(Map<String, dynamic>.from(data as Map));
   }
 }

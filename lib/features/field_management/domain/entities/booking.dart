@@ -13,6 +13,7 @@ class BookingInfo extends Equatable {
   final String? providerRef;
   final String? approvalUrl;
   final String? pagoEstado;
+  final String? provider;
 
   const BookingInfo({
     required this.reservaId,
@@ -26,10 +27,13 @@ class BookingInfo extends Equatable {
     this.providerRef,
     this.approvalUrl,
     this.pagoEstado,
+    this.provider,
   });
 
   bool get senaPagada =>
-      estado == 'senada' || estado == 'confirmada' || pagoEstado == 'confirmado';
+      estado == 'senada' ||
+      estado == 'confirmada' ||
+      pagoEstado == 'confirmado';
 
   factory BookingInfo.fromJson(Map<String, dynamic> json) {
     double numOf(dynamic v) =>
@@ -42,19 +46,20 @@ class BookingInfo extends Equatable {
       sena: numOf(json['sena']),
       senaPct: numOf(json['senaPct'] ?? 0.2),
       estado: (json['estado'] ?? 'pendiente').toString(),
-      pagoId: (json['pago'] is Map
-              ? json['pago']['id']
-              : json['pagoId'])
+      pagoId: (json['pago'] is Map ? json['pago']['id'] : json['pagoId'])
           ?.toString(),
       providerRef: (json['pago'] is Map
               ? json['pago']['providerRef']
-          : json['providerRef'])
+              : json['providerRef'])
           ?.toString(),
       approvalUrl: (json['pago'] is Map
               ? json['pago']['approvalUrl']
               : json['approvalUrl'])
           ?.toString(),
       pagoEstado: json['pagoEstado']?.toString(),
+      provider:
+          (json['pago'] is Map ? json['pago']['provider'] : json['provider'])
+              ?.toString(),
     );
   }
 
@@ -71,5 +76,6 @@ class BookingInfo extends Equatable {
         providerRef,
         approvalUrl,
         pagoEstado,
+        provider,
       ];
 }

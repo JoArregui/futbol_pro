@@ -27,7 +27,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ChatBloc, ChatState>(
-      listener: (_, s) { if (s is ChatRoomSelectedState) _scrollToBottom(); },
+      listener: (ctx, s) {
+        if (s is ChatRoomSelectedState) {
+          _scrollToBottom();
+          if (s.error != null) {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(content: Text(s.error!), backgroundColor: Colors.red),
+            );
+          }
+        }
+      },
       builder: (context, state) {
         if (state is ChatRoomSelectedState && state.room.id == widget.chatRoomId) {
           final isGroup = state.room.isGroup;

@@ -7,6 +7,7 @@ import 'package:futbol_pro/routes/app_routes.dart';
 import '../core/routing/go_router_refresh_stream.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
+import '../features/auth/presentation/widgets/auth_initializer_widget.dart';
 import '../features/chat/presentation/pages/chat_list_page.dart';
 import '../features/chat/presentation/pages/chat_room_page.dart';
 import '../features/chat/presentation/pages/new_chat_page.dart';
@@ -38,9 +39,9 @@ class AppRouter {
     routes: <RouteBase>[
       ShellRoute(
         builder: (context, state, child) {
-          final hideNavBar = state.matchedLocation.contains('room') ||
-              state.matchedLocation.contains('match_detail') ||
-              state.matchedLocation.contains('/chat/new');
+          final loc = state.matchedLocation;
+          final hideNavBar = (loc.startsWith('/chat/') && loc != '/chat') ||
+              loc.contains('match_detail');
           return MainScaffold(
             hideBottomBar: hideNavBar,
             child: child,
@@ -141,6 +142,10 @@ class AppRouter {
         path: AppRoutes.register,
         builder: (context, state) => const RegisterPage(),
       ),
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const AuthInitializer(),
+      ),
     ],
     // FUNCIÓN DE REDIRECCIÓN: maneja la lógica de autenticación
     // Nunca anónima: sin AuthAuthenticated no se entra a nada protegido.
@@ -148,8 +153,16 @@ class AppRouter {
       final authState = authBloc.state;
       final isAuthenticated = authState is AuthAuthenticated;
       final needsBiometric = authState is AuthBiometricRequired;
+      final isInitial = authState is AuthInitial;
       final loc = state.matchedLocation;
       final isLoggingInOrUp = loc == AppRoutes.login || loc == AppRoutes.register;
+      final isSplash = loc == AppRoutes.splash;
+
+      if (isInitial) {
+        // Splash como ruta: sin overlay ni doble MaterialApp.
+        return isSplash ? null : AppRoutes.splash;
+      }
+      if (isSplash) return AppRoutes.home;
 
       if (needsBiometric) {
         // Con biometría pendiente, forzar al login (pantalla de huella).

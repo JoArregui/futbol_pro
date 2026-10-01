@@ -30,6 +30,13 @@ class NotificationServiceImpl implements NotificationService {
 
   final StreamController<RemoteMessage> _onMessageCtrl =
       StreamController<RemoteMessage>.broadcast();
+  StreamSubscription<RemoteMessage>? _fgSub;
+
+  /// Ids locales secuenciales (sin colisión en el mismo segundo).
+  int _seq = 0;
+
+  static String sanitizeTopic(String topic) =>
+      topic.replaceAll(RegExp(r'[^a-zA-Z0-9-_.~%]'), '_');
 
   bool _initialized = false;
 
@@ -78,12 +85,12 @@ class NotificationServiceImpl implements NotificationService {
     // ignore: avoid_print
     print('🔔 Permiso notificaciones: ${settings.authorizationStatus}');
 
-    FirebaseMessaging.onMessage.listen((message) async {
+    _fgSub = FirebaseMessaging.onMessage.listen((message) async {
       _onMessageCtrl.add(message);
       final notification = message.notification;
       if (notification != null) {
         await _local.show(
-          notification.hashCode,
+          _seq = (_seq + 1) & 0x7fffffff,
           notification.title,
           notification.body,
           NotificationDetails(
@@ -99,6 +106,12 @@ class NotificationServiceImpl implements NotificationService {
         );
       }
     });
+
+    // Topic global: anuncios del club para todos.
+    // Topics por partido/equipo se gestionan en NotifyTopics.
+    try {
+      await _messaging.subscribeToTopic('futbolpro_all');
+    } catch (_) {}
 
     _initialized = true;
     // ignore: avoid_print

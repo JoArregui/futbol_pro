@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/widgets/app_event_listener.dart';
+import '../../core/widgets/app_states.dart';
 import '../../routes/app_routes.dart';
 import 'draggable_floating_chat_button.dart';
 
@@ -23,49 +25,99 @@ class MainScaffold extends StatelessWidget {
 
   void _onItemTapped(BuildContext context, int index) {
     if (index >= 0 && index < shellRoutes.length) {
-      final path = shellRoutes[index];
-
-      context.go(path);
+      context.go(shellRoutes[index]);
     }
   }
 
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-
-    int index = shellRoutes.indexWhere((path) => location.startsWith(path));
-
+    final index = shellRoutes.indexWhere((path) => location.startsWith(path));
     return index >= 0 ? index : 0;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      body: Stack(
-        children: [
-          child,
-          const DraggableFloatingChatButton(),
-        ],
+      extendBody: true,
+      body: AppEventListener(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                const OfflineBar(),
+                const OutboxBanner(),
+                Expanded(child: child),
+              ],
+            ),
+            const DraggableFloatingChatButton(),
+          ],
+        ),
       ),
       bottomNavigationBar: hideBottomBar
           ? null
-          : BottomNavigationBar(
-              currentIndex: _calculateSelectedIndex(context),
-              onTap: (index) => _onItemTapped(context, index),
-              selectedItemColor: Theme.of(context).colorScheme.primary,
-              unselectedItemColor: Colors.grey,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.calendar_month), label: 'Partidos'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.list_alt), label: 'Clasificación'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.sports_soccer), label: 'Canchas'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.person), label: 'Perfil'),
-              ],
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF121814).withValues(alpha: 0.92)
+                        : Colors.white.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.5 : 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(26),
+                    child: NavigationBar(
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      height: 68,
+                      selectedIndex: _calculateSelectedIndex(context),
+                      onDestinationSelected: (i) => _onItemTapped(context, i),
+                      destinations: const [
+                        NavigationDestination(
+                          icon: Icon(Icons.calendar_month_outlined),
+                          selectedIcon: Icon(Icons.calendar_month),
+                          label: 'Partidos',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.emoji_events_outlined),
+                          selectedIcon: Icon(Icons.emoji_events),
+                          label: 'Ligas',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.stadium_outlined),
+                          selectedIcon: Icon(Icons.stadium),
+                          label: 'Canchas',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.chat_bubble_outline_rounded),
+                          selectedIcon: Icon(Icons.chat_bubble_rounded),
+                          label: 'Chat',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.person_outline_rounded),
+                          selectedIcon: Icon(Icons.person_rounded),
+                          label: 'Perfil',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
     );
   }

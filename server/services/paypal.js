@@ -9,7 +9,8 @@ const baseUrl = environment === 'live'
 const currency = (process.env.PAYPAL_CURRENCY || 'EUR').toUpperCase();
 
 function configured() {
-  return Boolean(clientId && clientSecret);
+  const placeholders = new Set(['tu_client_id', 'tu_client_secret', 'your_client_id', 'your_client_secret']);
+  return Boolean(clientId && clientSecret && !placeholders.has(clientId) && !placeholders.has(clientSecret));
 }
 
 async function paypalRequest(path, options = {}) {
@@ -20,6 +21,7 @@ async function paypalRequest(path, options = {}) {
   }
   const response = await fetch(`${baseUrl}${path}`, {
     ...options,
+    signal: AbortSignal.timeout(8000),
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   });
   const body = await response.json().catch(() => ({}));
@@ -41,6 +43,7 @@ async function accessToken() {
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
     method: 'POST',
+    signal: AbortSignal.timeout(8000),
     headers: {
       Authorization: `Basic ${basic}`,
       'Content-Type': 'application/x-www-form-urlencoded',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart'; // Importado para navegación segura
+import '../../../../core/services/notify_topics.dart';
 import '../bloc/match_detail_bloc.dart';
 import '../widgets/match_detail_view.dart';
 
@@ -24,6 +25,14 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
     context
         .read<MatchDetailBloc>()
         .add(MatchDetailLoadRequested(widget.matchId));
+    // Recibir avisos del partido (marcador validado, nuevos jugadores).
+    NotifyTopics.joinMatch(widget.matchId);
+  }
+
+  @override
+  void dispose() {
+    NotifyTopics.leaveMatch(widget.matchId);
+    super.dispose();
   }
 
   @override
@@ -67,33 +76,33 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
               return const Center(child: CircularProgressIndicator());
             }
 
-          if (state is MatchDetailError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        color: Colors.red, size: 60),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Error al cargar los detalles del partido.',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'ID del Partido: ${widget.matchId}\nDetalle: ${state.message}',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+            if (state is MatchDetailError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 60),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Error al cargar los detalles del partido.',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'ID del Partido: ${widget.matchId}\nDetalle: ${state.message}',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }
+              );
+            }
 
             if (state is MatchDetailLoaded) {
               return MatchDetailView(match: state.match);

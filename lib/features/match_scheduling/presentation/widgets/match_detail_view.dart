@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/consts.dart';
+import '../../../../core/injection_container.dart';
+import '../../../../core/services/file_download_service.dart';
 import '../../data/models/match_model.dart';
 import '../../domain/entities/match.dart';
 import '../../domain/entities/match_result.dart';
@@ -67,6 +70,8 @@ class MatchDetailView extends StatelessWidget {
           _ParticipantsCard(matchModel: matchModel),
           const Divider(height: 30),
           const _SplitSection(),
+          const Divider(height: 30),
+          const _ActaSection(),
         ],
       ),
     );
@@ -147,16 +152,17 @@ class _ResultSection extends StatelessWidget {
     final model = matchModel;
     final result = model?.result;
     final myId = context.read<MatchDetailBloc>().currentUserId;
-    final isParticipant =
-        model?.participants.any((p) => p.id == myId) ?? false;
+    final isParticipant = model?.participants.any((p) => p.id == myId) ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Resultado',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold, color: Colors.deepPurple),
+          'Marcador final',
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepPurple),
         ),
         const SizedBox(height: 12),
         if (result != null)
@@ -165,7 +171,7 @@ class _ResultSection extends StatelessWidget {
           const Card(
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: Text('Aún no hay resultado propuesto.'),
+              child: Text('Aún no hay marcador registrado.'),
             ),
           ),
         const SizedBox(height: 12),
@@ -176,7 +182,7 @@ class _ResultSection extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(12),
                 child: Text(
-                    'Propuesta enviada. Debe confirmarla otro participante.'),
+                    'Marcador pendiente de validación. Debe validarlo otro participante del partido.'),
               ),
             )
           else if (isParticipant)
@@ -185,7 +191,7 @@ class _ResultSection extends StatelessWidget {
                   .read<MatchDetailBloc>()
                   .add(MatchResultConfirmRequested(model!.id)),
               icon: const Icon(Icons.verified),
-              label: const Text('Confirmar resultado'),
+              label: const Text('Validar marcador'),
             ),
         if (result == null && isParticipant)
           _ProposeForm(matchId: model!.id, participants: model.participants),
@@ -228,7 +234,9 @@ class _ResultCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Chip(
                   label: Text(
-                      result.isConfirmed ? 'Confirmado' : 'Propuesto',
+                      result.isConfirmed
+                          ? 'Validado'
+                          : 'Pendiente de validación',
                       style: const TextStyle(fontSize: 12)),
                 ),
               ],
@@ -248,8 +256,8 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(height: 8),
               const Text('Goleadores:',
                   style: TextStyle(fontWeight: FontWeight.w600)),
-              ...result.goleadores.map((g) => Text(
-                  '• ${_name(g.playerId)} (${g.goles})')),
+              ...result.goleadores
+                  .map((g) => Text('• ${_name(g.playerId)} (${g.goles})')),
             ],
           ],
         ),
@@ -286,8 +294,8 @@ class _ProposeFormState extends State<_ProposeForm> {
               mvpId: _mvpId,
               goleadores: _scorers
                   .where((s) => s.playerId != null)
-                  .map((s) =>
-                      ScorerEntry(playerId: s.playerId!, goles: s.goles))
+                  .map(
+                      (s) => ScorerEntry(playerId: s.playerId!, goles: s.goles))
                   .toList(),
             ),
           ),
@@ -303,7 +311,7 @@ class _ProposeFormState extends State<_ProposeForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Proponer resultado',
+            const Text('Registrar marcador final',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
@@ -344,8 +352,7 @@ class _ProposeFormState extends State<_ProposeForm> {
               label: 'MVP (opcional)',
               value: _mvpId,
               items: [
-                const DropdownMenuItem(
-                    value: null, child: Text('Sin MVP')),
+                const DropdownMenuItem(value: null, child: Text('Sin MVP')),
                 ...widget.participants.map((p) => DropdownMenuItem(
                       value: p.id,
                       child: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
@@ -360,8 +367,7 @@ class _ProposeFormState extends State<_ProposeForm> {
                     style: TextStyle(fontWeight: FontWeight.w600)),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () =>
-                      setState(() => _scorers.add(_ScorerRow())),
+                  onPressed: () => setState(() => _scorers.add(_ScorerRow())),
                   icon: const Icon(Icons.add),
                   label: const Text('Añadir'),
                 ),
@@ -380,7 +386,7 @@ class _ProposeFormState extends State<_ProposeForm> {
               child: FilledButton.icon(
                 onPressed: _submit,
                 icon: const Icon(Icons.send),
-                label: const Text('Enviar propuesta'),
+                label: const Text('Guardar marcador'),
               ),
             ),
           ],
@@ -421,8 +427,7 @@ class _ScorerRowWidget extends StatelessWidget {
               items: participants
                   .map((p) => DropdownMenuItem(
                         value: p.id,
-                        child: Text(
-                            p.nickname.isNotEmpty ? p.nickname : p.name,
+                        child: Text(p.nickname.isNotEmpty ? p.nickname : p.name,
                             overflow: TextOverflow.ellipsis),
                       ))
                   .toList(),
@@ -438,8 +443,7 @@ class _ScorerRowWidget extends StatelessWidget {
               label: 'Goles',
               value: row.goles,
               items: List.generate(9, (i) => i + 1)
-                  .map((n) =>
-                      DropdownMenuItem(value: n, child: Text('$n')))
+                  .map((n) => DropdownMenuItem(value: n, child: Text('$n')))
                   .toList(),
               onChanged: (v) {
                 row.goles = v ?? 1;
@@ -506,8 +510,8 @@ class _ScoreStepper extends StatelessWidget {
               icon: const Icon(Icons.remove_circle_outline),
             ),
             Text('$value',
-                style: const TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
             IconButton(
               onPressed: value < 99 ? () => onChanged(value + 1) : null,
               icon: const Icon(Icons.add_circle_outline),
@@ -529,9 +533,8 @@ class _SplitSection extends StatelessWidget {
       builder: (context, state) {
         final loaded = state is MatchDetailLoaded ? state : null;
         final split = loaded?.split;
-        final model = loaded?.match is MatchModel
-            ? loaded!.match as MatchModel
-            : null;
+        final model =
+            loaded?.match is MatchModel ? loaded!.match as MatchModel : null;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -542,8 +545,7 @@ class _SplitSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             if (model?.costeTotal != null)
-              Text(
-                  'Coste total: \$${model!.costeTotal!.toStringAsFixed(2)}',
+              Text('Coste total: \$${model!.costeTotal!.toStringAsFixed(2)}',
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             if (split == null)
@@ -579,13 +581,11 @@ class _SplitSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       ...split.detail.map((d) => Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 2),
+                            padding: const EdgeInsets.symmetric(vertical: 2),
                             child: Row(
                               children: [
                                 Expanded(child: Text(d.name)),
-                                Text(
-                                    '\$${d.amount.toStringAsFixed(2)}',
+                                Text('\$${d.amount.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.w600)),
                               ],
@@ -599,6 +599,104 @@ class _SplitSection extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+/// Acta oficial del partido: se carga bajo demanda y se puede exportar a CSV.
+class _ActaSection extends StatelessWidget {
+  const _ActaSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MatchDetailBloc, MatchDetailState>(
+      builder: (context, state) {
+        final loaded = state is MatchDetailLoaded ? state : null;
+        final acta = loaded?.acta;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Acta del partido',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold, color: Colors.deepPurple),
+            ),
+            const SizedBox(height: 8),
+            if (acta == null)
+              OutlinedButton.icon(
+                onPressed: loaded == null
+                    ? null
+                    : () => context
+                        .read<MatchDetailBloc>()
+                        .add(MatchActaRequested(loaded.match.id)),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Ver acta oficial'),
+              )
+            else
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${acta.golesA ?? '-'} - ${acta.golesB ?? '-'} · ${acta.estado}',
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w900),
+                      ),
+                      Text('${acta.field} · ${acta.time}'),
+                      if (acta.mvp != null)
+                        Text('MVP: ${acta.mvp}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                      if (acta.scorers.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        const Text('Goleadores:',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        ...acta.scorers
+                            .map((g) => Text('• ${g.name} (${g.goles})')),
+                      ],
+                      const SizedBox(height: 8),
+                      Text('Participantes (${acta.participants.length})',
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ...acta.participants.map((p) => Text(
+                          '• ${p.name}${p.noShows > 0 ? ' (${p.noShows} ausencias)' : ''}')),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _exportActa(context, acta.matchId),
+                          icon: const Icon(Icons.download_outlined),
+                          label: const Text('Exportar CSV'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _exportActa(BuildContext context, String matchId) async {
+    try {
+      final path = await sl<FileDownloadService>().downloadText(
+        apiPath: '${AppConsts.effectiveBaseUrl}/matches/$matchId/acta.csv',
+        filename: 'acta-$matchId.csv',
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Acta guardada: $path')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error export: $e')),
+        );
+      }
+    }
   }
 }
 
@@ -623,12 +721,10 @@ class _ParticipantsCard extends StatelessWidget {
         children: participants
             .map((p) => ListTile(
                   leading: CircleAvatar(
-                      child: Text((p.nickname.isNotEmpty
-                              ? p.nickname
-                              : p.name)
-                          .characters
-                          .firstOrNull
-                          ?.toUpperCase() ??
+                      child: Text((p.nickname.isNotEmpty ? p.nickname : p.name)
+                              .characters
+                              .firstOrNull
+                              ?.toUpperCase() ??
                           '?')),
                   title: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
                   subtitle: Text(

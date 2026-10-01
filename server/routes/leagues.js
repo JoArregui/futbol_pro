@@ -136,6 +136,9 @@ router.post('/:leagueId/register', async (req, res) => {
   try {
     const [ligas] = await pool.execute('SELECT * FROM ligas WHERE id_liga = ?', [leagueId]);
     if (ligas.length === 0) return res.status(404).json({ message: 'Liga no encontrada.' });
+    if (ligas[0].estado !== 'open') {
+      return res.status(409).json({ message: 'La liga ya no acepta inscripciones.' });
+    }
     const [[c]] = await pool.execute(
       'SELECT COUNT(*) AS n FROM liga_equipos WHERE id_liga_fk = ?', [leagueId]
     );

@@ -9,7 +9,7 @@ import '../../domain/usecases/schedule_friendly_match.dart';
 import '../../domain/usecases/get_match_details.dart';
 import '../../domain/usecases/update_match_with_teams.dart';
 // ⚽ NUEVO IMPORT
-import '../../domain/usecases/get_upcoming_matches.dart'; 
+import '../../domain/usecases/get_upcoming_matches.dart';
 import '../../../../core/usecases/usecase.dart'; // Importar NoParams
 
 part 'match_event.dart';
@@ -38,7 +38,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     on<GenerateTeamsForMatchEvent>(_onGenerateTeamsForMatch);
     on<GetMatchDetailsEvent>(_onGetMatchDetails);
     // ⚽ REGISTRAR NUEVO MANEJADOR
-    on<GetUpcomingMatchesEvent>(_onGetUpcomingMatches); 
+    on<GetUpcomingMatchesEvent>(_onGetUpcomingMatches);
   }
 
   // ⚽ NUEVO MANEJADOR DE EVENTO
@@ -55,7 +55,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
       (matches) => emit(MatchesListLoaded(matches: matches)),
     );
   }
-  
+
   Future<void> _onGetMatchDetails(
     GetMatchDetailsEvent event,
     Emitter<MatchState> emit,

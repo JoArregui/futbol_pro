@@ -1,5 +1,4 @@
-Miscellaneous
-
+# Miscellaneous
 *.class
 *.log
 *.pyc
@@ -12,24 +11,14 @@ Miscellaneous
 .svn/
 .swiftpm/
 migrate_working_dir/
-
-IntelliJ related
-
+# IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
-
-The .vscode folder contains launch configuration and tasks you configure in
-
-VS Code which you may wish to be included in version control, so this line
-
-is commented out by default.
-
-#.vscode/
-
-Flutter/Dart/Pub related
-
+# Launch local con IPs privadas: no commitear.
+.vscode/
+# Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -38,40 +27,27 @@ Flutter/Dart/Pub related
 .pub/
 /build/
 /coverage/
-
-----------------------------------------
-
-FIREBASE & SECRETS (CRÍTICO)
-
-Excluye archivos que contienen claves API o secretos.
-
-----------------------------------------
-
+/android/build/
+/android/.gradle/
+# ----------------------------------------
+# FIREBASE & SECRETS (CRÍTICO)
+# Excluye archivos que contienen claves API o secretos.
+# ----------------------------------------
 lib/firebase_options.dart
-
 android/app/google-services.json
-
 ios/Runner/GoogleService-Info.plist
-
-----------------------------------------
-
-FIN FIREBASE & SECRETS
-
-----------------------------------------
-
-Symbolication related
-
+# ----------------------------------------
+# FIN FIREBASE & SECRETS
+# ----------------------------------------
+# Symbolication related
 app.*.symbols
-
-Obfuscation related
-
+# Obfuscation related
 app.*.map.json
-
-Android Studio will place build artifacts here
-
+# Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
+android/build/reports/
 
 # Server (Node.js) — no commitear secretos ni deps
 server/node_modules/

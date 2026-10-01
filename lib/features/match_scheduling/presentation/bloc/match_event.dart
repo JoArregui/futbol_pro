@@ -67,7 +67,6 @@ class GenerateTeamsForMatchEvent extends MatchEvent {
   List<Object> get props => [matchId, players];
 }
 
-
 class GetMatchDetailsEvent extends MatchEvent {
   final String matchId;
   const GetMatchDetailsEvent({required this.matchId});

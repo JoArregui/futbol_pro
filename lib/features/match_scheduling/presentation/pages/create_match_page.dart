@@ -97,11 +97,10 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                 _isTeamMode && _opponentCtrl.text.trim().isNotEmpty
                     ? _opponentCtrl.text.trim()
                     : null,
-            maxPlayers: _isTeamMode
-                ? null
-                : int.tryParse(_maxCtrl.text.trim()) ?? 14,
-            costeTotal: double.tryParse(
-                _costCtrl.text.trim().replaceAll(',', '.')),
+            maxPlayers:
+                _isTeamMode ? null : int.tryParse(_maxCtrl.text.trim()) ?? 14,
+            costeTotal:
+                double.tryParse(_costCtrl.text.trim().replaceAll(',', '.')),
           ),
         );
   }
@@ -191,17 +190,16 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                         decoration: const InputDecoration(
                             labelText: 'Nombre de tu equipo',
                             border: OutlineInputBorder()),
-                        validator: (v) => _isTeamMode &&
-                                (v == null || v.trim().isEmpty)
-                            ? 'Requerido para equipo'
-                            : null,
+                        validator: (v) =>
+                            _isTeamMode && (v == null || v.trim().isEmpty)
+                                ? 'Requerido para equipo'
+                                : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _opponentCtrl,
                         decoration: const InputDecoration(
-                            labelText:
-                                'Equipo rival (vacío = abierto a retos)',
+                            labelText: 'Equipo rival (vacío = abierto a retos)',
                             border: OutlineInputBorder()),
                       ),
                       const SizedBox(height: 12),
@@ -224,8 +222,8 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                     ],
                     TextFormField(
                       controller: _costCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
                           labelText:
                               'Coste total cancha (opcional, para dividir)',
@@ -233,8 +231,8 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                           prefixText: '\$ '),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
-                        final n = double.tryParse(
-                            v.trim().replaceAll(',', '.'));
+                        final n =
+                            double.tryParse(v.trim().replaceAll(',', '.'));
                         if (n == null || n < 0) return 'Monto inválido';
                         return null;
                       },
@@ -335,8 +333,8 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                                     const Text('Árbitros disponibles:'),
                                     ..._referees.take(3).map((r) => ListTile(
                                           dense: true,
-                                          leading: const Icon(
-                                              Icons.sports_soccer),
+                                          leading:
+                                              const Icon(Icons.sports_soccer),
                                           title: Text(r.name),
                                           subtitle: Text(
                                               'Rating ${r.rating} — \$${r.fee}'),

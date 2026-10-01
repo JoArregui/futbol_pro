@@ -9,7 +9,8 @@ abstract class ProfileState extends Equatable {
 
 class ProfileInitial extends ProfileState {
   const ProfileInitial();
-  }
+}
+
 class ProfileLoading extends ProfileState {}
 
 class ProfileError extends ProfileState {
@@ -24,26 +25,36 @@ class ProfileError extends ProfileState {
 class ProfileLoaded extends ProfileState {
   final UserProfile profile;
   final bool isUpdating;
+  final String? error;
 
   const ProfileLoaded({
     required this.profile,
     this.isUpdating = false,
+    this.error,
   });
-  
+
   ProfileLoaded copyWith({
     UserProfile? profile,
     bool? isUpdating,
+    String? error,
   }) {
     return ProfileLoaded(
       profile: profile ?? this.profile,
       isUpdating: isUpdating ?? this.isUpdating,
+      error: error,
     );
   }
 
   @override
-  List<Object> get props => [profile, isUpdating];
+  List<Object> get props => [profile, isUpdating, error ?? ''];
 }
 
 class ProfileUpdateSuccess extends ProfileLoaded {
-  const ProfileUpdateSuccess({required super.profile}) : super(isUpdating: false);
+  final DateTime updatedAt;
+  ProfileUpdateSuccess({required super.profile})
+      : updatedAt = DateTime.now(),
+        super(isUpdating: false);
+
+  @override
+  List<Object> get props => [profile, isUpdating, error ?? '', updatedAt];
 }

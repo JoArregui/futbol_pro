@@ -47,8 +47,7 @@ class MatchSplit extends Equatable {
       detail: raw is List
           ? raw
               .whereType<Map<dynamic, dynamic>>()
-              .map((e) =>
-                  SplitShare.fromJson(Map<String, dynamic>.from(e)))
+              .map((e) => SplitShare.fromJson(Map<String, dynamic>.from(e)))
               .toList()
           : const [],
     );

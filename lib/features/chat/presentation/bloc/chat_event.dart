@@ -101,9 +101,11 @@ class ChatTypingChanged extends ChatEvent {
 class ChatSocketMessageReceived extends ChatEvent {
   final Message message;
   final String roomId;
-  const ChatSocketMessageReceived({required this.message, required this.roomId});
+  /// Id cliente del remitente para reconciliar el optimista (puede ser null).
+  final String? clientId;
+  const ChatSocketMessageReceived({required this.message, required this.roomId, this.clientId});
   @override
-  List<Object> get props => [message, roomId];
+  List<Object?> get props => [message, roomId, clientId];
 }
 
 class ChatSocketTypingReceived extends ChatEvent {
