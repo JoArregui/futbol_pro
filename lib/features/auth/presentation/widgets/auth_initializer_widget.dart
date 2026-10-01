@@ -22,7 +22,7 @@ class _AuthInitializerState extends State<AuthInitializer> {
 
   @override
   Widget build(BuildContext context) {
-    // Este Scaffold se muestra mientras el AuthBloc procesa el evento AppStarted 
+    // Este Scaffold se muestra mientras el AuthBloc procesa el evento AppStarted
     // y antes de que GoRouter redirija la navegación.
     return const Scaffold(
       backgroundColor: Color(0xFF008080),
@@ -30,11 +30,7 @@ class _AuthInitializerState extends State<AuthInitializer> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.sports_soccer,
-              size: 80,
-              color: Colors.white,
-            ),
+            Icon(Icons.sports_soccer, size: 80, color: Colors.white),
             SizedBox(height: 32),
             CircularProgressIndicator(color: Colors.white),
             SizedBox(height: 16),

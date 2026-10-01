@@ -10,12 +10,12 @@ import '../../domain/usecases/register_user.dart';
 
 String get _kBaseUrl => '${AppConsts.effectiveBaseUrl}/auth';
 
-
 abstract class AuthRemoteDataSource {
   Future<Player> login(LoginParams params);
   Future<Player> register(RegisterParams params);
   Future<Player> getAuthenticatedPlayer();
   Future<void> logout();
+
   /// Intenta rotar el par de tokens con el refresh guardado.
   /// Devuelve true si se obtuvo un access nuevo.
   Future<bool> refreshSession();
@@ -26,7 +26,6 @@ abstract class AuthRemoteDataSource {
   Future<bool> isBiometricEnabled();
   Future<void> setBiometricEnabled(bool v);
 }
-
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final http.Client client;
@@ -39,11 +38,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   String? _refreshToken;
   bool _storageLoaded = false;
 
-  AuthRemoteDataSourceImpl({
-    required this.client,
-    required this.secureStorage,
-  });
-
+  AuthRemoteDataSourceImpl({required this.client, required this.secureStorage});
 
   Player _parseAuthResponse(Map<String, dynamic> body) {
     // Nuevo formato {user, token, role} o legacy plano
@@ -55,8 +50,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return Player.fromJson(userJson);
   }
 
-  Future<void> _persist(Player player, String? token,
-      [String? refreshToken]) async {
+  Future<void> _persist(
+    Player player,
+    String? token, [
+    String? refreshToken,
+  ]) async {
     _currentUserId = player.id;
     _currentUserName = player.name;
     _currentUserRole = player.role;
@@ -80,7 +78,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final url = Uri.parse('$_kBaseUrl/login');
     try {
       final response = await client
-          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'email': params.email, 'password': params.password}))
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': params.email,
+              'password': params.password,
+            }),
+          )
           .timeout(AppConsts.httpTimeout);
 
       if (response.statusCode == 200) {
@@ -88,26 +93,37 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final player = _parseAuthResponse(jsonResponse);
         final token = jsonResponse['token']?.toString();
         final refreshToken = jsonResponse['refreshToken']?.toString();
-        if (player.id.isEmpty) throw const ServerException(message: 'Respuesta inválida del servidor');
+        if (player.id.isEmpty)
+          throw const ServerException(
+            message: 'Respuesta inválida del servidor',
+          );
         await _persist(player, token, refreshToken);
         return player;
       } else if (response.statusCode == 401) {
         throw const ServerException(message: 'Credenciales inválidas');
       } else {
         String serverMsg = response.body;
-        try { serverMsg = (jsonDecode(response.body) as Map)['message']?.toString() ?? serverMsg; } catch (_) {}
-        throw ServerException(message: 'Error de servidor (${response.statusCode}): $serverMsg');
+        try {
+          serverMsg =
+              (jsonDecode(response.body) as Map)['message']?.toString() ??
+              serverMsg;
+        } catch (_) {}
+        throw ServerException(
+          message: 'Error de servidor (${response.statusCode}): $serverMsg',
+        );
       }
     } on TimeoutException {
       // Sin anonimato: offline NO entra. Solo reanuda si ya había sesión válida.
-      throw const ServerException(message: 'Sin conexión al servidor. No se permite entrar sin validar credenciales.');
+      throw const ServerException(
+        message:
+            'Sin conexión al servidor. No se permite entrar sin validar credenciales.',
+      );
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
       throw ServerException(message: 'Fallo de conexión: $e');
     }
   }
-
 
   // ===============================================
   // IMPLEMENTACIÓN DE REGISTER (API REST)
@@ -116,12 +132,25 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<Player> register(RegisterParams params) async {
     final url = Uri.parse('$_kBaseUrl/register');
     // Validación cliente rápida para evitar 500 por campos vacíos
-    if (params.email.isEmpty || params.password.isEmpty || params.nickname.isEmpty) {
-      throw const ServerException(message: 'Faltan campos obligatorios (email, password, nickname).');
+    if (params.email.isEmpty ||
+        params.password.isEmpty ||
+        params.nickname.isEmpty) {
+      throw const ServerException(
+        message: 'Faltan campos obligatorios (email, password, nickname).',
+      );
     }
     try {
       final response = await client
-          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'email': params.email, 'password': params.password, 'nickname': params.nickname, 'name': params.name}))
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': params.email,
+              'password': params.password,
+              'nickname': params.nickname,
+              'name': params.name,
+            }),
+          )
           .timeout(AppConsts.httpTimeout);
 
       if (response.statusCode == 201) {
@@ -133,16 +162,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         return player;
       } else if (response.statusCode == 409) {
         String msg = 'El usuario ya existe.';
-        try { msg = (jsonDecode(response.body) as Map)['message']?.toString() ?? msg; } catch (_) {}
+        try {
+          msg =
+              (jsonDecode(response.body) as Map)['message']?.toString() ?? msg;
+        } catch (_) {}
         throw ServerException(message: msg);
       } else {
         String serverMsg = response.body;
-        try { serverMsg = (jsonDecode(response.body) as Map)['message']?.toString() ?? serverMsg; } catch (_) {}
-        throw ServerException(message: 'Error de registro (${response.statusCode}): $serverMsg');
+        try {
+          serverMsg =
+              (jsonDecode(response.body) as Map)['message']?.toString() ??
+              serverMsg;
+        } catch (_) {}
+        throw ServerException(
+          message: 'Error de registro (${response.statusCode}): $serverMsg',
+        );
       }
     } on TimeoutException {
       // Sin anonimato: no se crea usuario demo offline.
-      throw const ServerException(message: 'Sin conexión al servidor. No se puede registrar sin validar.');
+      throw const ServerException(
+        message: 'Sin conexión al servidor. No se puede registrar sin validar.',
+      );
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
@@ -187,13 +227,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     // Validar token contra /auth/me
     try {
       final url = Uri.parse('$_kBaseUrl/me');
-      final response = await client.get(url, headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $_token',
-      }).timeout(const Duration(seconds: 5));
+      final response = await client
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_token',
+            },
+          )
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final p = Player.fromJson(
-            Map<String, dynamic>.from(jsonDecode(response.body) as Map));
+          Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+        );
         await _persist(p, _token);
         return p;
       }
@@ -229,12 +275,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // /auth/refresh del reintento para no entrar en bucle.
       final url = Uri.parse('$_kBaseUrl/refresh');
       final response = await client
-          .post(url,
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({'refreshToken': rt}))
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': rt}),
+          )
           .timeout(AppConsts.httpTimeout);
       if (response.statusCode == 200) {
-        final body = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+        final body = Map<String, dynamic>.from(
+          jsonDecode(response.body) as Map,
+        );
         final newToken = body['token']?.toString();
         final newRefresh = body['refreshToken']?.toString();
         if (newToken == null || newToken.isEmpty) return false;
@@ -243,7 +293,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           _refreshToken = newRefresh;
         }
         await secureStorage.persistTokens(
-            token: _token, refreshToken: _refreshToken);
+          token: _token,
+          refreshToken: _refreshToken,
+        );
         return true;
       }
       return false;
@@ -283,7 +335,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   String getCurrentUserId() {
     return _currentUserId;
   }
-  
+
   @override
   String getCurrentUserName() {
     return _currentUserName;

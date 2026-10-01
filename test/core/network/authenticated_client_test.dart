@@ -38,11 +38,11 @@ void main() {
 
   group('AuthenticatedClient', () {
     test('inyecta Bearer cuando hay token', () async {
-      when(() => mockStorage.read(key: 'auth_token'))
-          .thenAnswer((_) async => 'abc123');
+      when(
+        () => mockStorage.read(key: 'auth_token'),
+      ).thenAnswer((_) async => 'abc123');
       final inner = FakeInner((req) async => ok('{}'));
-      final client =
-          AuthenticatedClient(inner: inner, storage: storage);
+      final client = AuthenticatedClient(inner: inner, storage: storage);
 
       await client.get(Uri.parse('https://api.test/api/v1/users/1/profile'));
 
@@ -50,11 +50,11 @@ void main() {
     });
 
     test('respeta un Authorization ya presente', () async {
-      when(() => mockStorage.read(key: 'auth_token'))
-          .thenAnswer((_) async => 'nuevo');
+      when(
+        () => mockStorage.read(key: 'auth_token'),
+      ).thenAnswer((_) async => 'nuevo');
       final inner = FakeInner((req) async => ok('{}'));
-      final client =
-          AuthenticatedClient(inner: inner, storage: storage);
+      final client = AuthenticatedClient(inner: inner, storage: storage);
 
       await client.get(
         Uri.parse('https://api.test/api/v1/admin/stats'),
@@ -66,8 +66,9 @@ void main() {
 
     test('ante 401 rota con onUnauthorized y reintenta una vez', () async {
       var calls = 0;
-      when(() => mockStorage.read(key: 'auth_token'))
-          .thenAnswer((_) async => calls == 0 ? 'expirado' : 'fresco');
+      when(
+        () => mockStorage.read(key: 'auth_token'),
+      ).thenAnswer((_) async => calls == 0 ? 'expirado' : 'fresco');
       final inner = FakeInner((req) async {
         calls++;
         if (calls == 1) return ok('unauthorized', code: 401);
@@ -76,8 +77,9 @@ void main() {
       final client = AuthenticatedClient(inner: inner, storage: storage);
       client.onUnauthorized = () async => true;
 
-      final res = await client
-          .get(Uri.parse('https://api.test/api/v1/matches/upcoming'));
+      final res = await client.get(
+        Uri.parse('https://api.test/api/v1/matches/upcoming'),
+      );
 
       expect(res.statusCode, 200);
       expect(calls, 2);
@@ -86,8 +88,9 @@ void main() {
 
     test('no reintenta /auth/refresh (evita bucle)', () async {
       var calls = 0;
-      when(() => mockStorage.read(key: 'auth_token'))
-          .thenAnswer((_) async => 'x');
+      when(
+        () => mockStorage.read(key: 'auth_token'),
+      ).thenAnswer((_) async => 'x');
       final inner = FakeInner((req) async {
         calls++;
         return ok('expired', code: 401);

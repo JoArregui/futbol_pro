@@ -9,7 +9,14 @@ class MessageList extends StatelessWidget {
   final ScrollController scrollController;
   final bool isGroupChat;
   final bool isTyping;
-  const MessageList({super.key, required this.messages, required this.currentUserId, required this.scrollController, this.isGroupChat = false, this.isTyping = false});
+  const MessageList({
+    super.key,
+    required this.messages,
+    required this.currentUserId,
+    required this.scrollController,
+    this.isGroupChat = false,
+    this.isTyping = false,
+  });
 
   String _dateLabel(DateTime d) {
     final now = DateTime.now();
@@ -24,7 +31,12 @@ class MessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (messages.isEmpty && !isTyping) {
-      return const Center(child: Text('Aún no hay mensajes. ¡Sé el primero!', style: TextStyle(color: Colors.grey)));
+      return const Center(
+        child: Text(
+          'Aún no hay mensajes. ¡Sé el primero!',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
     }
     // Agrupar por fecha
     final items = <Widget>[];
@@ -37,7 +49,9 @@ class MessageList extends StatelessWidget {
         lastDate = d;
       }
       final isMe = m.senderId == currentUserId;
-      items.add(MessageBubble(message: m, isMe: isMe, isGroupChat: isGroupChat));
+      items.add(
+        MessageBubble(message: m, isMe: isMe, isGroupChat: isGroupChat),
+      );
     }
     if (isTyping) {
       items.add(const _TypingIndicator());
@@ -57,36 +71,70 @@ class _DateChip extends StatelessWidget {
   const _DateChip({required this.label});
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: const Color(0xFFE1F2FA), borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 1)]),
-            child: Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF54656F), fontWeight: FontWeight.w500)),
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE1F2FA),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 1,
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF54656F),
+            fontWeight: FontWeight.w500,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
   @override
   Widget build(BuildContext context) => Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          margin: const EdgeInsets.only(top: 4, left: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16).copyWith(topLeft: const Radius.circular(4))),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Text('escribiendo', style: TextStyle(color: Color(0xFF54656F), fontSize: 13, fontStyle: FontStyle.italic)),
-            const SizedBox(width: 6),
-            SizedBox(
-              width: 36,
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: List.generate(3, (i) => _Dot(delay: i * 200))),
+    alignment: Alignment.centerLeft,
+    child: Container(
+      margin: const EdgeInsets.only(top: 4, left: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(
+          16,
+        ).copyWith(topLeft: const Radius.circular(4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'escribiendo',
+            style: TextStyle(
+              color: Color(0xFF54656F),
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
             ),
-          ]),
-        ),
-      );
+          ),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 36,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(3, (i) => _Dot(delay: i * 200)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Dot extends StatefulWidget {
@@ -101,11 +149,31 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..repeat(reverse: true);
-    Future.delayed(Duration(milliseconds: widget.delay), () { if (mounted) _c.forward(); });
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) _c.forward();
+    });
   }
+
   @override
-  void dispose() { _c.dispose(); super.dispose(); }
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
   @override
-  Widget build(BuildContext context) => FadeTransition(opacity: Tween<double>(begin: 0.3, end: 1).animate(_c), child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF54656F), shape: BoxShape.circle)));
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: Tween<double>(begin: 0.3, end: 1).animate(_c),
+    child: Container(
+      width: 6,
+      height: 6,
+      decoration: const BoxDecoration(
+        color: Color(0xFF54656F),
+        shape: BoxShape.circle,
+      ),
+    ),
+  );
 }

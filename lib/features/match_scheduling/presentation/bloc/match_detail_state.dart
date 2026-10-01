@@ -36,15 +36,21 @@ class MatchDetailLoaded extends MatchDetailState {
   /// Acta del partido (se carga bajo demanda).
   final MatchActa? acta;
 
-  const MatchDetailLoaded(
-      {required this.match, this.notice, this.error, this.split, this.acta});
+  const MatchDetailLoaded({
+    required this.match,
+    this.notice,
+    this.error,
+    this.split,
+    this.acta,
+  });
 
-  MatchDetailLoaded copyWith(
-      {Match? match,
-      String? notice,
-      String? error,
-      MatchSplit? split,
-      MatchActa? acta}) {
+  MatchDetailLoaded copyWith({
+    Match? match,
+    String? notice,
+    String? error,
+    MatchSplit? split,
+    MatchActa? acta,
+  }) {
     return MatchDetailLoaded(
       match: match ?? this.match,
       notice: notice ?? this.notice,

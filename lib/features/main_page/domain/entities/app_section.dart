@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-class 
-AppSection {
+class AppSection {
   final String title;
   final IconData icon;
-  final String routePath; 
+  final String routePath;
 
   const AppSection({
     required this.title,

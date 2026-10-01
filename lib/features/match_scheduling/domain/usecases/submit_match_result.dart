@@ -17,7 +17,8 @@ class SubmitMatchResult implements UseCase<MatchResult, SubmitResultParams> {
         params.golesA > 99 ||
         params.golesB > 99) {
       return const Left(
-          ValidationFailure('El marcador debe estar entre 0 y 99.'));
+        ValidationFailure('El marcador debe estar entre 0 y 99.'),
+      );
     }
     return repository.submitResult(
       matchId: params.matchId,
@@ -54,6 +55,14 @@ class SubmitResultParams extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [matchId, golesA, golesB, ganador, goleadores, teamAIds, teamBIds, mvpId];
+  List<Object?> get props => [
+    matchId,
+    golesA,
+    golesB,
+    ganador,
+    goleadores,
+    teamAIds,
+    teamBIds,
+    mvpId,
+  ];
 }

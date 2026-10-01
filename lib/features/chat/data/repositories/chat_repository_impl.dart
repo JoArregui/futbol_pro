@@ -13,12 +13,17 @@ class ChatRepositoryImpl implements ChatRepository {
   final ChatLocalDataSource localDataSource;
   final Connectivity connectivity;
 
-  ChatRepositoryImpl({required this.remoteDataSource, required this.localDataSource, Connectivity? connectivity})
-      : connectivity = connectivity ?? Connectivity();
+  ChatRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+    Connectivity? connectivity,
+  }) : connectivity = connectivity ?? Connectivity();
 
   Future<bool> get _isOnline async {
     final res = await connectivity.checkConnectivity();
-    return res.contains(ConnectivityResult.mobile) || res.contains(ConnectivityResult.wifi) || res.contains(ConnectivityResult.ethernet);
+    return res.contains(ConnectivityResult.mobile) ||
+        res.contains(ConnectivityResult.wifi) ||
+        res.contains(ConnectivityResult.ethernet);
   }
 
   // ===============================================
@@ -48,36 +53,58 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Either<Failure, void>> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl, String? clientId}) async {
+  Future<Either<Failure, void>> sendMessage({
+    required String roomId,
+    required String senderId,
+    required String senderName,
+    required String text,
+    String? imageUrl,
+    String? clientId,
+  }) async {
     final online = await _isOnline;
     final cid = (clientId != null && clientId.isNotEmpty)
         ? clientId
         : 'c${DateTime.now().microsecondsSinceEpoch}-$senderId';
     final tempMsg = Message(
-        id: cid,
+      id: cid,
+      senderId: senderId,
+      senderName: senderName,
+      text: text,
+      timestamp: DateTime.now(),
+      status: online ? MessageStatus.sent : MessageStatus.sending,
+      type: imageUrl != null ? MessageType.image : MessageType.text,
+      imageUrl: imageUrl,
+    );
+    // guarda optimista en Isar
+    await localDataSource.cacheMessage(roomId, tempMsg);
+    if (!online)
+      return const Left(
+        CacheFailure('Mensaje guardado offline, se enviará al reconectar'),
+      );
+    try {
+      await remoteDataSource.sendMessage(
+        roomId: roomId,
         senderId: senderId,
         senderName: senderName,
         text: text,
-        timestamp: DateTime.now(),
-        status: online ? MessageStatus.sent : MessageStatus.sending,
-        type: imageUrl != null ? MessageType.image : MessageType.text,
-        imageUrl: imageUrl);
-    // guarda optimista en Isar
-    await localDataSource.cacheMessage(roomId, tempMsg);
-    if (!online) return const Left(CacheFailure('Mensaje guardado offline, se enviará al reconectar'));
-    try {
-      await remoteDataSource.sendMessage(roomId: roomId, senderId: senderId, senderName: senderName, text: text, imageUrl: imageUrl, clientId: cid);
+        imageUrl: imageUrl,
+        clientId: cid,
+      );
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return const Left(ServerFailure('Error desconocido al enviar el mensaje.'));
+      return const Left(
+        ServerFailure('Error desconocido al enviar el mensaje.'),
+      );
     }
   }
 
   @override
   Future<Either<Failure, void>> markMessagesAsRead(
-      String roomId, String userId) async {
+    String roomId,
+    String userId,
+  ) async {
     try {
       await remoteDataSource.markMessagesAsRead(roomId, userId);
       return const Right(null);
@@ -86,7 +113,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on Exception {
       // Cambiado de CacheFailure, ya que ahora es una llamada a la API
       return const Left(
-          ServerFailure('No se pudo actualizar el estado de lectura.'));
+        ServerFailure('No se pudo actualizar el estado de lectura.'),
+      );
     }
   }
 
@@ -115,9 +143,19 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Either<Failure, ChatRoom>> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId}) async {
+  Future<Either<Failure, ChatRoom>> createChat({
+    required String title,
+    required String type,
+    required List<String> memberIds,
+    String? relatedEntityId,
+  }) async {
     try {
-      final model = await remoteDataSource.createChat(title: title, type: type, memberIds: memberIds, relatedEntityId: relatedEntityId);
+      final model = await remoteDataSource.createChat(
+        title: title,
+        type: type,
+        memberIds: memberIds,
+        relatedEntityId: relatedEntityId,
+      );
       return Right(model);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
@@ -127,9 +165,15 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> searchUsers({required String query, required String excludeUid}) async {
+  Future<Either<Failure, List<Map<String, dynamic>>>> searchUsers({
+    required String query,
+    required String excludeUid,
+  }) async {
     try {
-      final res = await remoteDataSource.searchUsers(query: query, excludeUid: excludeUid);
+      final res = await remoteDataSource.searchUsers(
+        query: query,
+        excludeUid: excludeUid,
+      );
       return Right(res);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

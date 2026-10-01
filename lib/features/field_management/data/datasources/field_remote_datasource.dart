@@ -8,8 +8,10 @@ import '../models/field_model.dart';
 String get _kBaseUrl => '${AppConsts.effectiveBaseUrl}/fields';
 
 abstract class FieldRemoteDataSource {
-  Future<List<FieldModel>> getAvailableFields(
-      {required DateTime startTime, required DateTime endTime});
+  Future<List<FieldModel>> getAvailableFields({
+    required DateTime startTime,
+    required DateTime endTime,
+  });
   Future<BookingInfo> reserveField({
     required String fieldId,
     required DateTime startTime,
@@ -26,15 +28,21 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
   FieldRemoteDataSourceImpl({required this.client});
 
   @override
-  Future<List<FieldModel>> getAvailableFields(
-      {required DateTime startTime, required DateTime endTime}) async {
-    final uri = Uri.parse('$_kBaseUrl/available').replace(queryParameters: {
-      'start': startTime.toUtc().toIso8601String(),
-      'end': endTime.toUtc().toIso8601String(),
-    });
+  Future<List<FieldModel>> getAvailableFields({
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    final uri = Uri.parse('$_kBaseUrl/available').replace(
+      queryParameters: {
+        'start': startTime.toUtc().toIso8601String(),
+        'end': endTime.toUtc().toIso8601String(),
+      },
+    );
     try {
-      final response =
-          await client.get(uri, headers: {'Content-Type': 'application/json'});
+      final response = await client.get(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+      );
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
         return list
@@ -43,8 +51,11 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
       }
       if (response.statusCode == 404) return [];
       throw ServerException(
-          message: _messageFromResponse(
-              response, 'Error al obtener campos: ${response.statusCode}'));
+        message: _messageFromResponse(
+          response,
+          'Error al obtener campos: ${response.statusCode}',
+        ),
+      );
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
@@ -73,18 +84,23 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
       );
       if (response.statusCode == 201) {
         return BookingInfo.fromJson(
-            Map<String, dynamic>.from(jsonDecode(response.body) as Map));
+          Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+        );
       }
       if (response.statusCode == 409) {
         throw const ServerException(
-            message: 'El campo ya está reservado en ese horario.');
+          message: 'El campo ya está reservado en ese horario.',
+        );
       }
       if (response.statusCode == 403) {
         throw const ServerException(message: 'No tienes permiso.');
       }
       throw ServerException(
-          message: _messageFromResponse(
-              response, 'Error al reservar campo: ${response.statusCode}'));
+        message: _messageFromResponse(
+          response,
+          'Error al reservar campo: ${response.statusCode}',
+        ),
+      );
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
@@ -93,8 +109,10 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
   }
 
   @override
-  Future<bool> confirmPago(
-      {required String pagoId, required String orderId}) async {
+  Future<bool> confirmPago({
+    required String pagoId,
+    required String orderId,
+  }) async {
     try {
       final response = await client.post(
         Uri.parse('$_kBaseUrl/pagos/$pagoId/confirm'),
@@ -103,8 +121,11 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
       );
       if (response.statusCode == 200) return true;
       throw ServerException(
-          message: _messageFromResponse(
-              response, 'Error al confirmar pago: ${response.statusCode}'));
+        message: _messageFromResponse(
+          response,
+          'Error al confirmar pago: ${response.statusCode}',
+        ),
+      );
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
@@ -115,18 +136,25 @@ class FieldRemoteDataSourceImpl implements FieldRemoteDataSource {
   @override
   Future<List<BookingInfo>> misReservas() async {
     try {
-      final response = await client.get(Uri.parse('$_kBaseUrl/mis-reservas'),
-          headers: {'Content-Type': 'application/json'});
+      final response = await client.get(
+        Uri.parse('$_kBaseUrl/mis-reservas'),
+        headers: {'Content-Type': 'application/json'},
+      );
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
         return list
-            .map((item) =>
-                BookingInfo.fromJson(Map<String, dynamic>.from(item as Map)))
+            .map(
+              (item) =>
+                  BookingInfo.fromJson(Map<String, dynamic>.from(item as Map)),
+            )
             .toList();
       }
       throw ServerException(
-          message: _messageFromResponse(
-              response, 'Error al obtener reservas: ${response.statusCode}'));
+        message: _messageFromResponse(
+          response,
+          'Error al obtener reservas: ${response.statusCode}',
+        ),
+      );
     } on ServerException {
       rethrow;
     } on Exception catch (e) {

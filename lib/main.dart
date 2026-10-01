@@ -32,7 +32,8 @@ const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint(
-      '⚙️ ${AppConfig.appName} | flavor=${AppConfig.flavor.name} | api=${AppConfig.apiUrl()}');
+    '⚙️ ${AppConfig.appName} | flavor=${AppConfig.flavor.name} | api=${AppConfig.apiUrl()}',
+  );
 
   // Reporte global de errores: siempre a consola, a Sentry solo con DSN.
   FlutterError.onError = (details) {
@@ -77,32 +78,34 @@ Future<void> _bootstrap() async {
     }
 
     // Mostrar error en pantalla
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text(
-                  'Error al inicializar la aplicación',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  e.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ],
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Error al inicializar la aplicación',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    e.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -110,13 +113,10 @@ void main() async {
   if (_sentryDsn.isEmpty) {
     return _bootstrap();
   }
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = _sentryDsn;
-      options.tracesSampleRate = 0.2;
-    },
-    appRunner: _bootstrap,
-  );
+  await SentryFlutter.init((options) {
+    options.dsn = _sentryDsn;
+    options.tracesSampleRate = 0.2;
+  }, appRunner: _bootstrap);
 }
 
 class MyApp extends StatelessWidget {

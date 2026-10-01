@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 enum MessageStatus { sending, sent, delivered, read, failed }
+
 enum MessageType { text, image, system }
 
 class Message extends Equatable {
@@ -26,11 +27,7 @@ class Message extends Equatable {
     this.imageUrl,
   });
 
-  Message copyWith({
-    String? id,
-    MessageStatus? status,
-    String? text,
-  }) =>
+  Message copyWith({String? id, MessageStatus? status, String? text}) =>
       Message(
         id: id ?? this.id,
         senderId: senderId,
@@ -44,5 +41,15 @@ class Message extends Equatable {
       );
 
   @override
-  List<Object?> get props => [id, senderId, senderName, text, timestamp, status, type, replyToId, imageUrl];
+  List<Object?> get props => [
+    id,
+    senderId,
+    senderName,
+    text,
+    timestamp,
+    status,
+    type,
+    replyToId,
+    imageUrl,
+  ];
 }

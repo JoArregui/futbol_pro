@@ -30,7 +30,6 @@ class ChatMessagesSubscriptionRequested extends ChatEvent {
   List<Object> get props => [roomId];
 }
 
-
 class ChatMessagesReceived extends ChatEvent {
   final List<Message> messages;
 
@@ -66,7 +65,6 @@ class ChatMarkAsRead extends ChatEvent {
   List<Object> get props => [roomId];
 }
 
-
 class ChatRoomsReceived extends ChatEvent {
   final List<ChatRoom> rooms;
   const ChatRoomsReceived(this.rooms);
@@ -78,7 +76,11 @@ class ChatCreateRequested extends ChatEvent {
   final String title;
   final String type;
   final List<String> memberIds;
-  const ChatCreateRequested({required this.title, required this.type, required this.memberIds});
+  const ChatCreateRequested({
+    required this.title,
+    required this.type,
+    required this.memberIds,
+  });
   @override
   List<Object> get props => [title, type, memberIds];
 }
@@ -101,9 +103,14 @@ class ChatTypingChanged extends ChatEvent {
 class ChatSocketMessageReceived extends ChatEvent {
   final Message message;
   final String roomId;
+
   /// Id cliente del remitente para reconciliar el optimista (puede ser null).
   final String? clientId;
-  const ChatSocketMessageReceived({required this.message, required this.roomId, this.clientId});
+  const ChatSocketMessageReceived({
+    required this.message,
+    required this.roomId,
+    this.clientId,
+  });
   @override
   List<Object?> get props => [message, roomId, clientId];
 }
@@ -112,7 +119,11 @@ class ChatSocketTypingReceived extends ChatEvent {
   final String roomId;
   final String userId;
   final bool isTyping;
-  const ChatSocketTypingReceived({required this.roomId, required this.userId, required this.isTyping});
+  const ChatSocketTypingReceived({
+    required this.roomId,
+    required this.userId,
+    required this.isTyping,
+  });
   @override
   List<Object> get props => [roomId, userId, isTyping];
 }

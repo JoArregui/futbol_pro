@@ -31,11 +31,11 @@ class _LoginPageState extends State<LoginPage> {
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            LoginRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            ),
-          );
+        LoginRequested(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        ),
+      );
     }
   }
 
@@ -56,7 +56,8 @@ class _LoginPageState extends State<LoginPage> {
             if (state is AuthAuthenticated) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('¡Bienvenido de vuelta, crack! ⚽')),
+                  content: Text('¡Bienvenido de vuelta, crack! ⚽'),
+                ),
               );
             }
           },
@@ -77,13 +78,20 @@ class _LoginPageState extends State<LoginPage> {
                               gradient: AppColors.gradientLime,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.fingerprint,
-                                size: 44, color: Colors.black),
+                            child: const Icon(
+                              Icons.fingerprint,
+                              size: 44,
+                              color: Colors.black,
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          const Text('Desbloqueo rápido con huella',
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.w900)),
+                          const Text(
+                            'Desbloqueo rápido con huella',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           const Text(
                             'La activaste tú en tu Perfil. Es opcional: evita reescribir la contraseña al volver. El primer login siempre fue con email + contraseña y puedes desactivarla cuando quieras.',
@@ -94,15 +102,15 @@ class _LoginPageState extends State<LoginPage> {
                           AppButton(
                             label: 'Desbloquear con huella',
                             icon: Icons.fingerprint,
-                            onPressed: () => context
-                                .read<AuthBloc>()
-                                .add(const BiometricUnlockRequested()),
+                            onPressed: () => context.read<AuthBloc>().add(
+                              const BiometricUnlockRequested(),
+                            ),
                           ),
                           AppButton.ghost(
                             label: 'Usar otra cuenta',
-                            onPressed: () => context
-                                .read<AuthBloc>()
-                                .add(const LogoutRequested()),
+                            onPressed: () => context.read<AuthBloc>().add(
+                              const LogoutRequested(),
+                            ),
                           ),
                         ],
                       ),
@@ -143,34 +151,47 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.sports_soccer,
-                      color: Colors.black, size: 42),
+                  child: const Icon(
+                    Icons.sports_soccer,
+                    color: Colors.black,
+                    size: 42,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               const Center(
-                child: Text('FUTBOL PRO',
-                    style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2)),
+                child: Text(
+                  'FUTBOL PRO',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                  ),
+                ),
               ),
               const Center(
-                child: Text('Tu club, tus partidos, tu nivel.',
-                    style: TextStyle(color: AppColors.textDim, fontSize: 14)),
+                child: Text(
+                  'Tu club, tus partidos, tu nivel.',
+                  style: TextStyle(color: AppColors.textDim, fontSize: 14),
+                ),
               ),
               const SizedBox(height: 22),
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Iniciar sesión',
-                        style: TextStyle(
-                            fontSize: 19, fontWeight: FontWeight.w900)),
+                    const Text(
+                      'Iniciar sesión',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    const Text('Acceso seguro con contraseña.',
-                        style:
-                            TextStyle(color: AppColors.textDim, fontSize: 13)),
+                    const Text(
+                      'Acceso seguro con contraseña.',
+                      style: TextStyle(color: AppColors.textDim, fontSize: 13),
+                    ),
                     const SizedBox(height: 16),
                     const ConnectionBanner(),
                     const SizedBox(height: 12),
@@ -194,9 +215,11 @@ class _LoginPageState extends State<LoginPage> {
                         labelText: 'Contraseña',
                         prefixIcon: const Icon(Icons.lock_outline_rounded),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
@@ -212,8 +235,9 @@ class _LoginPageState extends State<LoginPage> {
                           label: 'Iniciar Sesión',
                           icon: Icons.login_rounded,
                           loading: state is AuthLoading,
-                          onPressed:
-                              state is AuthLoading ? null : _onLoginPressed,
+                          onPressed: state is AuthLoading
+                              ? null
+                              : _onLoginPressed,
                         );
                       },
                     ),

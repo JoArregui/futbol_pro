@@ -44,15 +44,15 @@ class Standing extends Equatable {
 
   @override
   List<Object?> get props => [
-        teamName,
-        teamId,
-        points,
-        gamesPlayed,
-        wins,
-        draws,
-        losses,
-        goalsFor,
-        goalsAgainst,
-        goalDifference,
-      ];
+    teamName,
+    teamId,
+    points,
+    gamesPlayed,
+    wins,
+    draws,
+    losses,
+    goalsFor,
+    goalsAgainst,
+    goalDifference,
+  ];
 }

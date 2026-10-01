@@ -33,6 +33,7 @@ class SendParams extends Equatable {
 
   final String senderName;
   final String? imageUrl;
+
   /// Id cliente (uuid local) para reconciliar el eco del socket.
   final String? clientId;
 
@@ -46,5 +47,12 @@ class SendParams extends Equatable {
   });
 
   @override
-  List<Object?> get props => [roomId, senderId, content, senderName, imageUrl, clientId];
+  List<Object?> get props => [
+    roomId,
+    senderId,
+    content,
+    senderName,
+    imageUrl,
+    clientId,
+  ];
 }

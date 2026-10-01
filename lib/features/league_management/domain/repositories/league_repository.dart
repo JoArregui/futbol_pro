@@ -9,8 +9,10 @@ abstract class LeagueRepository {
     required String leagueId,
   });
   Future<Either<Failure, List<Tournament>>> getTournaments();
-  Future<Either<Failure, bool>> registerTeam(
-      {required String leagueId, required String teamName});
+  Future<Either<Failure, bool>> registerTeam({
+    required String leagueId,
+    required String teamName,
+  });
   Future<Either<Failure, Tournament>> createLeague({
     required String nombre,
     String descripcion,

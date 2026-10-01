@@ -33,25 +33,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     final result = await repository.getAuthenticatedPlayer();
-    await result.fold(
-      (failure) async => emit(AuthUnauthenticated()),
-      (player) async {
-        // Si el usuario activó biometría, exigir desbloqueo local.
-        final enabled = await repository.isBiometricEnabled();
-        if (enabled) {
-          final available = await biometricService.isAvailable();
-          if (available) {
-            emit(AuthBiometricRequired(player.id, role: player.role));
-            return;
-          }
+    await result.fold((failure) async => emit(AuthUnauthenticated()), (
+      player,
+    ) async {
+      // Si el usuario activó biometría, exigir desbloqueo local.
+      final enabled = await repository.isBiometricEnabled();
+      if (enabled) {
+        final available = await biometricService.isAvailable();
+        if (available) {
+          emit(AuthBiometricRequired(player.id, role: player.role));
+          return;
         }
-        emit(AuthAuthenticated(player.id, role: player.role));
-      },
-    );
+      }
+      emit(AuthAuthenticated(player.id, role: player.role));
+    });
   }
 
   Future<void> _onLoginRequested(
-      LoginRequested event, Emitter<AuthState> emit) async {
+    LoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     if (state is AuthLoading) return;
     emit(AuthLoading());
     final result = await loginUser(
@@ -64,7 +65,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onRegisterRequested(
-      RegisterRequested event, Emitter<AuthState> emit) async {
+    RegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     if (state is AuthLoading) return;
     emit(AuthLoading());
     final result = await registerUser(
@@ -82,7 +85,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onBiometricUnlock(
-      BiometricUnlockRequested event, Emitter<AuthState> emit) async {
+    BiometricUnlockRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     final current = state;
     String userId = '';
     String role = 'player';
@@ -100,7 +105,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       role = player.role;
     }
     final ok = await biometricService.authenticate(
-        reason: 'Desbloquea Futbol Pro con tu huella');
+      reason: 'Desbloquea Futbol Pro con tu huella',
+    );
     if (ok) {
       emit(AuthAuthenticated(userId, role: role));
     } else {
@@ -109,17 +115,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onBiometricEnroll(
-      BiometricEnrollmentRequested event, Emitter<AuthState> emit) async {
+    BiometricEnrollmentRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     if (event.enabled) {
       final ok = await biometricService.authenticate(
-          reason: 'Activa el desbloqueo con huella');
+        reason: 'Activa el desbloqueo con huella',
+      );
       if (!ok) return;
     }
     await repository.setBiometricEnabled(event.enabled);
   }
 
   Future<void> _onLogoutRequested(
-      LogoutRequested event, Emitter<AuthState> emit) async {
+    LogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     final result = await repository.logout();
     result.fold(

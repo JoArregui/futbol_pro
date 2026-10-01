@@ -19,25 +19,35 @@ class MatchRepositoryImpl implements MatchRepository {
 
   Either<Failure, T> _handleException<T>(dynamic exception) {
     if (exception is ValidationException) {
-      return Left(ValidationFailure(
-          exception.message ?? 'Datos inválidos. Revisa el formulario.'));
+      return Left(
+        ValidationFailure(
+          exception.message ?? 'Datos inválidos. Revisa el formulario.',
+        ),
+      );
     } else if (exception is ConflictException) {
-      return Left(ServerFailure(
+      return Left(
+        ServerFailure(
           (exception.message?.isNotEmpty ?? false)
               ? exception.message!
-              : 'Conflicto: ya existe o está en uso.'));
+              : 'Conflicto: ya existe o está en uso.',
+        ),
+      );
     } else if (exception is UnauthorizedException) {
       return const Left(
-          AuthenticationFailure('No autorizado. Por favor, inicia sesión.'));
+        AuthenticationFailure('No autorizado. Por favor, inicia sesión.'),
+      );
     } else if (exception is ForbiddenException) {
       return const Left(
-          PermissionFailure('No tienes permiso para realizar esta acción.'));
+        PermissionFailure('No tienes permiso para realizar esta acción.'),
+      );
     } else if (exception is NotFoundException) {
       return const Left(
-          NotFoundFailure('El recurso solicitado no fue encontrado.'));
+        NotFoundFailure('El recurso solicitado no fue encontrado.'),
+      );
     } else if (exception is ServerException) {
       return const Left(
-          ServerFailure('Error en el servidor. Inténtalo de nuevo más tarde.'));
+        ServerFailure('Error en el servidor. Inténtalo de nuevo más tarde.'),
+      );
     } else {
       return const Left(ServerFailure('Ocurrió un error inesperado.'));
     }
@@ -45,11 +55,15 @@ class MatchRepositoryImpl implements MatchRepository {
 
   /// Si no hay red y hay cola, guarda la acción para reenviarla sola.
   Future<QueuedFailure?> _queueIfOffline(
-      String kind, Map<String, dynamic> payload, Object e) async {
+    String kind,
+    Map<String, dynamic> payload,
+    Object e,
+  ) async {
     if (outbox == null || !isNetworkError(e)) return null;
     await outbox!.enqueue(kind, payload);
     return const QueuedFailure(
-        'Sin conexión: acción guardada, se enviará sola al volver la red.');
+      'Sin conexión: acción guardada, se enviará sola al volver la red.',
+    );
   }
 
   // Soporta JoinMatch
@@ -65,8 +79,10 @@ class MatchRepositoryImpl implements MatchRepository {
       );
       return Right(matchModel);
     } catch (e) {
-      final queued = await _queueIfOffline(
-          'join_match', {'matchId': matchId, 'playerId': playerId}, e);
+      final queued = await _queueIfOffline('join_match', {
+        'matchId': matchId,
+        'playerId': playerId,
+      }, e);
       if (queued != null) return Left(queued);
       return _handleException(e);
     }
@@ -87,19 +103,19 @@ class MatchRepositoryImpl implements MatchRepository {
     double? costeTotal,
   }) async {
     try {
-      final MatchModel matchModel =
-          await remoteDataSource.scheduleFriendlyMatch(
-        time: time,
-        fieldId: fieldId,
-        title: title,
-        mode: mode,
-        needsReferee: needsReferee,
-        description: description,
-        organizerTeamName: organizerTeamName,
-        opponentTeamName: opponentTeamName,
-        maxPlayers: maxPlayers,
-        costeTotal: costeTotal,
-      );
+      final MatchModel matchModel = await remoteDataSource
+          .scheduleFriendlyMatch(
+            time: time,
+            fieldId: fieldId,
+            title: title,
+            mode: mode,
+            needsReferee: needsReferee,
+            description: description,
+            organizerTeamName: organizerTeamName,
+            opponentTeamName: opponentTeamName,
+            maxPlayers: maxPlayers,
+            costeTotal: costeTotal,
+          );
       return Right(matchModel);
     } catch (e) {
       return _handleException(e);
@@ -110,8 +126,8 @@ class MatchRepositoryImpl implements MatchRepository {
   @override
   Future<Either<Failure, List<Match>>> getUpcomingMatches() async {
     try {
-      final List<MatchModel> matchModels =
-          await remoteDataSource.getUpcomingMatches();
+      final List<MatchModel> matchModels = await remoteDataSource
+          .getUpcomingMatches();
       return Right(matchModels);
     } catch (e) {
       return _handleException(e);
@@ -122,8 +138,9 @@ class MatchRepositoryImpl implements MatchRepository {
   @override
   Future<Either<Failure, Match>> getMatchById(String matchId) async {
     try {
-      final MatchModel matchModel =
-          await remoteDataSource.getMatchById(matchId);
+      final MatchModel matchModel = await remoteDataSource.getMatchById(
+        matchId,
+      );
       return Right(matchModel);
     } catch (e) {
       return _handleException(e);
@@ -173,19 +190,16 @@ class MatchRepositoryImpl implements MatchRepository {
       );
       return Right(result);
     } catch (e) {
-      final queued = await _queueIfOffline(
-          'submit_result',
-          {
-            'matchId': matchId,
-            'golesA': golesA,
-            'golesB': golesB,
-            'ganador': ganador,
-            'goleadores': goleadores.map((g) => g.toJson()).toList(),
-            'teamAIds': teamAIds,
-            'teamBIds': teamBIds,
-            if (mvpId != null) 'mvpId': mvpId,
-          },
-          e);
+      final queued = await _queueIfOffline('submit_result', {
+        'matchId': matchId,
+        'golesA': golesA,
+        'golesB': golesB,
+        'ganador': ganador,
+        'goleadores': goleadores.map((g) => g.toJson()).toList(),
+        'teamAIds': teamAIds,
+        'teamBIds': teamBIds,
+        if (mvpId != null) 'mvpId': mvpId,
+      }, e);
       if (queued != null) return Left(queued);
       return _handleException(e);
     }
@@ -199,8 +213,9 @@ class MatchRepositoryImpl implements MatchRepository {
       final result = await remoteDataSource.confirmResult(matchId: matchId);
       return Right(result);
     } catch (e) {
-      final queued =
-          await _queueIfOffline('confirm_result', {'matchId': matchId}, e);
+      final queued = await _queueIfOffline('confirm_result', {
+        'matchId': matchId,
+      }, e);
       if (queued != null) return Left(queued);
       return _handleException(e);
     }
@@ -213,11 +228,15 @@ class MatchRepositoryImpl implements MatchRepository {
   }) async {
     try {
       final count = await remoteDataSource.reportNoShow(
-          matchId: matchId, playerId: playerId);
+        matchId: matchId,
+        playerId: playerId,
+      );
       return Right(count);
     } catch (e) {
-      final queued = await _queueIfOffline(
-          'report_no_show', {'matchId': matchId, 'playerId': playerId}, e);
+      final queued = await _queueIfOffline('report_no_show', {
+        'matchId': matchId,
+        'playerId': playerId,
+      }, e);
       if (queued != null) return Left(queued);
       return _handleException(e);
     }
@@ -236,9 +255,7 @@ class MatchRepositoryImpl implements MatchRepository {
   }
 
   @override
-  Future<Either<Failure, MatchActa>> getActa({
-    required String matchId,
-  }) async {
+  Future<Either<Failure, MatchActa>> getActa({required String matchId}) async {
     try {
       final acta = await remoteDataSource.getActa(matchId: matchId);
       return Right(acta);

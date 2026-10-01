@@ -18,8 +18,7 @@ class StandingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<LeagueBloc>()
-        ..add(const GetTournamentsRequested()),
+      create: (_) => sl<LeagueBloc>()..add(const GetTournamentsRequested()),
       child: _StandingsView(initialLeagueId: currentLeagueId),
     );
   }
@@ -89,9 +88,10 @@ class _StandingsViewState extends State<_StandingsView> {
           if (state is TournamentsLoaded && _selectedId == null) {
             if (state.tournaments.isEmpty) {
               return _EmptyLeagues(
-                  onRetry: () => context
-                      .read<LeagueBloc>()
-                      .add(const GetTournamentsRequested()));
+                onRetry: () => context.read<LeagueBloc>().add(
+                  const GetTournamentsRequested(),
+                ),
+              );
             }
             return const Center(child: CircularProgressIndicator());
           }
@@ -102,13 +102,15 @@ class _StandingsViewState extends State<_StandingsView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Error: ${state.message}',
-                        textAlign: TextAlign.center),
+                    Text(
+                      'Error: ${state.message}',
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: () => context
-                          .read<LeagueBloc>()
-                          .add(const GetTournamentsRequested()),
+                      onPressed: () => context.read<LeagueBloc>().add(
+                        const GetTournamentsRequested(),
+                      ),
                       child: const Text('Reintentar'),
                     ),
                   ],
@@ -155,8 +157,9 @@ class _StandingsBody extends StatelessWidget {
                 border: OutlineInputBorder(),
               ),
               items: tournaments
-                  .map((t) => DropdownMenuItem(
-                      value: t.id, child: Text(t.name)))
+                  .map(
+                    (t) => DropdownMenuItem(value: t.id, child: Text(t.name)),
+                  )
                   .toList(),
               onChanged: (v) {
                 if (v != null) onSelect(v);
@@ -164,38 +167,40 @@ class _StandingsBody extends StatelessWidget {
             ),
           ),
         Expanded(
-          child: Builder(builder: (context) {
-            final currentState = state;
-            if (currentState is LeagueLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (currentState is LeagueLoadSuccess) {
-              if (currentState.standings.isEmpty) {
-                return const Center(
-                    child: Text(
-                        'Sin equipos en esta liga todavía.'));
+          child: Builder(
+            builder: (context) {
+              final currentState = state;
+              if (currentState is LeagueLoading) {
+                return const Center(child: CircularProgressIndicator());
               }
-              return StandingsTable(standings: currentState.standings);
-            }
-            if (currentState is LeagueError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Text(
-                    'Error al cargar la tabla: ${currentState.message}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red.shade700),
+              if (currentState is LeagueLoadSuccess) {
+                if (currentState.standings.isEmpty) {
+                  return const Center(
+                    child: Text('Sin equipos en esta liga todavía.'),
+                  );
+                }
+                return StandingsTable(standings: currentState.standings);
+              }
+              if (currentState is LeagueError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      'Error al cargar la tabla: ${currentState.message}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
                   ),
-                ),
+                );
+              }
+              if (currentState is TournamentsLoaded) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return const Center(
+                child: Text('Selecciona una liga para ver los datos.'),
               );
-            }
-            if (currentState is TournamentsLoaded) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return const Center(
-              child: Text('Selecciona una liga para ver los datos.'),
-            );
-          }),
+            },
+          ),
         ),
       ],
     );
@@ -214,11 +219,16 @@ class _EmptyLeagues extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.emoji_events_outlined,
-                size: 64, color: Colors.grey.shade400),
+            Icon(
+              Icons.emoji_events_outlined,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 12),
-            const Text('No hay ligas todavía.',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'No hay ligas todavía.',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
             const Text(
               'Un superadmin puede crear una desde Torneos.',
@@ -226,9 +236,7 @@ class _EmptyLeagues extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            FilledButton(
-                onPressed: onRetry,
-                child: const Text('Reintentar')),
+            FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => context.push('/tournaments'),
@@ -291,21 +299,22 @@ class StandingsTable extends StatelessWidget {
           final isTopThree = index <= 3;
 
           return DataRow(
-            color: WidgetStateProperty.resolveWith<Color>(
-              (Set<WidgetState> states) {
-                if (isTopThree) {
-                  return Colors.blue.shade50;
-                }
-                return Colors.transparent;
-              },
-            ),
+            color: WidgetStateProperty.resolveWith<Color>((
+              Set<WidgetState> states,
+            ) {
+              if (isTopThree) {
+                return Colors.blue.shade50;
+              }
+              return Colors.transparent;
+            }),
             cells: [
               DataCell(
                 Text(
                   index.toString(),
                   style: TextStyle(
-                    fontWeight:
-                        isTopThree ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isTopThree
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),

@@ -25,27 +25,26 @@ class UserProfileModel extends UserProfile {
     // Convertir el string de fecha (ISO 8601) a DateTime
     final createdAtString =
         (json['createdAt'] ?? json['fecha_creacion'])?.toString() ??
-            DateTime.now().toIso8601String();
+        DateTime.now().toIso8601String();
 
     return UserProfileModel(
       uid: uid,
       email: (json['email'] ?? 'correo_no_disponible@app.com').toString(),
-      nickname:
-          (json['nickname'] ?? json['apodo'] ?? 'NuevoJugador').toString(),
+      nickname: (json['nickname'] ?? json['apodo'] ?? 'NuevoJugador')
+          .toString(),
       name: (json['name'] ?? json['nombre'])?.toString(),
       avatarUrl: (json['avatarUrl'] ?? json['url_avatar'])?.toString(),
       bio: json['bio']?.toString(),
       // Manejo seguro de valores numéricos desde JSON (num? -> int/double)
-      gamesPlayed: (json['gamesPlayed'] ?? json['partidos_jugados'] as num?)
-              is num
+      gamesPlayed:
+          (json['gamesPlayed'] ?? json['partidos_jugados'] as num?) is num
           ? ((json['gamesPlayed'] ?? json['partidos_jugados']) as num).toInt()
           : 0,
       wins: (json['wins'] ?? json['victorias'] as num?) is num
           ? ((json['wins'] ?? json['victorias']) as num).toInt()
           : 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 1000.0,
-      createdAt:
-          DateTime.tryParse(createdAtString) ?? DateTime.now(),
+      createdAt: DateTime.tryParse(createdAtString) ?? DateTime.now(),
       position: (json['position'] ?? json['posicion'])?.toString(),
       foot: (json['foot'] ?? json['pierna'])?.toString(),
       available: _parseAvailable(json),
@@ -53,8 +52,9 @@ class UserProfileModel extends UserProfile {
   }
 
   static bool _parseAvailable(Map<String, dynamic> json) {
-    final v =
-        json.containsKey('available') ? json['available'] : json['disponible'];
+    final v = json.containsKey('available')
+        ? json['available']
+        : json['disponible'];
     if (v is bool) return v;
     if (v is num) return v != 0;
     if (v is String) return v != '0' && v.toLowerCase() != 'false';

@@ -2,7 +2,7 @@
 class ServerException implements Exception {
   final String message;
   // Constructor const añadido
-  const ServerException({this.message = 'Error en el servidor'}); 
+  const ServerException({this.message = 'Error en el servidor'});
 }
 
 class CacheException implements Exception {
@@ -15,30 +15,34 @@ class CacheException implements Exception {
 class UnauthenticatedException implements Exception {
   final String? message;
   // 🟢 CORRECCIÓN: Ahora acepta un mensaje nombrado opcional.
-  const UnauthenticatedException({this.message}); 
+  const UnauthenticatedException({this.message});
 }
 
 // Excepciones HTTP o de lógica de negocio (Errores comunes de la API)
 class UnauthorizedException implements Exception {
   final String? message;
   // 🟢 CORRECCIÓN: Ahora acepta un mensaje nombrado opcional.
-  const UnauthorizedException({this.message}); 
-} 
+  const UnauthorizedException({this.message});
+}
+
 class ForbiddenException implements Exception {
   final String? message;
   // 🟢 CORRECCIÓN: Ahora acepta un mensaje nombrado opcional.
   const ForbiddenException({this.message});
 }
+
 class NotFoundException implements Exception {
   final String? message;
   // 🟢 CORRECCIÓN: Ahora acepta un mensaje nombrado opcional.
   const NotFoundException({this.message});
-} 
+}
+
 class ConflictException implements Exception {
   final String? message;
   // 🟢 CORRECCIÓN: Ahora acepta un mensaje nombrado opcional.
   const ConflictException({this.message});
 }
+
 class ValidationException implements Exception {
   final String? message;
   const ValidationException({this.message});

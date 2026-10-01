@@ -9,7 +9,13 @@ class CreateChat implements UseCase<ChatRoom, CreateChatParams> {
   final ChatRepository repository;
   CreateChat(this.repository);
   @override
-  Future<Either<Failure, ChatRoom>> call(CreateChatParams params) => repository.createChat(title: params.title, type: params.type, memberIds: params.memberIds, relatedEntityId: params.relatedEntityId);
+  Future<Either<Failure, ChatRoom>> call(CreateChatParams params) =>
+      repository.createChat(
+        title: params.title,
+        type: params.type,
+        memberIds: params.memberIds,
+        relatedEntityId: params.relatedEntityId,
+      );
 }
 
 class CreateChatParams extends Equatable {
@@ -17,7 +23,12 @@ class CreateChatParams extends Equatable {
   final String type;
   final List<String> memberIds;
   final String? relatedEntityId;
-  const CreateChatParams({required this.title, required this.type, required this.memberIds, this.relatedEntityId});
+  const CreateChatParams({
+    required this.title,
+    required this.type,
+    required this.memberIds,
+    this.relatedEntityId,
+  });
   @override
   List<Object?> get props => [title, type, memberIds, relatedEntityId];
 }

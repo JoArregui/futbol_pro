@@ -60,8 +60,11 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           emit(ProfileLoaded(profile: newProfile));
           return;
         } catch (createError) {
-          emit(ProfileError(
-              'Error al crear y cargar el perfil: ${createError.toString()}'));
+          emit(
+            ProfileError(
+              'Error al crear y cargar el perfil: ${createError.toString()}',
+            ),
+          );
           return;
         }
       }
@@ -76,8 +79,11 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     final currentState = state;
     if (currentState is! ProfileLoaded) {
-      emit(const ProfileError(
-          'No se pudo actualizar: el perfil no estaba cargado.'));
+      emit(
+        const ProfileError(
+          'No se pudo actualizar: el perfil no estaba cargado.',
+        ),
+      );
       return;
     }
 
@@ -100,9 +106,12 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileUpdateSuccess(profile: updatedProfile));
     } catch (e) {
       // Un solo estado: mantiene perfil + muestra error (antes doble emit).
-      emit(currentState.copyWith(
+      emit(
+        currentState.copyWith(
           isUpdating: false,
-          error: 'Error al actualizar: ${e.toString()}'));
+          error: 'Error al actualizar: ${e.toString()}',
+        ),
+      );
     }
   }
 }

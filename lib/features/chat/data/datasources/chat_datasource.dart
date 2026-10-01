@@ -1,5 +1,5 @@
 import 'dart:async';
-// ❌ ELIMINAMOS: import 'package:cloud_firestore/cloud_firestore.dart'; 
+// ❌ ELIMINAMOS: import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http; // 🟢 NUEVA DEPENDENCIA: HTTP
 import 'dart:convert'; // Necesario para JSON
 
@@ -11,14 +11,28 @@ import '../models/message_model.dart';
 
 String get _kChatUrl => '${AppConsts.effectiveBaseUrl}/chats';
 
-
 abstract class ChatRemoteDataSource {
   Future<List<MessageModel>> getMessages(String roomId);
-  Future<void> sendMessage({required String roomId, required String senderId, required String senderName, required String text, String? imageUrl, String? clientId});
+  Future<void> sendMessage({
+    required String roomId,
+    required String senderId,
+    required String senderName,
+    required String text,
+    String? imageUrl,
+    String? clientId,
+  });
   Future<void> markMessagesAsRead(String roomId, String userId);
   Future<List<ChatRoomModel>> getChatRooms(String userId);
-  Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId});
-  Future<List<Map<String, dynamic>>> searchUsers({required String query, required String excludeUid});
+  Future<ChatRoomModel> createChat({
+    required String title,
+    required String type,
+    required List<String> memberIds,
+    String? relatedEntityId,
+  });
+  Future<List<Map<String, dynamic>>> searchUsers({
+    required String query,
+    required String excludeUid,
+  });
 }
 
 // ----------------------------------------------------
@@ -31,7 +45,6 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   // 🟢 Constructor actualizado
   ChatRemoteDataSourceImpl({required this.client});
 
-  
   /// Obtiene los mensajes de la sala por HTTP
   @override
   Future<List<MessageModel>> getMessages(String roomId) async {
@@ -44,13 +57,14 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         final List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => MessageModel.fromJson(json)).toList();
       } else {
-        throw ServerException(message: 'Error al obtener mensajes: ${response.statusCode}');
+        throw ServerException(
+          message: 'Error al obtener mensajes: ${response.statusCode}',
+        );
       }
     } on Exception catch (e) {
       throw ServerException(message: 'Fallo de conexión: $e');
     }
   }
-
 
   /// Envía un mensaje a la API REST para insertar en la BD
   @override
@@ -78,15 +92,15 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       );
 
       if (response.statusCode != 201 && response.statusCode != 200) {
-        throw ServerException(message: 'Error al enviar mensaje: ${response.statusCode}');
+        throw ServerException(
+          message: 'Error al enviar mensaje: ${response.statusCode}',
+        );
       }
-      
     } on Exception catch (e) {
       throw ServerException(message: 'Fallo de conexión al enviar mensaje: $e');
     }
   }
 
-  
   /// Marca los mensajes como leídos (asumiendo que la API actualizará la tabla chats)
   @override
   Future<void> markMessagesAsRead(String roomId, String userId) async {
@@ -94,28 +108,48 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
     try {
       // Usamos un PUT o POST para notificar al servidor
-      final response = await client.put(url); 
+      final response = await client.put(url);
 
       if (response.statusCode != 200) {
-        throw ServerException(message: 'Error al marcar como leído: ${response.statusCode}');
+        throw ServerException(
+          message: 'Error al marcar como leído: ${response.statusCode}',
+        );
       }
     } on Exception catch (e) {
       throw ServerException(message: 'Fallo de conexión: $e');
     }
   }
 
-  
   @override
-  Future<ChatRoomModel> createChat({required String title, required String type, required List<String> memberIds, String? relatedEntityId}) async {
+  Future<ChatRoomModel> createChat({
+    required String title,
+    required String type,
+    required List<String> memberIds,
+    String? relatedEntityId,
+  }) async {
     final url = Uri.parse(_kChatUrl);
     final res = await client
-        .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'type': type, 'memberIds': memberIds, if (relatedEntityId != null) 'relatedEntityId': relatedEntityId}))
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'title': title,
+            'type': type,
+            'memberIds': memberIds,
+            if (relatedEntityId != null) 'relatedEntityId': relatedEntityId,
+          }),
+        )
         .timeout(const Duration(seconds: 15));
     if (res.statusCode == 201 || res.statusCode == 200) {
       final j = jsonDecode(res.body);
       // Si solo devuelve id, construir room mínimo
       if (j is Map && j['title'] == null) {
-        return ChatRoomModel(id: j['id'].toString(), type: ChatRoomType.private, title: title, memberIds: memberIds);
+        return ChatRoomModel(
+          id: j['id'].toString(),
+          type: ChatRoomType.private,
+          title: title,
+          memberIds: memberIds,
+        );
       }
       return ChatRoomModel.fromJson(Map<String, dynamic>.from(j as Map));
     }
@@ -123,11 +157,13 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> searchUsers({required String query, required String excludeUid}) async {
-    final uri = Uri.parse('${AppConsts.effectiveBaseUrl}/users/search').replace(queryParameters: {
-      'q': query,
-      'excludeUid': excludeUid,
-    });
+  Future<List<Map<String, dynamic>>> searchUsers({
+    required String query,
+    required String excludeUid,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConsts.effectiveBaseUrl}/users/search',
+    ).replace(queryParameters: {'q': query, 'excludeUid': excludeUid});
     final res = await client.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
       final List<dynamic> list = jsonDecode(res.body);
@@ -142,7 +178,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   /// Obtiene la lista de salas de chat del usuario
   @override
   Future<List<ChatRoomModel>> getChatRooms(String userId) async {
-    final url = Uri.parse('$_kChatUrl/$userId/chats'); 
+    final url = Uri.parse('$_kChatUrl/$userId/chats');
 
     try {
       final response = await client.get(url);
@@ -151,7 +187,9 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         final List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => ChatRoomModel.fromJson(json)).toList();
       } else {
-        throw ServerException(message: 'Error al obtener salas: ${response.statusCode}');
+        throw ServerException(
+          message: 'Error al obtener salas: ${response.statusCode}',
+        );
       }
     } on Exception catch (e) {
       throw ServerException(message: 'Fallo de conexión: $e');

@@ -11,7 +11,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
   // Implementación de la creación
   @override
   Future<UserProfile> createProfile(
-      String uid, String email, String nickname) async {
+    String uid,
+    String email,
+    String nickname,
+  ) async {
     try {
       final newProfile = UserProfileModel.initial(uid, email, nickname);
       await remoteDataSource.createProfileInitial(newProfile);

@@ -10,7 +10,8 @@ class RefereeRemoteDataSource {
 
   Future<List<Referee>> getAvailable({required DateTime date}) async {
     final url = Uri.parse(
-        '${AppConsts.effectiveBaseUrl}/referees/available?date=${date.toUtc().toIso8601String()}');
+      '${AppConsts.effectiveBaseUrl}/referees/available?date=${date.toUtc().toIso8601String()}',
+    );
     final res = await client.get(url);
     if (res.statusCode == 200) {
       final List<dynamic> list = jsonDecode(res.body);

@@ -14,18 +14,17 @@ import '../bloc/match_detail_bloc.dart';
 class MatchDetailView extends StatelessWidget {
   final Match match;
 
-  const MatchDetailView({
-    super.key,
-    required this.match,
-  });
+  const MatchDetailView({super.key, required this.match});
 
   @override
   Widget build(BuildContext context) {
-    final MatchModel? matchModel =
-        match is MatchModel ? match as MatchModel : null;
+    final MatchModel? matchModel = match is MatchModel
+        ? match as MatchModel
+        : null;
 
-    final String timeFormatted =
-        DateFormat('dd MMM yyyy - HH:mm').format(match.scheduledTime);
+    final String timeFormatted = DateFormat(
+      'dd MMM yyyy - HH:mm',
+    ).format(match.scheduledTime);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
@@ -64,7 +63,9 @@ class MatchDetailView extends StatelessWidget {
           Text(
             'Participantes',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold, color: Colors.deepPurple),
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
           ),
           const SizedBox(height: 15),
           _ParticipantsCard(matchModel: matchModel),
@@ -77,10 +78,11 @@ class MatchDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(
-      {required IconData icon,
-      required String title,
-      required String subtitle}) {
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
     return Card(
       elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -97,7 +99,9 @@ class MatchDetailView extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.w800),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   Text(
                     subtitle,
@@ -112,8 +116,11 @@ class MatchDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(
-      {required IconData icon, required String label, required String value}) {
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -126,14 +133,18 @@ class MatchDetailView extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                  fontWeight: FontWeight.w600, color: Colors.black87),
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
               style: const TextStyle(
-                  fontWeight: FontWeight.w400, color: Colors.black54),
+                fontWeight: FontWeight.w400,
+                color: Colors.black54,
+              ),
             ),
           ),
         ],
@@ -159,10 +170,10 @@ class _ResultSection extends StatelessWidget {
       children: [
         Text(
           'Marcador final',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepPurple),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.deepPurple,
+          ),
         ),
         const SizedBox(height: 12),
         if (result != null)
@@ -182,14 +193,15 @@ class _ResultSection extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(12),
                 child: Text(
-                    'Marcador pendiente de validación. Debe validarlo otro participante del partido.'),
+                  'Marcador pendiente de validación. Debe validarlo otro participante del partido.',
+                ),
               ),
             )
           else if (isParticipant)
             FilledButton.icon(
-              onPressed: () => context
-                  .read<MatchDetailBloc>()
-                  .add(MatchResultConfirmRequested(model!.id)),
+              onPressed: () => context.read<MatchDetailBloc>().add(
+                MatchResultConfirmRequested(model!.id),
+              ),
               icon: const Icon(Icons.verified),
               label: const Text('Validar marcador'),
             ),
@@ -229,15 +241,16 @@ class _ResultCard extends StatelessWidget {
                 Text(
                   result.scoreLine(),
                   style: const TextStyle(
-                      fontSize: 32, fontWeight: FontWeight.w900),
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Chip(
                   label: Text(
-                      result.isConfirmed
-                          ? 'Validado'
-                          : 'Pendiente de validación',
-                      style: const TextStyle(fontSize: 12)),
+                    result.isConfirmed ? 'Validado' : 'Pendiente de validación',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -247,17 +260,22 @@ class _ResultCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.star, color: Colors.amber),
                   const SizedBox(width: 6),
-                  Text('MVP: ${_name(result.mvpId!)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'MVP: ${_name(result.mvpId!)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ],
             if (result.goleadores.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text('Goleadores:',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              ...result.goleadores
-                  .map((g) => Text('• ${_name(g.playerId)} (${g.goles})')),
+              const Text(
+                'Goleadores:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              ...result.goleadores.map(
+                (g) => Text('• ${_name(g.playerId)} (${g.goles})'),
+              ),
             ],
           ],
         ),
@@ -285,21 +303,20 @@ class _ProposeFormState extends State<_ProposeForm> {
 
   void _submit() {
     context.read<MatchDetailBloc>().add(
-          MatchResultProposeRequested(
-            SubmitResultParams(
-              matchId: widget.matchId,
-              golesA: _golesA,
-              golesB: _golesB,
-              ganador: _ganador,
-              mvpId: _mvpId,
-              goleadores: _scorers
-                  .where((s) => s.playerId != null)
-                  .map(
-                      (s) => ScorerEntry(playerId: s.playerId!, goles: s.goles))
-                  .toList(),
-            ),
-          ),
-        );
+      MatchResultProposeRequested(
+        SubmitResultParams(
+          matchId: widget.matchId,
+          golesA: _golesA,
+          golesB: _golesB,
+          ganador: _ganador,
+          mvpId: _mvpId,
+          goleadores: _scorers
+              .where((s) => s.playerId != null)
+              .map((s) => ScorerEntry(playerId: s.playerId!, goles: s.goles))
+              .toList(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -311,28 +328,33 @@ class _ProposeFormState extends State<_ProposeForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Registrar marcador final',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Registrar marcador final',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: _ScoreStepper(
-                      label: 'Equipo A',
-                      value: _golesA,
-                      onChanged: (v) => setState(() => _golesA = v)),
+                    label: 'Equipo A',
+                    value: _golesA,
+                    onChanged: (v) => setState(() => _golesA = v),
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text('-',
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    '-',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 Expanded(
                   child: _ScoreStepper(
-                      label: 'Equipo B',
-                      value: _golesB,
-                      onChanged: (v) => setState(() => _golesB = v)),
+                    label: 'Equipo B',
+                    value: _golesB,
+                    onChanged: (v) => setState(() => _golesB = v),
+                  ),
                 ),
               ],
             ),
@@ -353,18 +375,22 @@ class _ProposeFormState extends State<_ProposeForm> {
               value: _mvpId,
               items: [
                 const DropdownMenuItem(value: null, child: Text('Sin MVP')),
-                ...widget.participants.map((p) => DropdownMenuItem(
-                      value: p.id,
-                      child: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
-                    )),
+                ...widget.participants.map(
+                  (p) => DropdownMenuItem(
+                    value: p.id,
+                    child: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
+                  ),
+                ),
               ],
               onChanged: (v) => setState(() => _mvpId = v),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Goleadores',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Goleadores',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: () => setState(() => _scorers.add(_ScorerRow())),
@@ -373,13 +399,15 @@ class _ProposeFormState extends State<_ProposeForm> {
                 ),
               ],
             ),
-            ..._scorers.asMap().entries.map((e) => _ScorerRowWidget(
-                  key: ValueKey(e.key),
-                  row: e.value,
-                  participants: widget.participants,
-                  onRemove: () => setState(() => _scorers.removeAt(e.key)),
-                  onChanged: () => setState(() {}),
-                )),
+            ..._scorers.asMap().entries.map(
+              (e) => _ScorerRowWidget(
+                key: ValueKey(e.key),
+                row: e.value,
+                participants: widget.participants,
+                onRemove: () => setState(() => _scorers.removeAt(e.key)),
+                onChanged: () => setState(() {}),
+              ),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -406,12 +434,13 @@ class _ScorerRowWidget extends StatelessWidget {
   final List<MatchParticipant> participants;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
-  const _ScorerRowWidget(
-      {super.key,
-      required this.row,
-      required this.participants,
-      required this.onRemove,
-      required this.onChanged});
+  const _ScorerRowWidget({
+    super.key,
+    required this.row,
+    required this.participants,
+    required this.onRemove,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -425,11 +454,15 @@ class _ScorerRowWidget extends StatelessWidget {
               label: 'Jugador',
               value: row.playerId,
               items: participants
-                  .map((p) => DropdownMenuItem(
-                        value: p.id,
-                        child: Text(p.nickname.isNotEmpty ? p.nickname : p.name,
-                            overflow: TextOverflow.ellipsis),
-                      ))
+                  .map(
+                    (p) => DropdownMenuItem(
+                      value: p.id,
+                      child: Text(
+                        p.nickname.isNotEmpty ? p.nickname : p.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) {
                 row.playerId = v;
@@ -452,7 +485,9 @@ class _ScorerRowWidget extends StatelessWidget {
             ),
           ),
           IconButton(
-              onPressed: onRemove, icon: const Icon(Icons.delete_outline)),
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline),
+          ),
         ],
       ),
     );
@@ -466,17 +501,20 @@ class _LabeledDropdown<T> extends StatelessWidget {
   final T? value;
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?> onChanged;
-  const _LabeledDropdown(
-      {required this.label,
-      required this.value,
-      required this.items,
-      required this.onChanged});
+  const _LabeledDropdown({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InputDecorator(
-      decoration:
-          InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
@@ -494,8 +532,11 @@ class _ScoreStepper extends StatelessWidget {
   final String label;
   final int value;
   final ValueChanged<int> onChanged;
-  const _ScoreStepper(
-      {required this.label, required this.value, required this.onChanged});
+  const _ScoreStepper({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -509,9 +550,10 @@ class _ScoreStepper extends StatelessWidget {
               onPressed: value > 0 ? () => onChanged(value - 1) : null,
               icon: const Icon(Icons.remove_circle_outline),
             ),
-            Text('$value',
-                style:
-                    const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            Text(
+              '$value',
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
             IconButton(
               onPressed: value < 99 ? () => onChanged(value + 1) : null,
               icon: const Icon(Icons.add_circle_outline),
@@ -533,28 +575,33 @@ class _SplitSection extends StatelessWidget {
       builder: (context, state) {
         final loaded = state is MatchDetailLoaded ? state : null;
         final split = loaded?.split;
-        final model =
-            loaded?.match is MatchModel ? loaded!.match as MatchModel : null;
+        final model = loaded?.match is MatchModel
+            ? loaded!.match as MatchModel
+            : null;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Dividir cuenta',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
             ),
             const SizedBox(height: 8),
             if (model?.costeTotal != null)
-              Text('Coste total: \$${model!.costeTotal!.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                'Coste total: \$${model!.costeTotal!.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             const SizedBox(height: 8),
             if (split == null)
               OutlinedButton.icon(
                 onPressed: loaded == null
                     ? null
-                    : () => context
-                        .read<MatchDetailBloc>()
-                        .add(MatchSplitRequested(loaded.match.id)),
+                    : () => context.read<MatchDetailBloc>().add(
+                        MatchSplitRequested(loaded.match.id),
+                      ),
                 icon: const Icon(Icons.payments_outlined),
                 label: const Text('Calcular por persona'),
               )
@@ -563,7 +610,8 @@ class _SplitSection extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.all(12),
                   child: Text(
-                      'Este partido no tiene coste registrado. Al crearlo puedes indicar el total.'),
+                    'Este partido no tiene coste registrado. Al crearlo puedes indicar el total.',
+                  ),
                 ),
               )
             else
@@ -577,20 +625,27 @@ class _SplitSection extends StatelessWidget {
                         '\$${split.perPerson.toStringAsFixed(2)} por persona '
                         '(${split.participants} jugadores)',
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      ...split.detail.map((d) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Row(
-                              children: [
-                                Expanded(child: Text(d.name)),
-                                Text('\$${d.amount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          )),
+                      ...split.detail.map(
+                        (d) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(d.name)),
+                              Text(
+                                '\$${d.amount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -618,16 +673,18 @@ class _ActaSection extends StatelessWidget {
             Text(
               'Acta del partido',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
             ),
             const SizedBox(height: 8),
             if (acta == null)
               OutlinedButton.icon(
                 onPressed: loaded == null
                     ? null
-                    : () => context
-                        .read<MatchDetailBloc>()
-                        .add(MatchActaRequested(loaded.match.id)),
+                    : () => context.read<MatchDetailBloc>().add(
+                        MatchActaRequested(loaded.match.id),
+                      ),
                 icon: const Icon(Icons.receipt_long_outlined),
                 label: const Text('Ver acta oficial'),
               )
@@ -641,25 +698,36 @@ class _ActaSection extends StatelessWidget {
                       Text(
                         '${acta.golesA ?? '-'} - ${acta.golesB ?? '-'} · ${acta.estado}',
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w900),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       Text('${acta.field} · ${acta.time}'),
                       if (acta.mvp != null)
-                        Text('MVP: ${acta.mvp}',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          'MVP: ${acta.mvp}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       if (acta.scorers.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        const Text('Goleadores:',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        ...acta.scorers
-                            .map((g) => Text('• ${g.name} (${g.goles})')),
+                        const Text(
+                          'Goleadores:',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        ...acta.scorers.map(
+                          (g) => Text('• ${g.name} (${g.goles})'),
+                        ),
                       ],
                       const SizedBox(height: 8),
-                      Text('Participantes (${acta.participants.length})',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                      ...acta.participants.map((p) => Text(
-                          '• ${p.name}${p.noShows > 0 ? ' (${p.noShows} ausencias)' : ''}')),
+                      Text(
+                        'Participantes (${acta.participants.length})',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      ...acta.participants.map(
+                        (p) => Text(
+                          '• ${p.name}${p.noShows > 0 ? ' (${p.noShows} ausencias)' : ''}',
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
@@ -686,15 +754,15 @@ class _ActaSection extends StatelessWidget {
         filename: 'acta-$matchId.csv',
       );
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Acta guardada: $path')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Acta guardada: $path')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error export: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error export: $e')));
       }
     }
   }
@@ -719,48 +787,59 @@ class _ParticipantsCard extends StatelessWidget {
     return Card(
       child: Column(
         children: participants
-            .map((p) => ListTile(
-                  leading: CircleAvatar(
-                      child: Text((p.nickname.isNotEmpty ? p.nickname : p.name)
-                              .characters
-                              .firstOrNull
-                              ?.toUpperCase() ??
-                          '?')),
-                  title: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
-                  subtitle: Text(
-                      '${p.played} PJ • ${p.wins} V • ${p.mvpCount} MVP${p.noShows > 0 ? ' • ${p.noShows} ausencias' : ''}'),
-                  trailing: p.id == myId
-                      ? null
-                      : IconButton(
-                          tooltip: 'Reportar no-show',
-                          icon: const Icon(Icons.flag_outlined,
-                              color: Colors.orange),
-                          onPressed: () => showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Reportar no-show'),
-                              content: Text(
-                                  '¿Confirmas que ${p.nickname} no asistió?'),
-                              actions: [
-                                TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('Cancelar')),
-                                FilledButton(
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    context.read<MatchDetailBloc>().add(
-                                          MatchNoShowReported(
-                                              matchId: matchModel!.id,
-                                              playerId: p.id),
-                                        );
-                                  },
-                                  child: const Text('Reportar'),
-                                ),
-                              ],
+            .map(
+              (p) => ListTile(
+                leading: CircleAvatar(
+                  child: Text(
+                    (p.nickname.isNotEmpty ? p.nickname : p.name)
+                            .characters
+                            .firstOrNull
+                            ?.toUpperCase() ??
+                        '?',
+                  ),
+                ),
+                title: Text(p.nickname.isNotEmpty ? p.nickname : p.name),
+                subtitle: Text(
+                  '${p.played} PJ • ${p.wins} V • ${p.mvpCount} MVP${p.noShows > 0 ? ' • ${p.noShows} ausencias' : ''}',
+                ),
+                trailing: p.id == myId
+                    ? null
+                    : IconButton(
+                        tooltip: 'Reportar no-show',
+                        icon: const Icon(
+                          Icons.flag_outlined,
+                          color: Colors.orange,
+                        ),
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Reportar no-show'),
+                            content: Text(
+                              '¿Confirmas que ${p.nickname} no asistió?',
                             ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  context.read<MatchDetailBloc>().add(
+                                    MatchNoShowReported(
+                                      matchId: matchModel!.id,
+                                      playerId: p.id,
+                                    ),
+                                  );
+                                },
+                                child: const Text('Reportar'),
+                              ),
+                            ],
                           ),
                         ),
-                ))
+                      ),
+              ),
+            )
             .toList(),
       ),
     );

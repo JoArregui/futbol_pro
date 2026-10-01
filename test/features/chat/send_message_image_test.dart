@@ -16,46 +16,56 @@ void main() {
   });
 
   test('permite mensaje solo con imagen (sin texto)', () async {
-    when(() => repo.sendMessage(
-          roomId: any(named: 'roomId'),
-          senderId: any(named: 'senderId'),
-          senderName: any(named: 'senderName'),
-          text: any(named: 'text'),
-          imageUrl: any(named: 'imageUrl'),
-        )).thenAnswer((_) async => const Right(null));
+    when(
+      () => repo.sendMessage(
+        roomId: any(named: 'roomId'),
+        senderId: any(named: 'senderId'),
+        senderName: any(named: 'senderName'),
+        text: any(named: 'text'),
+        imageUrl: any(named: 'imageUrl'),
+      ),
+    ).thenAnswer((_) async => const Right(null));
 
-    final res = await usecase(const SendParams(
-      roomId: 'r1',
-      senderId: 'u1',
-      content: '',
-      senderName: 'Tester',
-      imageUrl: 'https://x.com/foto.jpg',
-    ));
+    final res = await usecase(
+      const SendParams(
+        roomId: 'r1',
+        senderId: 'u1',
+        content: '',
+        senderName: 'Tester',
+        imageUrl: 'https://x.com/foto.jpg',
+      ),
+    );
 
     expect(res.isRight(), isTrue);
-    verify(() => repo.sendMessage(
-          roomId: 'r1',
-          senderId: 'u1',
-          senderName: 'Tester',
-          text: '',
-          imageUrl: 'https://x.com/foto.jpg',
-        )).called(1);
+    verify(
+      () => repo.sendMessage(
+        roomId: 'r1',
+        senderId: 'u1',
+        senderName: 'Tester',
+        text: '',
+        imageUrl: 'https://x.com/foto.jpg',
+      ),
+    ).called(1);
   });
 
   test('rechaza vacío total (sin texto ni imagen)', () async {
-    final res = await usecase(const SendParams(
-      roomId: 'r1',
-      senderId: 'u1',
-      content: '   ',
-      senderName: 'Tester',
-    ));
+    final res = await usecase(
+      const SendParams(
+        roomId: 'r1',
+        senderId: 'u1',
+        content: '   ',
+        senderName: 'Tester',
+      ),
+    );
     expect(res.isLeft(), isTrue);
-    verifyNever(() => repo.sendMessage(
-          roomId: any(named: 'roomId'),
-          senderId: any(named: 'senderId'),
-          senderName: any(named: 'senderName'),
-          text: any(named: 'text'),
-          imageUrl: any(named: 'imageUrl'),
-        ));
+    verifyNever(
+      () => repo.sendMessage(
+        roomId: any(named: 'roomId'),
+        senderId: any(named: 'senderId'),
+        senderName: any(named: 'senderName'),
+        text: any(named: 'text'),
+        imageUrl: any(named: 'imageUrl'),
+      ),
+    );
   });
 }

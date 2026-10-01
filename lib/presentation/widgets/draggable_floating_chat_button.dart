@@ -61,8 +61,11 @@ class _DraggableFloatingChatButtonState
           heroTag: 'chat_fab',
           onPressed: () => _navigateToChat(context),
           backgroundColor: Theme.of(context).colorScheme.secondary,
-          child: const Icon(Icons.chat_bubble_outline_rounded,
-              color: Colors.white, size: 28),
+          child: const Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
         ),
         onDragEnd: (details) {
           final renderBox = context.findRenderObject() as RenderBox;
@@ -73,15 +76,15 @@ class _DraggableFloatingChatButtonState
             _xPosition = details.offset.dx - offset.dx;
             _yPosition = details.offset.dy - offset.dy;
 
-            _xPosition =
-                _xPosition.clamp(_margin, size.width - _buttonSize - _margin);
+            _xPosition = _xPosition.clamp(
+              _margin,
+              size.width - _buttonSize - _margin,
+            );
 
             _yPosition = _yPosition.clamp(
-                _margin,
-                size.height -
-                    kBottomNavigationBarHeight -
-                    _buttonSize -
-                    _margin);
+              _margin,
+              size.height - kBottomNavigationBarHeight - _buttonSize - _margin,
+            );
           });
         },
       ),

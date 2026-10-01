@@ -10,8 +10,11 @@ class LeagueDetailPage extends StatefulWidget {
   final String leagueId;
   final String leagueName;
 
-  const LeagueDetailPage(
-      {super.key, required this.leagueId, required this.leagueName});
+  const LeagueDetailPage({
+    super.key,
+    required this.leagueId,
+    required this.leagueName,
+  });
 
   @override
   State<LeagueDetailPage> createState() => _LeagueDetailPageState();
@@ -22,13 +25,21 @@ class _LeagueDetailPageState extends State<LeagueDetailPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<LeagueBloc>().add(LeagueDetailRequested(
-          leagueId: widget.leagueId, leagueName: widget.leagueName)),
+      (_) => context.read<LeagueBloc>().add(
+        LeagueDetailRequested(
+          leagueId: widget.leagueId,
+          leagueName: widget.leagueName,
+        ),
+      ),
     );
   }
 
-  void _reload() => context.read<LeagueBloc>().add(LeagueDetailRequested(
-      leagueId: widget.leagueId, leagueName: widget.leagueName));
+  void _reload() => context.read<LeagueBloc>().add(
+    LeagueDetailRequested(
+      leagueId: widget.leagueId,
+      leagueName: widget.leagueName,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +61,7 @@ class _LeagueDetailPageState extends State<LeagueDetailPage> {
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
           actions: [
-            IconButton(
-                onPressed: _reload, icon: const Icon(Icons.refresh)),
+            IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
           ],
           bottom: const TabBar(
             labelColor: Colors.white,
@@ -69,15 +79,18 @@ class _LeagueDetailPageState extends State<LeagueDetailPage> {
             if (state is FixtureGenerated) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text(
-                        'Fixture generado: ${state.partidos} partidos en ${state.jornadas} jornadas')),
+                  content: Text(
+                    'Fixture generado: ${state.partidos} partidos en ${state.jornadas} jornadas',
+                  ),
+                ),
               );
               _reload();
             } else if (state is LeagueError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.red),
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
           },
@@ -95,13 +108,13 @@ class _LeagueDetailPageState extends State<LeagueDetailPage> {
                       child: SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
-                          onPressed: () => context
-                              .read<LeagueBloc>()
-                              .add(GenerateFixtureRequested(
-                                  leagueId: widget.leagueId)),
+                          onPressed: () => context.read<LeagueBloc>().add(
+                            GenerateFixtureRequested(leagueId: widget.leagueId),
+                          ),
                           icon: const Icon(Icons.calendar_month),
                           label: Text(
-                              'Generar fixture (${d.teams.length} equipos)'),
+                            'Generar fixture (${d.teams.length} equipos)',
+                          ),
                         ),
                       ),
                     ),
@@ -112,9 +125,10 @@ class _LeagueDetailPageState extends State<LeagueDetailPage> {
                         _StandingsTab(detail: d),
                         _ScorersTab(detail: d),
                         _TeamsTab(
-                            detail: d,
-                            leagueId: widget.leagueId,
-                            onRegistered: _reload),
+                          detail: d,
+                          leagueId: widget.leagueId,
+                          onRegistered: _reload,
+                        ),
                       ],
                     ),
                   ),
@@ -123,7 +137,9 @@ class _LeagueDetailPageState extends State<LeagueDetailPage> {
             }
             return Center(
               child: FilledButton(
-                  onPressed: _reload, child: const Text('Cargar detalle')),
+                onPressed: _reload,
+                child: const Text('Cargar detalle'),
+              ),
             );
           },
         ),
@@ -140,7 +156,8 @@ class _FixtureTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (detail.fixture.isEmpty) {
       return const Center(
-          child: Text('Sin fixture. El admin lo genera con 2+ equipos.'));
+        child: Text('Sin fixture. El admin lo genera con 2+ equipos.'),
+      );
     }
     final jornadas = <int, List<FixtureEntry>>{};
     for (final f in detail.fixture) {
@@ -161,28 +178,35 @@ class _FixtureTab extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(4),
-                  child: Text('Jornada $j',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(
+                    'Jornada $j',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
-                ...games.map((g) => ListTile(
-                      dense: true,
-                      title: Text(
-                          '${g.equipoANombre} vs ${g.equipoBNombre}',
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: g.jugado
-                          ? Text('Final: ${g.golesA} - ${g.golesB}')
-                          : Text(g.status ?? 'Pendiente'),
-                      trailing: g.matchId == null
-                          ? null
-                          : IconButton(
-                              tooltip: 'Ver partido',
-                              icon: const Icon(Icons.open_in_new, size: 20),
-                              onPressed: () => context.push(
-                                  '/matches/match_detail/${g.matchId}'),
+                ...games.map(
+                  (g) => ListTile(
+                    dense: true,
+                    title: Text(
+                      '${g.equipoANombre} vs ${g.equipoBNombre}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: g.jugado
+                        ? Text('Final: ${g.golesA} - ${g.golesB}')
+                        : Text(g.status ?? 'Pendiente'),
+                    trailing: g.matchId == null
+                        ? null
+                        : IconButton(
+                            tooltip: 'Ver partido',
+                            icon: const Icon(Icons.open_in_new, size: 20),
+                            onPressed: () => context.push(
+                              '/matches/match_detail/${g.matchId}',
                             ),
-                    )),
+                          ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -218,19 +242,25 @@ class _StandingsTab extends StatelessWidget {
         ],
         rows: detail.standings.asMap().entries.map((e) {
           final s = e.value;
-          return DataRow(cells: [
-            DataCell(Text('${e.key + 1}')),
-            DataCell(Text(s.teamName,
-                style: const TextStyle(fontWeight: FontWeight.w600))),
-            DataCell(Text('${s.points}')),
-            DataCell(Text('${s.gamesPlayed}')),
-            DataCell(Text('${s.wins}')),
-            DataCell(Text('${s.draws}')),
-            DataCell(Text('${s.losses}')),
-            DataCell(Text('${s.goalsFor}')),
-            DataCell(Text('${s.goalsAgainst}')),
-            DataCell(Text('${s.goalDifference}')),
-          ]);
+          return DataRow(
+            cells: [
+              DataCell(Text('${e.key + 1}')),
+              DataCell(
+                Text(
+                  s.teamName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              DataCell(Text('${s.points}')),
+              DataCell(Text('${s.gamesPlayed}')),
+              DataCell(Text('${s.wins}')),
+              DataCell(Text('${s.draws}')),
+              DataCell(Text('${s.losses}')),
+              DataCell(Text('${s.goalsFor}')),
+              DataCell(Text('${s.goalsAgainst}')),
+              DataCell(Text('${s.goalDifference}')),
+            ],
+          );
         }).toList(),
       ),
     );
@@ -244,8 +274,7 @@ class _ScorersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (detail.scorers.isEmpty) {
-      return const Center(
-          child: Text('Sin goles registrados todavía.'));
+      return const Center(child: Text('Sin goles registrados todavía.'));
     }
     return ListView.builder(
       itemCount: detail.scorers.length,
@@ -253,8 +282,10 @@ class _ScorersTab extends StatelessWidget {
         final s = detail.scorers[i];
         return ListTile(
           leading: CircleAvatar(child: Text('${i + 1}')),
-          title: Text(s.name,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          title: Text(
+            s.name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           trailing: Chip(label: Text('${s.goles} ⚽')),
         );
       },
@@ -266,10 +297,11 @@ class _TeamsTab extends StatelessWidget {
   final LeagueDetail detail;
   final String leagueId;
   final VoidCallback onRegistered;
-  const _TeamsTab(
-      {required this.detail,
-      required this.leagueId,
-      required this.onRegistered});
+  const _TeamsTab({
+    required this.detail,
+    required this.leagueId,
+    required this.onRegistered,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -281,12 +313,13 @@ class _TeamsTab extends StatelessWidget {
       itemBuilder: (context, i) {
         final t = detail.teams[i];
         return Card(
-          margin:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: ListTile(
             leading: const Icon(Icons.shield, color: Colors.teal),
-            title: Text(t.nombre,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              t.nombre,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text('${t.plantilla.length} jugadores en plantilla'),
           ),
         );

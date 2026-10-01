@@ -8,10 +8,7 @@ import '../widgets/match_detail_view.dart';
 class MatchDetailPage extends StatefulWidget {
   final String matchId;
 
-  const MatchDetailPage({
-    super.key,
-    required this.matchId,
-  });
+  const MatchDetailPage({super.key, required this.matchId});
 
   @override
   State<MatchDetailPage> createState() => _MatchDetailPageState();
@@ -22,9 +19,9 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
   void initState() {
     super.initState();
 
-    context
-        .read<MatchDetailBloc>()
-        .add(MatchDetailLoadRequested(widget.matchId));
+    context.read<MatchDetailBloc>().add(
+      MatchDetailLoadRequested(widget.matchId),
+    );
     // Recibir avisos del partido (marcador validado, nuevos jugadores).
     NotifyTopics.joinMatch(widget.matchId);
   }
@@ -57,15 +54,16 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
       body: BlocListener<MatchDetailBloc, MatchDetailState>(
         listener: (context, state) {
           if (state is MatchDetailLoaded && state.notice != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.notice!)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.notice!)));
           }
           if (state is MatchDetailLoaded && state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.error!),
-                  backgroundColor: Colors.redAccent),
+                content: Text(state.error!),
+                backgroundColor: Colors.redAccent,
+              ),
             );
           }
         },
@@ -83,13 +81,18 @@ class _MatchDetailPageState extends State<MatchDetailPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 60),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 60,
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Error al cargar los detalles del partido.',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),

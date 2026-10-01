@@ -20,8 +20,10 @@ class AdminUsersSearchRequested extends AdminEvent {
 class AdminUsersSelectionChanged extends AdminEvent {
   final String userId;
   final bool selected;
-  const AdminUsersSelectionChanged(
-      {required this.userId, required this.selected});
+  const AdminUsersSelectionChanged({
+    required this.userId,
+    required this.selected,
+  });
   @override
   List<Object> get props => [userId, selected];
 }
@@ -40,8 +42,10 @@ class AdminBulkDeleteRequested extends AdminEvent {
 class AdminMatchesSelectionChanged extends AdminEvent {
   final String matchId;
   final bool selected;
-  const AdminMatchesSelectionChanged(
-      {required this.matchId, required this.selected});
+  const AdminMatchesSelectionChanged({
+    required this.matchId,
+    required this.selected,
+  });
   @override
   List<Object> get props => [matchId, selected];
 }
@@ -108,8 +112,11 @@ class AdminCreateFieldRequested extends AdminEvent {
   final String name;
   final double price;
   final int capacity;
-  const AdminCreateFieldRequested(this.name,
-      [this.price = 50, this.capacity = 14]);
+  const AdminCreateFieldRequested(
+    this.name, [
+    this.price = 50,
+    this.capacity = 14,
+  ]);
   @override
   List<Object> get props => [name, price, capacity];
 }

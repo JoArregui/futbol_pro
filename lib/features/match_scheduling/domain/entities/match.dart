@@ -33,20 +33,20 @@ class Match extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        scheduledTime,
-        fieldId,
-        type,
-        playerIds,
-        mode,
-        needsReferee,
-        description,
-        organizerTeamName,
-        opponentTeamName,
-        maxPlayers,
-        leagueId,
-      ];
+    id,
+    title,
+    scheduledTime,
+    fieldId,
+    type,
+    playerIds,
+    mode,
+    needsReferee,
+    description,
+    organizerTeamName,
+    opponentTeamName,
+    maxPlayers,
+    leagueId,
+  ];
 }
 
 enum MatchType { league, friendly }

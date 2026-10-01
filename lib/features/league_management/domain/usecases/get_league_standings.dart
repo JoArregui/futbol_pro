@@ -21,8 +21,6 @@ class GetLeagueStandings implements UseCase<List<Standing>, StandingsParams> {
 
   @override
   Future<Either<Failure, List<Standing>>> call(StandingsParams params) async {
-    return await repository.getLeagueStandings(
-      leagueId: params.leagueId,
-    );
+    return await repository.getLeagueStandings(leagueId: params.leagueId);
   }
 }

@@ -8,10 +8,22 @@ class MessageBubble extends StatelessWidget {
   final Message message;
   final bool isMe;
   final bool isGroupChat;
-  const MessageBubble({super.key, required this.message, required this.isMe, this.isGroupChat = false});
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.isMe,
+    this.isGroupChat = false,
+  });
 
   Color _senderColor(String name) {
-    final colors = [Colors.blue, Colors.purple, Colors.teal, Colors.orange, Colors.indigo, Colors.green];
+    final colors = [
+      Colors.blue,
+      Colors.purple,
+      Colors.teal,
+      Colors.orange,
+      Colors.indigo,
+      Colors.green,
+    ];
     return colors[name.hashCode % colors.length];
   }
 
@@ -20,7 +32,14 @@ class MessageBubble extends StatelessWidget {
     Color color = Colors.white70;
     switch (s) {
       case MessageStatus.sending:
-        return const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.white70));
+        return const SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 1.5,
+            color: Colors.white70,
+          ),
+        );
       case MessageStatus.sent:
         icon = Icons.check;
         break;
@@ -48,15 +67,26 @@ class MessageBubble extends StatelessWidget {
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (shouldShowSenderName)
               Padding(
                 padding: const EdgeInsets.only(left: 12, bottom: 2),
-                child: Text(message.senderName, style: TextStyle(color: _senderColor(message.senderName), fontWeight: FontWeight.bold, fontSize: 12)),
+                child: Text(
+                  message.senderName,
+                  style: TextStyle(
+                    color: _senderColor(message.senderName),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             Container(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.78,
+              ),
               decoration: BoxDecoration(
                 color: isMe
                     ? ChatColors.myBubble
@@ -65,7 +95,13 @@ class MessageBubble extends StatelessWidget {
                   topRight: Radius.circular(isMe ? 0 : 8),
                   topLeft: Radius.circular(isMe ? 8 : 0),
                 ),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 1, offset: const Offset(0, 1))],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 1,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               padding: const EdgeInsets.fromLTRB(8, 6, 6, 4),
               child: Stack(
@@ -90,25 +126,38 @@ class MessageBubble extends StatelessWidget {
                                   height: 140,
                                   color: Colors.black12,
                                   child: const Center(
-                                      child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2))),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                                 errorWidget: (_, __, ___) => Container(
                                   width: 220,
                                   height: 80,
                                   color: Colors.black12,
                                   child: const Icon(
-                                      Icons.broken_image,
-                                      color: Colors.grey),
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         if (message.text.isNotEmpty)
-                          Text(message.text, style: TextStyle(color: isMe ? Colors.white : ChatColors.otherText(context), fontSize: 15, height: 1.3)),
+                          Text(
+                            message.text,
+                            style: TextStyle(
+                              color: isMe
+                                  ? Colors.white
+                                  : ChatColors.otherText(context),
+                              fontSize: 15,
+                              height: 1.3,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -118,8 +167,19 @@ class MessageBubble extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(time, style: TextStyle(color: isMe ? Colors.white70 : ChatColors.subtle(context), fontSize: 11)),
-                        if (isMe) ...[const SizedBox(width: 4), _tick(message.status)],
+                        Text(
+                          time,
+                          style: TextStyle(
+                            color: isMe
+                                ? Colors.white70
+                                : ChatColors.subtle(context),
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (isMe) ...[
+                          const SizedBox(width: 4),
+                          _tick(message.status),
+                        ],
                       ],
                     ),
                   ),

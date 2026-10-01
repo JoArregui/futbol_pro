@@ -52,8 +52,8 @@ class ProfileLoaded extends ProfileState {
 class ProfileUpdateSuccess extends ProfileLoaded {
   final DateTime updatedAt;
   ProfileUpdateSuccess({required super.profile})
-      : updatedAt = DateTime.now(),
-        super(isUpdating: false);
+    : updatedAt = DateTime.now(),
+      super(isUpdating: false);
 
   @override
   List<Object> get props => [profile, isUpdating, error ?? '', updatedAt];

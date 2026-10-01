@@ -38,6 +38,11 @@ class ReserveFieldParams extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [fieldId, startTime, endTime, userId, paymentMethod];
+  List<Object?> get props => [
+    fieldId,
+    startTime,
+    endTime,
+    userId,
+    paymentMethod,
+  ];
 }

@@ -49,7 +49,10 @@ class LeagueDetailRequested extends LeagueEvent {
   final String leagueId;
   final String leagueName;
 
-  const LeagueDetailRequested({required this.leagueId, required this.leagueName});
+  const LeagueDetailRequested({
+    required this.leagueId,
+    required this.leagueName,
+  });
 
   @override
   List<Object> get props => [leagueId, leagueName];

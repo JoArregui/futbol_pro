@@ -14,13 +14,11 @@ class SocketService {
     _userId = userId;
     final base = AppConsts.effectiveBaseUrl.replaceAll('/api/v1', '');
     _socket = io.io(
-        base,
-        io.OptionBuilder()
-            .setTransports(['websocket'])
-            .enableAutoConnect()
-            // El JWT viaja como auth para que el servidor verifique join_user.
-            .setAuth({'token': token ?? ''})
-            .build());
+      base,
+      io.OptionBuilder().setTransports(['websocket']).enableAutoConnect()
+      // El JWT viaja como auth para que el servidor verifique join_user.
+      .setAuth({'token': token ?? ''}).build(),
+    );
     _socket!.onConnect((_) {
       _socket!.emit('join_user', userId);
     });
@@ -29,7 +27,9 @@ class SocketService {
   void joinRoom(String roomId) => _socket?.emit('join_room', roomId);
   void leaveRoom(String roomId) => _socket?.emit('leave_room', roomId);
   void sendTyping(String roomId, String userId, bool isTyping) => _socket?.emit(
-      'typing', {'roomId': roomId, 'userId': userId, 'isTyping': isTyping});
+    'typing',
+    {'roomId': roomId, 'userId': userId, 'isTyping': isTyping},
+  );
 
   void _safeOn(String event, void Function(Map<String, dynamic>) handler) {
     _socket?.off(event);

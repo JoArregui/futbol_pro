@@ -7,10 +7,7 @@ class JoinMatchButton extends StatelessWidget {
 
   final String currentUserId = 'user-123-activo';
 
-  const JoinMatchButton({
-    super.key,
-    required this.matchId,
-  });
+  const JoinMatchButton({super.key, required this.matchId});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +17,8 @@ class JoinMatchButton extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  '🎉 ¡Te has unido al partido ${state.match.title} con éxito!'),
+                '🎉 ¡Te has unido al partido ${state.match.title} con éxito!',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -42,7 +40,9 @@ class JoinMatchButton extends StatelessWidget {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               ),
             );
           }
@@ -58,11 +58,11 @@ class JoinMatchButton extends StatelessWidget {
           return ElevatedButton(
             onPressed: () {
               context.read<MatchBloc>().add(
-                    PlayerJoinsMatchEvent(
-                      matchId: matchId,
-                      playerId: currentUserId,
-                    ),
-                  );
+                PlayerJoinsMatchEvent(
+                  matchId: matchId,
+                  playerId: currentUserId,
+                ),
+              );
             },
             child: const Text('¡Apuntarse al Amistoso!'),
           );

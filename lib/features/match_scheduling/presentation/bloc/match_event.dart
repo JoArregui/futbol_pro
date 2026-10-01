@@ -31,17 +31,17 @@ class ScheduleFriendlyMatchEvent extends MatchEvent {
 
   @override
   List<Object?> get props => [
-        time,
-        fieldId,
-        title,
-        mode,
-        needsReferee,
-        description,
-        organizerTeamName,
-        opponentTeamName,
-        maxPlayers,
-        costeTotal,
-      ];
+    time,
+    fieldId,
+    title,
+    mode,
+    needsReferee,
+    description,
+    organizerTeamName,
+    opponentTeamName,
+    maxPlayers,
+    costeTotal,
+  ];
 }
 
 class PlayerJoinsMatchEvent extends MatchEvent {

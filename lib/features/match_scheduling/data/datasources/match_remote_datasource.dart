@@ -90,8 +90,11 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
       return json.decode(response.body);
     } else if (response.statusCode == 400) {
       throw ValidationException(
-          message: response.body.substring(
-              0, response.body.length > 500 ? 500 : response.body.length));
+        message: response.body.substring(
+          0,
+          response.body.length > 500 ? 500 : response.body.length,
+        ),
+      );
     } else if (response.statusCode == 401) {
       throw UnauthorizedException(message: 'No autorizado.');
     } else if (response.statusCode == 403) {
@@ -100,12 +103,16 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
       throw NotFoundException(message: 'No encontrado.');
     } else if (response.statusCode == 409) {
       throw ConflictException(
-          message: response.body.substring(
-              0, response.body.length > 500 ? 500 : response.body.length));
+        message: response.body.substring(
+          0,
+          response.body.length > 500 ? 500 : response.body.length,
+        ),
+      );
     } else {
       throw ServerException(
-          message:
-              'Error ${response.statusCode}: ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+        message:
+            'Error ${response.statusCode}: ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}',
+      );
     }
   }
 
@@ -164,9 +171,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
       // 🚀 NOMBRE DE LA CLASE CORREGIDO
       Uri.parse('${AppConsts.effectiveBaseUrl}/matches/$matchId/join'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'playerId': playerId,
-      }),
+      body: json.encode({'playerId': playerId}),
     );
     final data = _handleResponse(response);
     return MatchModel.fromJson(data);
@@ -193,10 +198,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
       // 🚀 NOMBRE DE LA CLASE CORREGIDO
       Uri.parse('${AppConsts.effectiveBaseUrl}/matches/$matchId/teams'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'teamA': teamA.toJson(),
-        'teamB': teamB.toJson(),
-      }),
+      body: json.encode({'teamA': teamA.toJson(), 'teamB': teamB.toJson()}),
     );
     final data = _handleResponse(response);
     return MatchModel.fromJson(data);
@@ -238,15 +240,18 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   Future<MatchResult> confirmResult({required String matchId}) async {
     final response = await client.post(
       Uri.parse(
-          '${AppConsts.effectiveBaseUrl}/matches/$matchId/result/confirm'),
+        '${AppConsts.effectiveBaseUrl}/matches/$matchId/result/confirm',
+      ),
       headers: {'Content-Type': 'application/json'},
     );
     return _parseResult(response);
   }
 
   @override
-  Future<int> reportNoShow(
-      {required String matchId, required String playerId}) async {
+  Future<int> reportNoShow({
+    required String matchId,
+    required String playerId,
+  }) async {
     final response = await client.post(
       Uri.parse('${AppConsts.effectiveBaseUrl}/matches/$matchId/no-show'),
       headers: {'Content-Type': 'application/json'},

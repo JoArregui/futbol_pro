@@ -14,19 +14,32 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
 
   Future<void> _check() async {
     if (!mounted) return;
-    setState(() { _checking = true; _status = null; });
-    final url = Uri.parse('${AppConsts.effectiveBaseUrl.replaceAll('/api/v1', '')}/health');
+    setState(() {
+      _checking = true;
+      _status = null;
+    });
+    final url = Uri.parse(
+      '${AppConsts.effectiveBaseUrl.replaceAll('/api/v1', '')}/health',
+    );
     try {
       final res = await http.get(url).timeout(const Duration(seconds: 5));
       if (!mounted) return;
       if (res.statusCode == 200) {
-        setState(() => _status = '✅ Conectado a ${AppConsts.effectiveBaseUrl} (${res.body})');
+        setState(
+          () => _status =
+              '✅ Conectado a ${AppConsts.effectiveBaseUrl} (${res.body})',
+        );
       } else {
-        setState(() => _status = '⚠️ Servidor responde ${res.statusCode} en $url');
+        setState(
+          () => _status = '⚠️ Servidor responde ${res.statusCode} en $url',
+        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _status = '❌ Sin conexión a ${AppConsts.effectiveBaseUrl}\n$e\n→ Ejecuta: cd server && npm run dev');
+        setState(
+          () => _status =
+              '❌ Sin conexión a ${AppConsts.effectiveBaseUrl}\n$e\n→ Ejecuta: cd server && npm run dev',
+        );
       }
     } finally {
       if (mounted) {
@@ -36,14 +49,21 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
   }
 
   @override
-  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _check()); }
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  }
 
   void _useEmulator() {
     AppConsts.overrideUrl = 'http://10.0.2.2:3000/api/v1';
     _check();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('API: emulador (10.0.2.2)'), backgroundColor: Color(0xFF25D366)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('API: emulador (10.0.2.2)'),
+        backgroundColor: Color(0xFF25D366),
+      ),
+    );
   }
 
   void _useUsb() {
@@ -51,7 +71,10 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
     AppConsts.overrideUrl = usbUrl;
     _check();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('API configurada por USB (adb reverse)'), backgroundColor: Color(0xFF25D366)),
+      const SnackBar(
+        content: Text('API configurada por USB (adb reverse)'),
+        backgroundColor: Color(0xFF25D366),
+      ),
     );
   }
 
@@ -62,30 +85,38 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
       builder: (_) => AlertDialog(
         title: const Text('Configurar API'),
         content: TextField(
-            controller: ctrl,
-            decoration: const InputDecoration(
-                labelText: 'http://IP-PC:3000/api/v1',
-                hintText: 'http://192.168.1.10:3000/api/v1',
-                border: OutlineInputBorder()),
-            keyboardType: TextInputType.url),
+          controller: ctrl,
+          decoration: const InputDecoration(
+            labelText: 'http://IP-PC:3000/api/v1',
+            hintText: 'http://192.168.1.10:3000/api/v1',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.url,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
-              onPressed: () {
-                final value = _normalizeApiUrl(ctrl.text);
-                if (value == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text(
-                            'Introduce una URL válida, por ejemplo http://192.168.1.10:3000/api/v1')),
-                  );
-                  return;
-                }
-                AppConsts.overrideUrl = value;
-                Navigator.pop(context);
-                _check();
-              },
-              child: const Text('Guardar')),
+            onPressed: () {
+              final value = _normalizeApiUrl(ctrl.text);
+              if (value == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Introduce una URL válida, por ejemplo http://192.168.1.10:3000/api/v1',
+                    ),
+                  ),
+                );
+                return;
+              }
+              AppConsts.overrideUrl = value;
+              Navigator.pop(context);
+              _check();
+            },
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     ).then((_) => ctrl.dispose());
@@ -110,40 +141,108 @@ class _ConnectionBannerState extends State<ConnectionBanner> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: _status?.startsWith('✅') == true ? const Color(0xFFE6F4EA) : isFail ? const Color(0xFFFCE8E6) : const Color(0xFFFFF8E1),
+        color: _status?.startsWith('✅') == true
+            ? const Color(0xFFE6F4EA)
+            : isFail
+            ? const Color(0xFFFCE8E6)
+            : const Color(0xFFFFF8E1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _status?.startsWith('✅') == true ? const Color(0xFF25D366) : Colors.grey.shade300),
+        border: Border.all(
+          color: _status?.startsWith('✅') == true
+              ? const Color(0xFF25D366)
+              : Colors.grey.shade300,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Expanded(child: Text('API: ${AppConsts.effectiveBaseUrl}', style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF54656F)))),
-            if (_checking) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-            if (!_checking) IconButton(icon: const Icon(Icons.refresh, size: 18), onPressed: _check, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-            IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: _showEditDialog, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'API: ${AppConsts.effectiveBaseUrl}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                    color: Color(0xFF54656F),
+                  ),
+                ),
+              ),
+              if (_checking)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              if (!_checking)
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 18),
+                  onPressed: _check,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18),
+                onPressed: _showEditDialog,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
           if (_status != null) ...[
             const SizedBox(height: 4),
-            Text(_status!, style: TextStyle(fontSize: 12, color: _status!.startsWith('✅') ? const Color(0xFF137333) : isFail ? const Color(0xFFA50E0E) : const Color(0xFF775500))),
+            Text(
+              _status!,
+              style: TextStyle(
+                fontSize: 12,
+                color: _status!.startsWith('✅')
+                    ? const Color(0xFF137333)
+                    : isFail
+                    ? const Color(0xFFA50E0E)
+                    : const Color(0xFF775500),
+              ),
+            ),
           ],
           if (isFail) ...[
             const SizedBox(height: 8),
-            SizedBox(width: double.infinity, child: ElevatedButton.icon(
-              onPressed: _useUsb,
-              icon: const Icon(Icons.usb, size: 16),
-              label: const Text('Usar conexión USB', style: TextStyle(fontSize: 12)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF075E54), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
-            )),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _useUsb,
+                icon: const Icon(Icons.usb, size: 16),
+                label: const Text(
+                  'Usar conexión USB',
+                  style: TextStyle(fontSize: 12),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF075E54),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+              ),
+            ),
             const SizedBox(height: 4),
-            SizedBox(width: double.infinity, child: ElevatedButton.icon(
-              onPressed: _useEmulator,
-              icon: const Icon(Icons.wifi, size: 16),
-              label: const Text('Usar emulador (10.0.2.2)', style: TextStyle(fontSize: 12)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF075E54), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
-            )),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _useEmulator,
+                icon: const Icon(Icons.wifi, size: 16),
+                label: const Text(
+                  'Usar emulador (10.0.2.2)',
+                  style: TextStyle(fontSize: 12),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF075E54),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+              ),
+            ),
             const SizedBox(height: 4),
-            Text('USB requiere adb reverse. La IP física requiere que ambos dispositivos estén en la misma red.', style: TextStyle(fontSize: 10, color: Colors.grey.shade700)),
+            Text(
+              'USB requiere adb reverse. La IP física requiere que ambos dispositivos estén en la misma red.',
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade700),
+            ),
           ],
         ],
       ),

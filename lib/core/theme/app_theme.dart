@@ -92,8 +92,10 @@ class AppTheme {
         hintStyle: const TextStyle(color: AppColors.muted),
         labelStyle: const TextStyle(color: AppColors.textDim),
         prefixIconColor: AppColors.lime,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(_radius),
           borderSide: BorderSide.none,
@@ -123,7 +125,10 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surface2,
         selectedColor: AppColors.lime,
-        labelStyle: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+        labelStyle: const TextStyle(
+          color: AppColors.text,
+          fontWeight: FontWeight.w600,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
@@ -199,8 +204,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
@@ -209,9 +216,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }

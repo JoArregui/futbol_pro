@@ -62,40 +62,51 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     final audit = results[10] as dynamic;
 
     if (stats.isLeft() || users.isLeft() || matches.isLeft()) {
-      final f = stats.fold((l) => l, (_) => null) ??
+      final f =
+          stats.fold((l) => l, (_) => null) ??
           users.fold((l) => l, (_) => null) ??
           matches.fold((l) => l, (_) => null);
       emit(AdminError((f as Failure).errorMessage));
       return;
     }
 
-    emit(AdminLoaded(
-      stats: stats.getOrElse(() => const AdminStats(
-          users: 0,
-          matches: 0,
-          fields: 0,
-          bookings: 0,
-          chats: 0,
-          teams: 0,
-          leagues: 0,
-          referees: 0,
-          revenue: 0)),
-      users: users.getOrElse(() => []),
-      matches: matches.getOrElse(() => []),
-      teams: teams.getOrElse(() => []),
-      players: players.getOrElse(() => []),
-      fields: fields.getOrElse(() => []),
-      referees: referees.getOrElse(() => []),
-      leagues: leagues.getOrElse(() => []),
-      friendlies: matches.getOrElse(() => <AdminMatch>[]).where((m) => m.type.toUpperCase() == 'AMISTOSO').toList(),
-      tournaments: tournaments.getOrElse(() => []),
-      finance: finance.getOrElse(() => AdminFinance.empty()),
-      audit: audit.getOrElse(() => []),
-    ));
+    emit(
+      AdminLoaded(
+        stats: stats.getOrElse(
+          () => const AdminStats(
+            users: 0,
+            matches: 0,
+            fields: 0,
+            bookings: 0,
+            chats: 0,
+            teams: 0,
+            leagues: 0,
+            referees: 0,
+            revenue: 0,
+          ),
+        ),
+        users: users.getOrElse(() => []),
+        matches: matches.getOrElse(() => []),
+        teams: teams.getOrElse(() => []),
+        players: players.getOrElse(() => []),
+        fields: fields.getOrElse(() => []),
+        referees: referees.getOrElse(() => []),
+        leagues: leagues.getOrElse(() => []),
+        friendlies: matches
+            .getOrElse(() => <AdminMatch>[])
+            .where((m) => m.type.toUpperCase() == 'AMISTOSO')
+            .toList(),
+        tournaments: tournaments.getOrElse(() => []),
+        finance: finance.getOrElse(() => AdminFinance.empty()),
+        audit: audit.getOrElse(() => []),
+      ),
+    );
   }
 
   Future<void> _onSearchUsers(
-      AdminUsersSearchRequested e, Emitter<AdminState> emit) async {
+    AdminUsersSearchRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(current.copyWith(searchingUsers: true));
@@ -103,11 +114,13 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     final resPlayers = await repository.getPlayers(query: e.query);
     res.fold(
       (f) => emit(adminErr(f.errorMessage, current)),
-      (u) => emit(current.copyWith(
-        users: u,
-        players: resPlayers.getOrElse(() => current.players),
-        searchingUsers: false,
-      )),
+      (u) => emit(
+        current.copyWith(
+          users: u,
+          players: resPlayers.getOrElse(() => current.players),
+          searchingUsers: false,
+        ),
+      ),
     );
   }
 
@@ -124,50 +137,57 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onBulkRole(
-      AdminBulkRoleRequested e, Emitter<AdminState> emit) async {
+    AdminBulkRoleRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded || current.selectedUserIds.isEmpty) return;
     emit(AdminActionRunning(message: 'Actualizando roles...', prev: current));
     final res = await repository.bulkRole(
-        ids: current.selectedUserIds.toList(), role: e.role);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final users = await repository.getUsers();
-        users.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (u) => emit(current.copyWith(users: u, selectedUserIds: {})),
-        );
-      },
+      ids: current.selectedUserIds.toList(),
+      role: e.role,
     );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final users = await repository.getUsers();
+      users.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (u) => emit(current.copyWith(users: u, selectedUserIds: {})),
+      );
+    });
   }
 
   Future<void> _onBulkDelete(
-      AdminBulkDeleteRequested e, Emitter<AdminState> emit) async {
+    AdminBulkDeleteRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded || current.selectedUserIds.isEmpty) return;
     emit(AdminActionRunning(message: 'Eliminando...', prev: current));
-    final res =
-        await repository.bulkDelete(ids: current.selectedUserIds.toList());
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final users = await repository.getUsers();
-        final stats = await repository.getStats();
-        users.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (u) => stats.fold(
-            (f) => emit(adminErr(f.errorMessage, current)),
-            (s) =>
-                emit(current.copyWith(users: u, stats: s, selectedUserIds: {})),
-          ),
-        );
-      },
+    final res = await repository.bulkDelete(
+      ids: current.selectedUserIds.toList(),
     );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final users = await repository.getUsers();
+      final stats = await repository.getStats();
+      users.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (u) => stats.fold(
+          (f) => emit(adminErr(f.errorMessage, current)),
+          (s) =>
+              emit(current.copyWith(users: u, stats: s, selectedUserIds: {})),
+        ),
+      );
+    });
   }
 
   void _onMatchSelection(
-      AdminMatchesSelectionChanged e, Emitter<AdminState> emit) {
+    AdminMatchesSelectionChanged e,
+    Emitter<AdminState> emit,
+  ) {
     final current = state;
     if (current is! AdminLoaded) return;
     final sel = Set<String>.from(current.selectedMatchIds);
@@ -180,75 +200,80 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onBulkCancel(
-      AdminBulkCancelMatchesRequested e, Emitter<AdminState> emit) async {
+    AdminBulkCancelMatchesRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded || current.selectedMatchIds.isEmpty) return;
     emit(AdminActionRunning(message: 'Cancelando partidos...', prev: current));
     final res = await repository.bulkCancelMatches(
-        ids: current.selectedMatchIds.toList());
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final matches = await repository.getMatches();
-        matches.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (m) => emit(current.copyWith(matches: m, selectedMatchIds: {})),
-        );
-      },
+      ids: current.selectedMatchIds.toList(),
     );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final matches = await repository.getMatches();
+      matches.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (m) => emit(current.copyWith(matches: m, selectedMatchIds: {})),
+      );
+    });
   }
 
   Future<void> _onCreateTeam(
-      AdminCreateTeamRequested e, Emitter<AdminState> emit) async {
+    AdminCreateTeamRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Creando equipo...', prev: current));
     final res = await repository.createTeam(name: e.name, league: e.league);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final teams = await repository.getTeams();
-        teams.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (t) => emit(current.copyWith(teams: t)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final teams = await repository.getTeams();
+      teams.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (t) => emit(current.copyWith(teams: t)),
+      );
+    });
   }
 
   Future<void> _onCreateLeague(
-      AdminCreateLeagueRequested e, Emitter<AdminState> emit) async {
+    AdminCreateLeagueRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Creando liga...', prev: current));
     final res = await repository.createLeague(name: e.name);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final leagues = await repository.getLeagues();
-        leagues.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (l) => emit(current.copyWith(leagues: l)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final leagues = await repository.getLeagues();
+      leagues.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (l) => emit(current.copyWith(leagues: l)),
+      );
+    });
   }
 
   Future<void> _onToggleField(
-      AdminToggleFieldRequested e, Emitter<AdminState> emit) async {
+    AdminToggleFieldRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     final res = await repository.toggleFieldStatus(id: e.id, status: e.status);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final fields = await repository.getFields();
-        fields.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (fl) => emit(current.copyWith(fields: fl)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final fields = await repository.getFields();
+      fields.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (fl) => emit(current.copyWith(fields: fl)),
+      );
+    });
   }
 
   Future<void> _refreshTeams(Emitter<AdminState> emit, AdminLoaded cur) async {
@@ -260,7 +285,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onUpdateTeam(
-      AdminUpdateTeamRequested e, Emitter<AdminState> emit) async {
+    AdminUpdateTeamRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Actualizando equipo...', prev: current));
@@ -272,7 +299,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onDeleteTeam(
-      AdminDeleteTeamRequested e, Emitter<AdminState> emit) async {
+    AdminDeleteTeamRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Borrando equipo...', prev: current));
@@ -284,128 +313,142 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onAddPlayerToTeam(
-      AdminAddPlayerToTeamRequested e, Emitter<AdminState> emit) async {
+    AdminAddPlayerToTeamRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     final res = await repository.addPlayerToTeam(
-        teamId: e.teamId, playerId: e.playerId);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final teams = await repository.getTeams();
-        teams.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (t) => emit(current.copyWith(teams: t)),
-        );
-      },
+      teamId: e.teamId,
+      playerId: e.playerId,
     );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final teams = await repository.getTeams();
+      teams.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (t) => emit(current.copyWith(teams: t)),
+      );
+    });
   }
 
   Future<void> _onRemovePlayerFromTeam(
-      AdminRemovePlayerFromTeamRequested e, Emitter<AdminState> emit) async {
+    AdminRemovePlayerFromTeamRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     final res = await repository.removePlayerFromTeam(
-        teamId: e.teamId, playerId: e.playerId);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final teams = await repository.getTeams();
-        teams.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (t) => emit(current.copyWith(teams: t)),
-        );
-      },
+      teamId: e.teamId,
+      playerId: e.playerId,
     );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final teams = await repository.getTeams();
+      teams.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (t) => emit(current.copyWith(teams: t)),
+      );
+    });
   }
 
   Future<void> _onCreateField(
-      AdminCreateFieldRequested e, Emitter<AdminState> emit) async {
+    AdminCreateFieldRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Creando campo...', prev: current));
     final res = await repository.createField(
-        name: e.name, price: e.price, capacity: e.capacity);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final fields = await repository.getFields();
-        fields.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (fl) => emit(current.copyWith(fields: fl)),
-        );
-      },
+      name: e.name,
+      price: e.price,
+      capacity: e.capacity,
     );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final fields = await repository.getFields();
+      fields.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (fl) => emit(current.copyWith(fields: fl)),
+      );
+    });
   }
 
   Future<void> _onDeleteField(
-      AdminDeleteFieldRequested e, Emitter<AdminState> emit) async {
+    AdminDeleteFieldRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Borrando campo...', prev: current));
     final res = await repository.deleteField(id: e.id);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final fields = await repository.getFields();
-        fields.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (fl) => emit(current.copyWith(fields: fl)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final fields = await repository.getFields();
+      fields.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (fl) => emit(current.copyWith(fields: fl)),
+      );
+    });
   }
 
   Future<void> _onCreateReferee(
-      AdminCreateRefereeRequested e, Emitter<AdminState> emit) async {
+    AdminCreateRefereeRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Añadiendo árbitro...', prev: current));
     final res = await repository.createReferee(name: e.name, fee: e.fee);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final refs = await repository.getReferees();
-        refs.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (r) => emit(current.copyWith(referees: r)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final refs = await repository.getReferees();
+      refs.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (r) => emit(current.copyWith(referees: r)),
+      );
+    });
   }
 
   Future<void> _onToggleReferee(
-      AdminToggleRefereeRequested e, Emitter<AdminState> emit) async {
+    AdminToggleRefereeRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     final res = await repository.updateReferee(id: e.id, status: e.status);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final refs = await repository.getReferees();
-        refs.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (r) => emit(current.copyWith(referees: r)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final refs = await repository.getReferees();
+      refs.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (r) => emit(current.copyWith(referees: r)),
+      );
+    });
   }
 
   Future<void> _onDeleteReferee(
-      AdminDeleteRefereeRequested e, Emitter<AdminState> emit) async {
+    AdminDeleteRefereeRequested e,
+    Emitter<AdminState> emit,
+  ) async {
     final current = state;
     if (current is! AdminLoaded) return;
     emit(AdminActionRunning(message: 'Quitando árbitro...', prev: current));
     final res = await repository.deleteReferee(id: e.id);
-    await res.fold(
-      (f) async => emit(adminErr(f.errorMessage, current)),
-      (_) async {
-        final refs = await repository.getReferees();
-        refs.fold(
-          (f) => emit(adminErr(f.errorMessage, current)),
-          (r) => emit(current.copyWith(referees: r)),
-        );
-      },
-    );
+    await res.fold((f) async => emit(adminErr(f.errorMessage, current)), (
+      _,
+    ) async {
+      final refs = await repository.getReferees();
+      refs.fold(
+        (f) => emit(adminErr(f.errorMessage, current)),
+        (r) => emit(current.copyWith(referees: r)),
+      );
+    });
   }
 }

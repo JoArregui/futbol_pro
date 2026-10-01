@@ -72,8 +72,9 @@ class MainScaffold extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: isDark ? 0.5 : 0.12),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.5 : 0.12,
+                        ),
                         blurRadius: 24,
                         offset: const Offset(0, 10),
                       ),

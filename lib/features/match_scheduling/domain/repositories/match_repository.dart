@@ -51,20 +51,14 @@ abstract class MatchRepository {
     String? mvpId,
   });
 
-  Future<Either<Failure, MatchResult>> confirmResult({
-    required String matchId,
-  });
+  Future<Either<Failure, MatchResult>> confirmResult({required String matchId});
 
   Future<Either<Failure, int>> reportNoShow({
     required String matchId,
     required String playerId,
   });
 
-  Future<Either<Failure, MatchSplit>> getSplit({
-    required String matchId,
-  });
+  Future<Either<Failure, MatchSplit>> getSplit({required String matchId});
 
-  Future<Either<Failure, MatchActa>> getActa({
-    required String matchId,
-  });
+  Future<Either<Failure, MatchActa>> getActa({required String matchId});
 }

@@ -50,11 +50,15 @@ class LeagueRepositoryImpl implements LeagueRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> registerTeam(
-      {required String leagueId, required String teamName}) async {
+  Future<Either<Failure, bool>> registerTeam({
+    required String leagueId,
+    required String teamName,
+  }) async {
     try {
       final ok = await remoteDataSource.registerTeam(
-          leagueId: leagueId, teamName: teamName);
+        leagueId: leagueId,
+        teamName: teamName,
+      );
       return Right(ok);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
@@ -71,7 +75,10 @@ class LeagueRepositoryImpl implements LeagueRepository {
   }) async {
     try {
       final model = await remoteDataSource.createLeague(
-          nombre: nombre, descripcion: descripcion, maxEquipos: maxEquipos);
+        nombre: nombre,
+        descripcion: descripcion,
+        maxEquipos: maxEquipos,
+      );
       return Right(model);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
@@ -92,12 +99,14 @@ class LeagueRepositoryImpl implements LeagueRepository {
         remoteDataSource.fetchLeagueStandings(leagueId: leagueId),
         remoteDataSource.fetchScorers(leagueId: leagueId),
       ]);
-      return Right(LeagueDetail(
-        teams: results[0] as List<LeagueTeam>,
-        fixture: results[1] as List<FixtureEntry>,
-        standings: (results[2] as List).cast<Standing>(),
-        scorers: results[3] as List<ScorerRow>,
-      ));
+      return Right(
+        LeagueDetail(
+          teams: results[0] as List<LeagueTeam>,
+          fixture: results[1] as List<FixtureEntry>,
+          standings: (results[2] as List).cast<Standing>(),
+          scorers: results[3] as List<ScorerRow>,
+        ),
+      );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -110,8 +119,7 @@ class LeagueRepositoryImpl implements LeagueRepository {
     required String leagueId,
   }) async {
     try {
-      final res =
-          await remoteDataSource.generateFixture(leagueId: leagueId);
+      final res = await remoteDataSource.generateFixture(leagueId: leagueId);
       return Right(res);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

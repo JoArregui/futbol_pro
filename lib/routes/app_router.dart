@@ -40,12 +40,10 @@ class AppRouter {
       ShellRoute(
         builder: (context, state, child) {
           final loc = state.matchedLocation;
-          final hideNavBar = (loc.startsWith('/chat/') && loc != '/chat') ||
+          final hideNavBar =
+              (loc.startsWith('/chat/') && loc != '/chat') ||
               loc.contains('match_detail');
-          return MainScaffold(
-            hideBottomBar: hideNavBar,
-            child: child,
-          );
+          return MainScaffold(hideBottomBar: hideNavBar, child: child);
         },
         routes: [
           GoRoute(
@@ -87,12 +85,13 @@ class AppRouter {
                 path: ':leagueId',
                 name: 'leagueDetail',
                 builder: (context, state) {
-                  final leagueId =
-                      state.pathParameters['leagueId'] ?? '';
+                  final leagueId = state.pathParameters['leagueId'] ?? '';
                   final leagueName =
                       state.uri.queryParameters['name'] ?? 'Liga';
                   return LeagueDetailPage(
-                      leagueId: leagueId, leagueName: leagueName);
+                    leagueId: leagueId,
+                    leagueName: leagueName,
+                  );
                 },
               ),
             ],
@@ -155,7 +154,8 @@ class AppRouter {
       final needsBiometric = authState is AuthBiometricRequired;
       final isInitial = authState is AuthInitial;
       final loc = state.matchedLocation;
-      final isLoggingInOrUp = loc == AppRoutes.login || loc == AppRoutes.register;
+      final isLoggingInOrUp =
+          loc == AppRoutes.login || loc == AppRoutes.register;
       final isSplash = loc == AppRoutes.splash;
 
       if (isInitial) {

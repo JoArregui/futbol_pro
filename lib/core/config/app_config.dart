@@ -10,8 +10,10 @@ enum AppFlavor { dev, staging, prod }
 class AppConfig {
   AppConfig._();
 
-  static const _flavorRaw =
-      String.fromEnvironment('FLAVOR', defaultValue: 'dev');
+  static const _flavorRaw = String.fromEnvironment(
+    'FLAVOR',
+    defaultValue: 'dev',
+  );
 
   static AppFlavor get flavor {
     switch (_flavorRaw.toLowerCase()) {

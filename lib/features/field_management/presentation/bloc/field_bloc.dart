@@ -86,7 +86,8 @@ class FieldBloc extends Bloc<FieldEvent, FieldState> {
     }
     emit(FieldLoading());
     final res = await confirmPago!(
-        ConfirmPagoParams(pagoId: event.pagoId, orderId: event.orderId));
+      ConfirmPagoParams(pagoId: event.pagoId, orderId: event.orderId),
+    );
     res.fold(
       (f) => emit(FieldError(message: f.errorMessage)),
       (_) => emit(PagoConfirmado(reservaId: event.reservaId)),

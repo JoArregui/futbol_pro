@@ -43,7 +43,7 @@ void main() {
             'played': 5,
             'wins': 3,
             'mvpCount': 1,
-            'noShows': 0
+            'noShows': 0,
           },
           {'id': '2', 'name': 'Cap B', 'nickname': 'capb'},
         ],

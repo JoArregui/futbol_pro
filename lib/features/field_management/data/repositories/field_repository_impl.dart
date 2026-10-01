@@ -61,11 +61,15 @@ class FieldRepositoryImpl implements FieldRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> confirmPago(
-      {required String pagoId, required String orderId}) async {
+  Future<Either<Failure, bool>> confirmPago({
+    required String pagoId,
+    required String orderId,
+  }) async {
     try {
-      final ok =
-          await remoteDataSource.confirmPago(pagoId: pagoId, orderId: orderId);
+      final ok = await remoteDataSource.confirmPago(
+        pagoId: pagoId,
+        orderId: orderId,
+      );
       return Right(ok);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

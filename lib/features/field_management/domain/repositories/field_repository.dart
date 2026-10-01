@@ -17,8 +17,10 @@ abstract class FieldRepository {
     String? paymentMethod,
   });
 
-  Future<Either<Failure, bool>> confirmPago(
-      {required String pagoId, required String orderId});
+  Future<Either<Failure, bool>> confirmPago({
+    required String pagoId,
+    required String orderId,
+  });
 
   Future<Either<Failure, List<BookingInfo>>> misReservas();
 }

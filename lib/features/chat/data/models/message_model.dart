@@ -42,12 +42,17 @@ class MessageModel extends Message {
     }
     MessageStatus status = MessageStatus.sent;
     final s = json['status'] as String?;
-    if (s != null) status = MessageStatus.values.firstWhere((e) => e.name == s, orElse: () => MessageStatus.sent);
+    if (s != null)
+      status = MessageStatus.values.firstWhere(
+        (e) => e.name == s,
+        orElse: () => MessageStatus.sent,
+      );
 
     return MessageModel(
       id: (json['id'] ?? json['id_mensaje'] ?? '').toString(),
       senderId: (json['senderId'] ?? json['id_emisor_fk'] ?? '').toString(),
-      senderName: (json['senderName'] ?? json['nombre_emisor'] ?? 'Usuario').toString(),
+      senderName: (json['senderName'] ?? json['nombre_emisor'] ?? 'Usuario')
+          .toString(),
       text: (json['text'] ?? json['texto'] ?? '').toString(),
       timestamp: timestamp,
       status: status,
@@ -58,26 +63,26 @@ class MessageModel extends Message {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'senderId': senderId,
-        'senderName': senderName,
-        'text': text,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'status': status.name,
-        'type': type.name,
-        if (replyToId != null) 'replyToId': replyToId,
-        if (imageUrl != null) 'imageUrl': imageUrl,
-      };
+    'id': id,
+    'senderId': senderId,
+    'senderName': senderName,
+    'text': text,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'status': status.name,
+    'type': type.name,
+    if (replyToId != null) 'replyToId': replyToId,
+    if (imageUrl != null) 'imageUrl': imageUrl,
+  };
 
   factory MessageModel.fromEntity(Message entity) => MessageModel(
-        id: entity.id,
-        senderId: entity.senderId,
-        senderName: entity.senderName,
-        text: entity.text,
-        timestamp: entity.timestamp,
-        status: entity.status,
-        type: entity.type,
-        replyToId: entity.replyToId,
-        imageUrl: entity.imageUrl,
-      );
+    id: entity.id,
+    senderId: entity.senderId,
+    senderName: entity.senderName,
+    text: entity.text,
+    timestamp: entity.timestamp,
+    status: entity.status,
+    type: entity.type,
+    replyToId: entity.replyToId,
+    imageUrl: entity.imageUrl,
+  );
 }

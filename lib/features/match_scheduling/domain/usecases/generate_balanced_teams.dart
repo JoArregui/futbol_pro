@@ -19,13 +19,19 @@ class GenerateBalancedTeams implements UseCase<TeamPair, GenerateTeamsParams> {
   @override
   Future<Either<Failure, TeamPair>> call(GenerateTeamsParams params) async {
     if (params.players.length < 2) {
-      return const Left(ValidationFailure(
-          "Se requieren al menos 2 jugadores para generar equipos."));
+      return const Left(
+        ValidationFailure(
+          "Se requieren al menos 2 jugadores para generar equipos.",
+        ),
+      );
     }
 
     if (params.players.length < params.minPlayers) {
-      return Left(ValidationFailure(
-          "Se requieren ${params.minPlayers} jugadores para iniciar el partido. Actualmente hay ${params.players.length}."));
+      return Left(
+        ValidationFailure(
+          "Se requieren ${params.minPlayers} jugadores para iniciar el partido. Actualmente hay ${params.players.length}.",
+        ),
+      );
     }
 
     // Algoritmo de balanceo simplificado:

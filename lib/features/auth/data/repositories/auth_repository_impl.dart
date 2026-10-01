@@ -26,7 +26,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.message));
     } on Exception {
       return const Left(
-          ServerFailure('Error desconocido al intentar iniciar sesión.'));
+        ServerFailure('Error desconocido al intentar iniciar sesión.'),
+      );
     }
   }
 
@@ -50,7 +51,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.message));
     } on Exception {
       return const Left(
-          ServerFailure('Error desconocido al intentar registrar el usuario.'));
+        ServerFailure('Error desconocido al intentar registrar el usuario.'),
+      );
     }
   }
 
@@ -83,7 +85,7 @@ class AuthRepositoryImpl implements AuthRepository {
   String getCurrentUserId() {
     return remoteDataSource.getCurrentUserId();
   }
-  
+
   @override
   String getCurrentUserName() {
     return remoteDataSource.getCurrentUserName();

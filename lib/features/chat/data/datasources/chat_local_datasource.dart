@@ -15,13 +15,18 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   ChatLocalDataSourceImpl(this.isar);
 
   @override
-  Future<void> cacheChatRooms(String ownerId, List<ChatRoom> rooms) => isar.saveChatRooms(ownerId, rooms);
+  Future<void> cacheChatRooms(String ownerId, List<ChatRoom> rooms) =>
+      isar.saveChatRooms(ownerId, rooms);
   @override
-  Future<List<ChatRoom>> getCachedChatRooms(String ownerId) => isar.getChatRooms(ownerId);
+  Future<List<ChatRoom>> getCachedChatRooms(String ownerId) =>
+      isar.getChatRooms(ownerId);
   @override
-  Future<void> cacheMessages(String roomId, List<Message> messages) => isar.saveMessages(roomId, messages);
+  Future<void> cacheMessages(String roomId, List<Message> messages) =>
+      isar.saveMessages(roomId, messages);
   @override
-  Future<List<Message>> getCachedMessages(String roomId) => isar.getMessages(roomId);
+  Future<List<Message>> getCachedMessages(String roomId) =>
+      isar.getMessages(roomId);
   @override
-  Future<void> cacheMessage(String roomId, Message message) => isar.saveMessage(roomId, message);
+  Future<void> cacheMessage(String roomId, Message message) =>
+      isar.saveMessage(roomId, message);
 }

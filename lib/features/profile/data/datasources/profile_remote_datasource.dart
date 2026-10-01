@@ -27,8 +27,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final url = Uri.parse('$_kBaseUrl/$uid/profile');
 
     try {
-      final response =
-          await client.get(url, headers: {'Content-Type': 'application/json'});
+      final response = await client.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
@@ -37,7 +39,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         throw NotFoundException(message: 'Perfil de usuario no encontrado.');
       } else {
         throw ServerException(
-            message: 'Error al obtener el perfil: ${response.statusCode}');
+          message: 'Error al obtener el perfil: ${response.statusCode}',
+        );
       }
     } on NotFoundException {
       rethrow;
@@ -64,7 +67,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
       if (response.statusCode != 201 && response.statusCode != 200) {
         throw ServerException(
-            message: 'Error al crear perfil: ${response.statusCode}');
+          message: 'Error al crear perfil: ${response.statusCode}',
+        );
       }
     } on ServerException {
       rethrow;
@@ -92,13 +96,15 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
       if (response.statusCode != 200) {
         throw ServerException(
-            message: 'Error al actualizar perfil: ${response.statusCode}');
+          message: 'Error al actualizar perfil: ${response.statusCode}',
+        );
       }
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
       throw ServerException(
-          message: 'Fallo de conexión al actualizar perfil: $e');
+        message: 'Fallo de conexión al actualizar perfil: $e',
+      );
     }
   }
 }

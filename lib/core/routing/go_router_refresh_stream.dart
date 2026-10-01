@@ -16,7 +16,8 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
   @override
   void dispose() {
-    _subscription.cancel(); // Asegura que la suscripción se cancele correctamente.
+    _subscription
+        .cancel(); // Asegura que la suscripción se cancele correctamente.
     super.dispose();
   }
 }

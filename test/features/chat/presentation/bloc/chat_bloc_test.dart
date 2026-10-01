@@ -12,7 +12,9 @@ import 'package:futbol_pro/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:futbol_pro/features/auth/domain/repositories/auth_repository.dart';
 
 class MockChatRepo extends Mock implements ChatRepository {}
+
 class MockAuthRepo extends Mock implements AuthRepository {}
+
 class MockSocket extends Mock implements SocketService {}
 
 void main() {

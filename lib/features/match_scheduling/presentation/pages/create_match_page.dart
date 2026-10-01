@@ -55,8 +55,8 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
 
   void _searchFields(BuildContext fieldCtx) {
     fieldCtx.read<FieldBloc>().add(
-          GetAvailableFieldsEvent(startTime: _start, endTime: _end),
-        );
+      GetAvailableFieldsEvent(startTime: _start, endTime: _end),
+    );
   }
 
   Future<void> _loadReferees() async {
@@ -82,27 +82,27 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
       return;
     }
     context.read<MatchBloc>().add(
-          ScheduleFriendlyMatchEvent(
-            time: _start,
-            fieldId: _selectedFieldId!,
-            title: _titleCtrl.text.trim(),
-            mode: _isTeamMode ? 'team' : 'open',
-            needsReferee: _needsReferee,
-            description:
-                _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-            organizerTeamName: _isTeamMode && _teamCtrl.text.trim().isNotEmpty
-                ? _teamCtrl.text.trim()
-                : null,
-            opponentTeamName:
-                _isTeamMode && _opponentCtrl.text.trim().isNotEmpty
-                    ? _opponentCtrl.text.trim()
-                    : null,
-            maxPlayers:
-                _isTeamMode ? null : int.tryParse(_maxCtrl.text.trim()) ?? 14,
-            costeTotal:
-                double.tryParse(_costCtrl.text.trim().replaceAll(',', '.')),
-          ),
-        );
+      ScheduleFriendlyMatchEvent(
+        time: _start,
+        fieldId: _selectedFieldId!,
+        title: _titleCtrl.text.trim(),
+        mode: _isTeamMode ? 'team' : 'open',
+        needsReferee: _needsReferee,
+        description: _descCtrl.text.trim().isEmpty
+            ? null
+            : _descCtrl.text.trim(),
+        organizerTeamName: _isTeamMode && _teamCtrl.text.trim().isNotEmpty
+            ? _teamCtrl.text.trim()
+            : null,
+        opponentTeamName: _isTeamMode && _opponentCtrl.text.trim().isNotEmpty
+            ? _opponentCtrl.text.trim()
+            : null,
+        maxPlayers: _isTeamMode
+            ? null
+            : int.tryParse(_maxCtrl.text.trim()) ?? 14,
+        costeTotal: double.tryParse(_costCtrl.text.trim().replaceAll(',', '.')),
+      ),
+    );
   }
 
   @override
@@ -134,7 +134,8 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                          'Partido creado${state.match.needsReferee ? ' + árbitro solicitado' : ''}'),
+                        'Partido creado${state.match.needsReferee ? ' + árbitro solicitado' : ''}',
+                      ),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -142,8 +143,9 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                 } else if (state is MatchError) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red),
+                      content: Text(state.message),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               },
@@ -155,13 +157,15 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                     SegmentedButton<bool>(
                       segments: const [
                         ButtonSegment(
-                            value: false,
-                            label: Text('Jugadores sueltos'),
-                            icon: Icon(Icons.group)),
+                          value: false,
+                          label: Text('Jugadores sueltos'),
+                          icon: Icon(Icons.group),
+                        ),
                         ButtonSegment(
-                            value: true,
-                            label: Text('Equipo completo'),
-                            icon: Icon(Icons.shield)),
+                          value: true,
+                          label: Text('Equipo completo'),
+                          icon: Icon(Icons.shield),
+                        ),
                       ],
                       selected: {_isTeamMode},
                       onSelectionChanged: (s) =>
@@ -171,7 +175,9 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                     TextFormField(
                       controller: _titleCtrl,
                       decoration: const InputDecoration(
-                          labelText: 'Título', border: OutlineInputBorder()),
+                        labelText: 'Título',
+                        border: OutlineInputBorder(),
+                      ),
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                     ),
@@ -179,8 +185,9 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                     TextFormField(
                       controller: _descCtrl,
                       decoration: const InputDecoration(
-                          labelText: 'Descripción (opcional)',
-                          border: OutlineInputBorder()),
+                        labelText: 'Descripción (opcional)',
+                        border: OutlineInputBorder(),
+                      ),
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
@@ -188,19 +195,21 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                       TextFormField(
                         controller: _teamCtrl,
                         decoration: const InputDecoration(
-                            labelText: 'Nombre de tu equipo',
-                            border: OutlineInputBorder()),
+                          labelText: 'Nombre de tu equipo',
+                          border: OutlineInputBorder(),
+                        ),
                         validator: (v) =>
                             _isTeamMode && (v == null || v.trim().isEmpty)
-                                ? 'Requerido para equipo'
-                                : null,
+                            ? 'Requerido para equipo'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _opponentCtrl,
                         decoration: const InputDecoration(
-                            labelText: 'Equipo rival (vacío = abierto a retos)',
-                            border: OutlineInputBorder()),
+                          labelText: 'Equipo rival (vacío = abierto a retos)',
+                          border: OutlineInputBorder(),
+                        ),
                       ),
                       const SizedBox(height: 12),
                     ] else ...[
@@ -208,8 +217,9 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                         controller: _maxCtrl,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                            labelText: 'Máx. jugadores',
-                            border: OutlineInputBorder()),
+                          labelText: 'Máx. jugadores',
+                          border: OutlineInputBorder(),
+                        ),
                         validator: (v) {
                           final n = int.tryParse(v ?? '');
                           if (n == null || n < 2 || n > 30) {
@@ -222,17 +232,20 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                     ],
                     TextFormField(
                       controller: _costCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(
-                          labelText:
-                              'Coste total cancha (opcional, para dividir)',
-                          border: OutlineInputBorder(),
-                          prefixText: '\$ '),
+                        labelText:
+                            'Coste total cancha (opcional, para dividir)',
+                        border: OutlineInputBorder(),
+                        prefixText: '\$ ',
+                      ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
-                        final n =
-                            double.tryParse(v.trim().replaceAll(',', '.'));
+                        final n = double.tryParse(
+                          v.trim().replaceAll(',', '.'),
+                        );
                         if (n == null || n < 0) return 'Monto inválido';
                         return null;
                       },
@@ -262,34 +275,41 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                       onPressed: () => _searchFields(fieldCtx),
                       icon: const Icon(Icons.search),
                       label: Text(
-                          'Ver disponibilidad (${DateFormat('HH:mm').format(_start)}-${DateFormat('HH:mm').format(_end)})'),
+                        'Ver disponibilidad (${DateFormat('HH:mm').format(_start)}-${DateFormat('HH:mm').format(_end)})',
+                      ),
                     ),
                     const SizedBox(height: 8),
                     BlocBuilder<FieldBloc, FieldState>(
                       builder: (context, state) {
                         if (state is FieldLoading) {
                           return const Center(
-                              child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(),
-                          ));
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
                         }
                         if (state is FieldLoadSuccess) {
                           if (state.fields.isEmpty) {
                             return const Text(
-                                'Sin campos libres en ese horario. Prueba otra hora.');
+                              'Sin campos libres en ese horario. Prueba otra hora.',
+                            );
                           }
                           return DropdownButtonFormField<String>(
                             initialValue: _selectedFieldId,
                             decoration: const InputDecoration(
-                                labelText: 'Campo disponible',
-                                border: OutlineInputBorder()),
+                              labelText: 'Campo disponible',
+                              border: OutlineInputBorder(),
+                            ),
                             items: state.fields
-                                .map((f) => DropdownMenuItem(
-                                      value: f.id,
-                                      child: Text(
-                                          '${f.name} — \$${f.hourlyRate}/h'),
-                                    ))
+                                .map(
+                                  (f) => DropdownMenuItem(
+                                    value: f.id,
+                                    child: Text(
+                                      '${f.name} — \$${f.hourlyRate}/h',
+                                    ),
+                                  ),
+                                )
                                 .toList(),
                             onChanged: (v) =>
                                 setState(() => _selectedFieldId = v),
@@ -298,11 +318,14 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                           );
                         }
                         if (state is FieldError) {
-                          return Text('Error campos: ${state.message}',
-                              style: const TextStyle(color: Colors.red));
+                          return Text(
+                            'Error campos: ${state.message}',
+                            style: const TextStyle(color: Colors.red),
+                          );
                         }
                         return const Text(
-                            'Busca disponibilidad para elegir campo.');
+                          'Busca disponibilidad para elegir campo.',
+                        );
                       },
                     ),
                     const SizedBox(height: 12),
@@ -313,34 +336,43 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                         if (v) _loadReferees();
                       },
                       title: const Text('Solicitar árbitro'),
-                      subtitle:
-                          const Text('Un árbitro oficial para el partido'),
+                      subtitle: const Text(
+                        'Un árbitro oficial para el partido',
+                      ),
                       secondary: const Icon(Icons.flag),
                     ),
                     if (_needsReferee)
                       _loadingRefs
                           ? const Center(
                               child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: CircularProgressIndicator(),
-                            ))
+                                padding: EdgeInsets.all(8),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
                           : _referees.isEmpty
-                              ? const Text(
-                                  'No hay árbitros libres (se solicitará igualmente).')
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Árbitros disponibles:'),
-                                    ..._referees.take(3).map((r) => ListTile(
-                                          dense: true,
-                                          leading:
-                                              const Icon(Icons.sports_soccer),
-                                          title: Text(r.name),
-                                          subtitle: Text(
-                                              'Rating ${r.rating} — \$${r.fee}'),
-                                        )),
-                                  ],
-                                ),
+                          ? const Text(
+                              'No hay árbitros libres (se solicitará igualmente).',
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Árbitros disponibles:'),
+                                ..._referees
+                                    .take(3)
+                                    .map(
+                                      (r) => ListTile(
+                                        dense: true,
+                                        leading: const Icon(
+                                          Icons.sports_soccer,
+                                        ),
+                                        title: Text(r.name),
+                                        subtitle: Text(
+                                          'Rating ${r.rating} — \$${r.fee}',
+                                        ),
+                                      ),
+                                    ),
+                              ],
+                            ),
                     const SizedBox(height: 16),
                     BlocBuilder<MatchBloc, MatchState>(
                       builder: (context, state) {
@@ -352,11 +384,16 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white))
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
                               : const Icon(Icons.check),
-                          label: Text(_isTeamMode
-                              ? 'Crear reto de equipos'
-                              : 'Crear amistoso abierto'),
+                          label: Text(
+                            _isTeamMode
+                                ? 'Crear reto de equipos'
+                                : 'Crear amistoso abierto',
+                          ),
                         );
                       },
                     ),

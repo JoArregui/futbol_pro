@@ -43,14 +43,17 @@ class AppEmpty extends StatelessWidget {
               child: Icon(icon, color: AppColors.lime, size: 36),
             ),
             const SizedBox(height: 14),
-            Text(title,
-                textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+            ),
             const SizedBox(height: 6),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textDim, fontSize: 13)),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textDim, fontSize: 13),
+            ),
             if (actionLabel != null) ...[
               const SizedBox(height: 16),
               AppButton(
@@ -88,16 +91,23 @@ class AppErrorView extends StatelessWidget {
                 color: AppColors.danger.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Icon(Icons.cloud_off_rounded,
-                  color: AppColors.danger, size: 36),
+              child: const Icon(
+                Icons.cloud_off_rounded,
+                color: AppColors.danger,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 14),
-            const Text('Algo falló',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+            const Text(
+              'Algo falló',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+            ),
             const SizedBox(height: 6),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textDim, fontSize: 13)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textDim, fontSize: 13),
+            ),
             const SizedBox(height: 16),
             AppButton(
               label: 'Reintentar',
@@ -198,17 +208,19 @@ class _OutboxBannerState extends State<OutboxBanner> {
       if (!silent || r.failed > 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(r.failed == 0
-                ? '✅ ${r.ok} acciones enviadas.'
-                : '⚠️ ${r.ok} enviadas, ${r.failed} siguen pendientes.'),
+            content: Text(
+              r.failed == 0
+                  ? '✅ ${r.ok} acciones enviadas.'
+                  : '⚠️ ${r.ok} enviadas, ${r.failed} siguen pendientes.',
+            ),
           ),
         );
       }
     } catch (_) {
       if (mounted && !silent) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Aún sin conexión.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('❌ Aún sin conexión.')));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -240,18 +252,25 @@ class _OutboxBannerState extends State<OutboxBanner> {
             children: [
               if (_sending)
                 const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               else
-                const Icon(Icons.outbox_rounded,
-                    color: AppColors.lime, size: 18),
+                const Icon(
+                  Icons.outbox_rounded,
+                  color: AppColors.lime,
+                  size: 18,
+                ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                    '$count ${count == 1 ? 'acción pendiente' : 'acciones pendientes'} de envío.',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w700)),
+                  '$count ${count == 1 ? 'acción pendiente' : 'acciones pendientes'} de envío.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: _sending ? null : () => _retry(),
@@ -276,7 +295,8 @@ class OfflineBar extends StatelessWidget {
       stream: Connectivity().onConnectivityChanged,
       builder: (context, snap) {
         final results = snap.data;
-        final offline = results != null &&
+        final offline =
+            results != null &&
             (results.isEmpty ||
                 results.every((r) => r == ConnectivityResult.none));
         if (!offline) return const SizedBox.shrink();
@@ -294,9 +314,10 @@ class OfflineBar extends StatelessWidget {
               Icon(Icons.wifi_off_rounded, color: AppColors.warning, size: 18),
               SizedBox(width: 8),
               Expanded(
-                child: Text('Sin conexión: verás datos guardados.',
-                    style:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                child: Text(
+                  'Sin conexión: verás datos guardados.',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),

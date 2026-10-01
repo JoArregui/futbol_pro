@@ -22,9 +22,12 @@ class Team extends Equatable {
   }
 
   factory Team.fromJson(Map<String, dynamic> json) {
-    final List<Player> playerList = (json['players'] as List<dynamic>?)
-            ?.map((playerJson) =>
-                Player.fromJson(playerJson as Map<String, dynamic>))
+    final List<Player> playerList =
+        (json['players'] as List<dynamic>?)
+            ?.map(
+              (playerJson) =>
+                  Player.fromJson(playerJson as Map<String, dynamic>),
+            )
             .toList() ??
         [];
 

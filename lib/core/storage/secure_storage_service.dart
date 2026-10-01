@@ -12,7 +12,7 @@ class SecureStorageService {
   final FlutterSecureStorage _storage;
 
   SecureStorageService({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> persistUser({
     required String userId,
@@ -56,8 +56,10 @@ class SecureStorageService {
 
   Future<bool> isBiometricEnabled() async =>
       await _storage.read(key: _kBiometricEnabled) == 'true';
-  Future<void> setBiometricEnabled(bool v) async =>
-      await _storage.write(key: _kBiometricEnabled, value: v ? 'true' : 'false');
+  Future<void> setBiometricEnabled(bool v) async => await _storage.write(
+    key: _kBiometricEnabled,
+    value: v ? 'true' : 'false',
+  );
 
   Future<void> clear() async {
     await _storage.delete(key: _kUserId);

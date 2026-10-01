@@ -35,15 +35,15 @@ class _RegisterPageState extends State<RegisterPage> {
   void _onRegisterPressed() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            RegisterRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-              nickname: _nicknameController.text.trim(),
-              name: _nameController.text.trim().isEmpty
-                  ? null
-                  : _nameController.text.trim(),
-            ),
-          );
+        RegisterRequested(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          nickname: _nicknameController.text.trim(),
+          name: _nameController.text.trim().isEmpty
+              ? null
+              : _nameController.text.trim(),
+        ),
+      );
     }
   }
 
@@ -53,9 +53,8 @@ class _RegisterPageState extends State<RegisterPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(AppRoutes.login),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(AppRoutes.login),
         ),
         title: const Text('Crear cuenta'),
       ),
@@ -65,8 +64,9 @@ class _RegisterPageState extends State<RegisterPage> {
             if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text('Error: ${state.message}'),
-                    backgroundColor: AppColors.danger),
+                  content: Text('Error: ${state.message}'),
+                  backgroundColor: AppColors.danger,
+                ),
               );
             }
             if (state is AuthAuthenticated) {
@@ -82,18 +82,21 @@ class _RegisterPageState extends State<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Center(
-                      child: Text('ÚNETE AL CLUB ⚽',
-                          style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5)),
+                      child: Text(
+                        'ÚNETE AL CLUB ⚽',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     const Center(
                       child: Text(
-                          'Crea tu perfil de jugador en 30 segundos.',
-                          style: TextStyle(
-                              color: AppColors.textDim)),
+                        'Crea tu perfil de jugador en 30 segundos.',
+                        style: TextStyle(color: AppColors.textDim),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     AppCard(
@@ -105,15 +108,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             controller: _emailController,
                             decoration: const InputDecoration(
                               labelText: 'Email',
-                              prefixIcon:
-                                  Icon(Icons.email_outlined),
+                              prefixIcon: Icon(Icons.email_outlined),
                             ),
-                            keyboardType:
-                                TextInputType.emailAddress,
-                            validator: (v) =>
-                                (v == null || !v.contains('@'))
-                                    ? 'Email válido.'
-                                    : null,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (v) => (v == null || !v.contains('@'))
+                                ? 'Email válido.'
+                                : null,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
@@ -122,19 +122,21 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: InputDecoration(
                               labelText: 'Contraseña (mín. 6)',
                               prefixIcon: const Icon(
-                                  Icons.lock_outline_rounded),
+                                Icons.lock_outline_rounded,
+                              ),
                               suffixIcon: IconButton(
-                                icon: Icon(_obscure
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined),
-                                onPressed: () => setState(() =>
-                                    _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
                               ),
                             ),
-                            validator: (v) =>
-                                (v == null || v.length < 6)
-                                    ? 'Mínimo 6 caracteres.'
-                                    : null,
+                            validator: (v) => (v == null || v.length < 6)
+                                ? 'Mínimo 6 caracteres.'
+                                : null,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
@@ -142,22 +144,18 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: const InputDecoration(
                               labelText: 'Nickname',
                               hintText: 'Ej: ElMatador9',
-                              prefixIcon:
-                                  Icon(Icons.tag_rounded),
+                              prefixIcon: Icon(Icons.tag_rounded),
                             ),
-                            validator: (v) =>
-                                (v == null || v.isEmpty)
-                                    ? 'Obligatorio.'
-                                    : null,
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? 'Obligatorio.'
+                                : null,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _nameController,
                             decoration: const InputDecoration(
-                              labelText:
-                                  'Nombre completo (opcional)',
-                              prefixIcon:
-                                  Icon(Icons.person_outline_rounded),
+                              labelText: 'Nombre completo (opcional)',
+                              prefixIcon: Icon(Icons.person_outline_rounded),
                             ),
                           ),
                           const SizedBox(height: 18),
@@ -165,21 +163,17 @@ class _RegisterPageState extends State<RegisterPage> {
                             builder: (context, state) {
                               return AppButton(
                                 label: 'Registrarme',
-                                icon: Icons
-                                    .sports_soccer_rounded,
-                                loading:
-                                    state is AuthLoading,
-                                onPressed:
-                                    state is AuthLoading
-                                        ? null
-                                        : _onRegisterPressed,
+                                icon: Icons.sports_soccer_rounded,
+                                loading: state is AuthLoading,
+                                onPressed: state is AuthLoading
+                                    ? null
+                                    : _onRegisterPressed,
                               );
                             },
                           ),
                           AppButton.ghost(
                             label: 'Ya tengo cuenta',
-                            onPressed: () =>
-                                context.go(AppRoutes.login),
+                            onPressed: () => context.go(AppRoutes.login),
                           ),
                         ],
                       ),

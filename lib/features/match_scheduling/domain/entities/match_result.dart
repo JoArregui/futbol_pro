@@ -38,8 +38,16 @@ class MatchParticipant extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, name, nickname, profileImageUrl, played, wins, mvpCount, noShows];
+  List<Object?> get props => [
+    id,
+    name,
+    nickname,
+    profileImageUrl,
+    played,
+    wins,
+    mvpCount,
+    noShows,
+  ];
 }
 
 /// Goleador individual dentro de una propuesta.
@@ -52,9 +60,9 @@ class ScorerEntry extends Equatable {
   Map<String, dynamic> toJson() => {'playerId': playerId, 'goles': goles};
 
   factory ScorerEntry.fromJson(Map<String, dynamic> json) => ScorerEntry(
-        playerId: (json['playerId'] ?? '').toString(),
-        goles: (json['goles'] as num?)?.toInt() ?? 0,
-      );
+    playerId: (json['playerId'] ?? '').toString(),
+    goles: (json['goles'] as num?)?.toInt() ?? 0,
+  );
 
   @override
   List<Object> get props => [playerId, goles];
@@ -123,16 +131,16 @@ class MatchResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        matchId,
-        golesA,
-        golesB,
-        ganador,
-        goleadores,
-        teamAIds,
-        teamBIds,
-        mvpId,
-        propuestoPor,
-        estado,
-        confirmedAt,
-      ];
+    matchId,
+    golesA,
+    golesB,
+    ganador,
+    goleadores,
+    teamAIds,
+    teamBIds,
+    mvpId,
+    propuestoPor,
+    estado,
+    confirmedAt,
+  ];
 }

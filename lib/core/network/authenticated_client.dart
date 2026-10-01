@@ -26,8 +26,8 @@ class AuthenticatedClient extends http.BaseClient {
     required http.Client inner,
     required SecureStorageService storage,
     this.onUnauthorized,
-  })  : _inner = inner,
-        _storage = storage;
+  }) : _inner = inner,
+       _storage = storage;
 
   static bool _isPublicAuthPath(Uri url) {
     final p = url.path;
@@ -53,8 +53,7 @@ class AuthenticatedClient extends http.BaseClient {
     } else if (isRefresh) {
       request.headers.remove('Authorization');
     }
-    var response =
-        await _inner.send(request).timeout(AppConsts.httpTimeout);
+    var response = await _inner.send(request).timeout(AppConsts.httpTimeout);
 
     // Rotación transparente con mutex: un solo refresh aunque haya N 401.
     if (response.statusCode == 401 &&
@@ -63,7 +62,9 @@ class AuthenticatedClient extends http.BaseClient {
       await response.stream.drain<void>();
       bool rotated = false;
       try {
-        _refreshing ??= onUnauthorized!().whenComplete(() => _refreshing = null);
+        _refreshing ??= onUnauthorized!().whenComplete(
+          () => _refreshing = null,
+        );
         rotated = await _refreshing!;
       } catch (_) {
         rotated = false;
@@ -75,8 +76,7 @@ class AuthenticatedClient extends http.BaseClient {
           if (fresh != null && fresh.isNotEmpty) {
             retry.headers['Authorization'] = 'Bearer $fresh';
           }
-          response =
-              await _inner.send(retry).timeout(AppConsts.httpTimeout);
+          response = await _inner.send(retry).timeout(AppConsts.httpTimeout);
         } on StateError {
           // Multipart u otro one-shot no reintentable: no devolver el
           // response drenado (body vacío); forzar re-login aguas arriba.
@@ -93,7 +93,8 @@ class AuthenticatedClient extends http.BaseClient {
   http.BaseRequest _copyRequest(http.BaseRequest original) {
     if (original is! http.Request) {
       throw StateError(
-          'No se puede reintentar ${original.runtimeType}: reloguear.');
+        'No se puede reintentar ${original.runtimeType}: reloguear.',
+      );
     }
     final copy = http.Request(original.method, original.url)
       ..headers.addAll(original.headers)

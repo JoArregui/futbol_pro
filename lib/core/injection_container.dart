@@ -114,7 +114,8 @@ Future<void> init() async {
     dispose: (c) => (c as AuthenticatedClient).close(),
   );
   sl.registerLazySingleton<NotificationService>(
-      () => NotificationServiceImpl());
+    () => NotificationServiceImpl(),
+  );
   sl.registerLazySingleton(() => SocketService());
   sl.registerLazySingleton(() => OutboxService());
   await sl<OutboxService>().init();
@@ -123,7 +124,8 @@ Future<void> init() async {
   await isarService.init();
   sl.registerSingleton<IsarService>(isarService);
   sl.registerLazySingleton<ChatLocalDataSource>(
-      () => ChatLocalDataSourceImpl(sl<IsarService>()));
+    () => ChatLocalDataSourceImpl(sl<IsarService>()),
+  );
   debugPrint('✅ Core registrado correctamente (Isar + Storage + Socket)');
 
   // ===========================================
@@ -147,7 +149,8 @@ Future<void> init() async {
 
   // Domain (Use Cases)
   sl.registerLazySingleton(
-      () => SubscribeToNotifications(sl<NotificationService>()));
+    () => SubscribeToNotifications(sl<NotificationService>()),
+  );
   sl.registerLazySingleton(() => LoginUser(sl<AuthRepository>()));
   sl.registerLazySingleton(() => RegisterUser(sl<AuthRepository>()));
   debugPrint('  ✅ UseCases registrados');
@@ -170,9 +173,7 @@ Future<void> init() async {
   // Data Sources
   sl.registerLazySingleton<ProfileRemoteDataSource>(
     // 🟢 CORREGIDO: Solo se pasa http.Client
-    () => ProfileRemoteDataSourceImpl(
-      client: sl<http.Client>(),
-    ),
+    () => ProfileRemoteDataSourceImpl(client: sl<http.Client>()),
   );
   debugPrint('  ✅ ProfileRemoteDataSource registrado');
 
@@ -208,16 +209,15 @@ Future<void> init() async {
   // Data Sources
   sl.registerLazySingleton<ChatRemoteDataSource>(
     // 🟢 CORREGIDO: Solo se pasa http.Client
-    () => ChatRemoteDataSourceImpl(
-      client: sl<http.Client>(),
-    ),
+    () => ChatRemoteDataSourceImpl(client: sl<http.Client>()),
   );
   debugPrint('  ✅ ChatRemoteDataSource registrado');
 
   sl.registerLazySingleton<ChatRepository>(
     () => ChatRepositoryImpl(
-        remoteDataSource: sl<ChatRemoteDataSource>(),
-        localDataSource: sl<ChatLocalDataSource>()),
+      remoteDataSource: sl<ChatRemoteDataSource>(),
+      localDataSource: sl<ChatLocalDataSource>(),
+    ),
   );
   debugPrint('  ✅ ChatRepository registrado (híbrido Isar+Server)');
 
@@ -261,8 +261,9 @@ Future<void> init() async {
   // Data (Repositories)
   sl.registerLazySingleton<MatchRepository>(
     () => MatchRepositoryImpl(
-        remoteDataSource: sl<MatchRemoteDataSource>(),
-        outbox: sl<OutboxService>()),
+      remoteDataSource: sl<MatchRemoteDataSource>(),
+      outbox: sl<OutboxService>(),
+    ),
   );
   debugPrint('  ✅ MatchRepository registrado');
 
@@ -270,7 +271,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ScheduleFriendlyMatch(sl<MatchRepository>()));
   sl.registerLazySingleton(() => JoinMatch(sl<MatchRepository>()));
   sl.registerLazySingleton(
-      () => GenerateBalancedTeams()); // No requiere dependencias
+    () => GenerateBalancedTeams(),
+  ); // No requiere dependencias
   sl.registerLazySingleton(() => GetMatchDetails(sl<MatchRepository>()));
   sl.registerLazySingleton(() => UpdateMatchWithTeams(sl<MatchRepository>()));
   sl.registerLazySingleton(() => GetUpcomingMatches(sl<MatchRepository>()));
@@ -324,9 +326,7 @@ Future<void> init() async {
 
   // Domain (Use Cases)
   sl.registerLazySingleton(() => GetAvailableFields(sl<FieldRepository>()));
-  sl.registerLazySingleton(
-    () => ReserveField(sl<FieldRepository>()),
-  );
+  sl.registerLazySingleton(() => ReserveField(sl<FieldRepository>()));
   sl.registerLazySingleton(() => ConfirmPago(sl<FieldRepository>()));
   sl.registerLazySingleton(() => GetMisReservas(sl<FieldRepository>()));
   debugPrint('  ✅ UseCases registrados');
@@ -369,23 +369,31 @@ Future<void> init() async {
   debugPrint('  ✅ UseCases registrados');
 
   // Presentation (BLoC)
-  sl.registerFactory(() => LeagueBloc(
+  sl.registerFactory(
+    () => LeagueBloc(
       getLeagueStandings: sl<GetLeagueStandings>(),
       getTournaments: sl<GetTournaments>(),
       registerTeam: sl<RegisterTeam>(),
       createLeague: sl<CreateLeague>(),
       getLeagueDetail: sl<GetLeagueDetail>(),
-      generateFixture: sl<GenerateFixture>()));
+      generateFixture: sl<GenerateFixture>(),
+    ),
+  );
   debugPrint('✅ League Management Feature registrado');
 
   // ===========================================
   // 8. Feature - Admin (superadmin)
   // ===========================================
   debugPrint('🛡️ Registrando Admin Feature...');
-  sl.registerLazySingleton<AdminRemoteDataSource>(() => AdminRemoteDataSource(
-      client: sl<http.Client>(), authRepository: sl<AuthRepository>()));
+  sl.registerLazySingleton<AdminRemoteDataSource>(
+    () => AdminRemoteDataSource(
+      client: sl<http.Client>(),
+      authRepository: sl<AuthRepository>(),
+    ),
+  );
   sl.registerLazySingleton<AdminRepository>(
-      () => AdminRepositoryImpl(remote: sl<AdminRemoteDataSource>()));
+    () => AdminRepositoryImpl(remote: sl<AdminRemoteDataSource>()),
+  );
   sl.registerFactory(() => AdminBloc(repository: sl<AdminRepository>()));
   debugPrint('✅ Admin Feature registrado');
 
@@ -394,8 +402,8 @@ Future<void> init() async {
   // AuthenticatedClient excluye /auth/refresh del reintento).
   final authClient = sl<http.Client>();
   if (authClient is AuthenticatedClient) {
-    authClient.onUnauthorized =
-        () => sl<AuthRemoteDataSource>().refreshSession();
+    authClient.onUnauthorized = () =>
+        sl<AuthRemoteDataSource>().refreshSession();
     debugPrint('✅ Rotación JWT conectada (401 → refresh → retry)');
   }
 

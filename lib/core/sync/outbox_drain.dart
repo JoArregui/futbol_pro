@@ -19,8 +19,9 @@ Future<({int ok, int failed})> drainOutbox() async {
         break;
       case 'submit_result':
         final scorers = ((p['goleadores'] as List?) ?? [])
-            .map((e) =>
-                ScorerEntry.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => ScorerEntry.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
         await remote.submitResult(
           matchId: (p['matchId'] ?? '').toString(),

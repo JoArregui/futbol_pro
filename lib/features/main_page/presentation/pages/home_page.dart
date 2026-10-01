@@ -82,37 +82,46 @@ class HomePage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.lime
-                                  .withValues(alpha: 0.4),
+                              color: AppColors.lime.withValues(alpha: 0.4),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.sports_soccer,
-                            color: Colors.black, size: 30),
+                        child: const Icon(
+                          Icons.sports_soccer,
+                          color: Colors.black,
+                          size: 30,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('FUTBOL PRO',
-                                style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.2)),
-                            Text('Juega. Compite. Gana.',
-                                style: TextStyle(
-                                    color: AppColors.textDim,
-                                    fontSize: 13)),
+                            Text(
+                              'FUTBOL PRO',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            Text(
+                              'Juega. Compite. Gana.',
+                              style: TextStyle(
+                                color: AppColors.textDim,
+                                fontSize: 13,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 7),
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.08)
@@ -121,14 +130,15 @@ class HomePage extends StatelessWidget {
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.bolt,
-                                size: 15,
-                                color: AppColors.lime),
+                            Icon(Icons.bolt, size: 15, color: AppColors.lime),
                             SizedBox(width: 4),
-                            Text('PRO',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12)),
+                            Text(
+                              'PRO',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -146,43 +156,48 @@ class HomePage extends StatelessWidget {
                         colors: [
                           Color(0xFF2A3F10),
                           Color(0xFF141E0C),
-                          Color(0xFF0E150A)
+                          Color(0xFF0E150A),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                          color: AppColors.lime
-                              .withValues(alpha: 0.25)),
+                        color: AppColors.lime.withValues(alpha: 0.25),
+                      ),
                     ),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.lime,
-                            borderRadius:
-                                BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text('TEMPORADA 2026',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900)),
+                          child: const Text(
+                            'TEMPORADA 2026',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 10),
-                        Text('Hola$name 👋',
-                            style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white)),
+                        Text(
+                          'Hola$name 👋',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
                         const Text(
-                            'Tienes 3 partidos esta semana. Arma tu equipo y reserva cancha.',
-                            style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14)),
+                          'Tienes 3 partidos esta semana. Arma tu equipo y reserva cancha.',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
                         const SizedBox(height: 14),
                         Row(
                           children: [
@@ -191,8 +206,7 @@ class HomePage extends StatelessWidget {
                                 label: 'Jugar ahora',
                                 icon: Icons.play_arrow_rounded,
                                 filled: true,
-                                onTap: () => context
-                                    .go(AppRoutes.matches),
+                                onTap: () => context.go(AppRoutes.matches),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -201,8 +215,7 @@ class HomePage extends StatelessWidget {
                                 label: 'Reservar',
                                 icon: Icons.stadium_rounded,
                                 filled: false,
-                                onTap: () => context
-                                    .go(AppRoutes.fields),
+                                onTap: () => context.go(AppRoutes.fields),
                               ),
                             ),
                           ],
@@ -217,8 +230,7 @@ class HomePage extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
             sliver: SliverGrid(
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
@@ -226,9 +238,9 @@ class HomePage extends StatelessWidget {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, i) => _SectionCard(
-                    section: sections[i],
-                    highlight:
-                        sections[i].title == 'Panel Admin'),
+                  section: sections[i],
+                  highlight: sections[i].title == 'Panel Admin',
+                ),
                 childCount: sections.length,
               ),
             ),
@@ -244,18 +256,17 @@ class _HeroBtn extends StatelessWidget {
   final IconData icon;
   final bool filled;
   final VoidCallback onTap;
-  const _HeroBtn(
-      {required this.label,
-      required this.icon,
-      required this.filled,
-      required this.onTap});
+  const _HeroBtn({
+    required this.label,
+    required this.icon,
+    required this.filled,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: filled
-          ? AppColors.lime
-          : Colors.white.withValues(alpha: 0.10),
+      color: filled ? AppColors.lime : Colors.white.withValues(alpha: 0.10),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -265,18 +276,15 @@ class _HeroBtn extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  color: filled
-                      ? Colors.black
-                      : Colors.white,
-                  size: 20),
+              Icon(icon, color: filled ? Colors.black : Colors.white, size: 20),
               const SizedBox(width: 6),
-              Text(label,
-                  style: TextStyle(
-                      color: filled
-                          ? Colors.black
-                          : Colors.white,
-                      fontWeight: FontWeight.w800)),
+              Text(
+                label,
+                style: TextStyle(
+                  color: filled ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),
@@ -288,8 +296,7 @@ class _HeroBtn extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final AppSection section;
   final bool highlight;
-  const _SectionCard(
-      {required this.section, this.highlight = false});
+  const _SectionCard({required this.section, this.highlight = false});
 
   @override
   Widget build(BuildContext context) {
@@ -316,30 +323,39 @@ class _SectionCard extends StatelessWidget {
                     ),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(section.icon,
-                size: 26,
-                color: highlight
-                    ? Colors.black
-                    : AppColors.lime),
+            child: Icon(
+              section.icon,
+              size: 26,
+              color: highlight ? Colors.black : AppColors.lime,
+            ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(section.title,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800)),
+              Text(
+                section.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 2),
               const Row(
                 children: [
-                  Text('Entrar',
-                      style: TextStyle(
-                          color: AppColors.textDim,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    'Entrar',
+                    style: TextStyle(
+                      color: AppColors.textDim,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded,
-                      size: 14, color: AppColors.lime),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: AppColors.lime,
+                  ),
                 ],
               ),
             ],

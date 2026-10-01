@@ -32,17 +32,17 @@ class ScheduleFriendlyMatchParams extends Equatable {
 
   @override
   List<Object?> get props => [
-        time,
-        fieldId,
-        title,
-        mode,
-        needsReferee,
-        description,
-        organizerTeamName,
-        opponentTeamName,
-        maxPlayers,
-        costeTotal,
-      ];
+    time,
+    fieldId,
+    title,
+    mode,
+    needsReferee,
+    description,
+    organizerTeamName,
+    opponentTeamName,
+    maxPlayers,
+    costeTotal,
+  ];
 }
 
 class ScheduleFriendlyMatch
@@ -53,7 +53,8 @@ class ScheduleFriendlyMatch
 
   @override
   Future<Either<Failure, Match>> call(
-      ScheduleFriendlyMatchParams params) async {
+    ScheduleFriendlyMatchParams params,
+  ) async {
     return await repository.scheduleFriendlyMatch(
       time: params.time,
       fieldId: params.fieldId,

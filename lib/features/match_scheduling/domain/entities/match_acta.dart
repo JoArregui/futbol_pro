@@ -4,8 +4,11 @@ class ActaScorer extends Equatable {
   final String playerId;
   final String name;
   final int goles;
-  const ActaScorer(
-      {required this.playerId, required this.name, required this.goles});
+  const ActaScorer({
+    required this.playerId,
+    required this.name,
+    required this.goles,
+  });
   @override
   List<Object> get props => [playerId, name, goles];
 }
@@ -14,8 +17,11 @@ class ActaParticipant extends Equatable {
   final String id;
   final String name;
   final int noShows;
-  const ActaParticipant(
-      {required this.id, required this.name, required this.noShows});
+  const ActaParticipant({
+    required this.id,
+    required this.name,
+    required this.noShows,
+  });
   @override
   List<Object> get props => [id, name, noShows];
 }
@@ -51,43 +57,47 @@ class MatchActa extends Equatable {
   bool get isValidated => estado == 'confirmado' || estado == 'validado';
 
   factory MatchActa.fromJson(Map<String, dynamic> j) => MatchActa(
-        matchId: (j['matchId'] ?? '').toString(),
-        field: (j['field'] ?? '').toString(),
-        time: (j['time'] ?? '').toString(),
-        status: (j['status'] ?? '').toString(),
-        type: (j['type'] ?? '').toString(),
-        golesA: (j['golesA'] as num?)?.toInt(),
-        golesB: (j['golesB'] as num?)?.toInt(),
-        estado: (j['estado'] ?? '').toString(),
-        mvp: j['mvp']?.toString(),
-        scorers: ((j['scorers'] as List?) ?? [])
-            .map((e) => ActaScorer(
-                  playerId: (e['playerId'] ?? '').toString(),
-                  name: (e['name'] ?? '').toString(),
-                  goles: (e['goles'] as num?)?.toInt() ?? 0,
-                ))
-            .toList(),
-        participants: ((j['participants'] as List?) ?? [])
-            .map((e) => ActaParticipant(
-                  id: (e['id'] ?? '').toString(),
-                  name: (e['name'] ?? '').toString(),
-                  noShows: (e['noShows'] as num?)?.toInt() ?? 0,
-                ))
-            .toList(),
-      );
+    matchId: (j['matchId'] ?? '').toString(),
+    field: (j['field'] ?? '').toString(),
+    time: (j['time'] ?? '').toString(),
+    status: (j['status'] ?? '').toString(),
+    type: (j['type'] ?? '').toString(),
+    golesA: (j['golesA'] as num?)?.toInt(),
+    golesB: (j['golesB'] as num?)?.toInt(),
+    estado: (j['estado'] ?? '').toString(),
+    mvp: j['mvp']?.toString(),
+    scorers: ((j['scorers'] as List?) ?? [])
+        .map(
+          (e) => ActaScorer(
+            playerId: (e['playerId'] ?? '').toString(),
+            name: (e['name'] ?? '').toString(),
+            goles: (e['goles'] as num?)?.toInt() ?? 0,
+          ),
+        )
+        .toList(),
+    participants: ((j['participants'] as List?) ?? [])
+        .map(
+          (e) => ActaParticipant(
+            id: (e['id'] ?? '').toString(),
+            name: (e['name'] ?? '').toString(),
+            noShows: (e['noShows'] as num?)?.toInt() ?? 0,
+          ),
+        )
+        .toList(),
+  );
 
   @override
   List<Object?> get props => [
-        matchId,
-        field,
-        time,
-        status,
-        type,
-        golesA,
-        golesB,
-        estado,
-        mvp,
-        scorers,
-        participants,
-      ];
+    matchId,
+    field,
+    time,
+    status,
+    type,
+    golesA,
+    golesB,
+    estado,
+    mvp,
+    scorers,
+    participants,
+  ];
 }

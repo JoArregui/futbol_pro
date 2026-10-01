@@ -33,8 +33,13 @@ class ReserveFieldRequested extends FieldEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [fieldId, startTime, endTime, userId, paymentMethod];
+  List<Object?> get props => [
+    fieldId,
+    startTime,
+    endTime,
+    userId,
+    paymentMethod,
+  ];
 }
 
 class ConfirmPagoRequested extends FieldEvent {

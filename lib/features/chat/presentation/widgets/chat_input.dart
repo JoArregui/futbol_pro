@@ -23,16 +23,22 @@ class _ChatInputState extends State<ChatInput> {
   void _send() {
     final t = _ctrl.text.trim();
     if (t.isEmpty || widget.isSending || _uploading) return;
-    context.read<ChatBloc>().add(ChatMessageSent(roomId: widget.roomId, content: t));
+    context.read<ChatBloc>().add(
+      ChatMessageSent(roomId: widget.roomId, content: t),
+    );
     _ctrl.clear();
     setState(() => _hasText = false);
-    context.read<ChatBloc>().add(ChatTypingChanged(roomId: widget.roomId, isTyping: false));
+    context.read<ChatBloc>().add(
+      ChatTypingChanged(roomId: widget.roomId, isTyping: false),
+    );
   }
 
   void _onChanged(String v) {
     final has = v.trim().isNotEmpty;
     if (has != _hasText) setState(() => _hasText = has);
-    context.read<ChatBloc>().add(ChatTypingChanged(roomId: widget.roomId, isTyping: has));
+    context.read<ChatBloc>().add(
+      ChatTypingChanged(roomId: widget.roomId, isTyping: has),
+    );
   }
 
   void _showAttachSheet() {
@@ -74,13 +80,17 @@ class _ChatInputState extends State<ChatInput> {
       setState(() => _uploading = true);
       final caption = _ctrl.text.trim();
       final ref = FirebaseStorage.instance.ref().child(
-          'chat_images/${widget.roomId}/${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await ref.putFile(File(picked.path),
-          SettableMetadata(contentType: 'image/jpeg'));
+        'chat_images/${widget.roomId}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      await ref.putFile(
+        File(picked.path),
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
       final url = await ref.getDownloadURL();
       if (!mounted) return;
-      context.read<ChatBloc>().add(ChatMessageSent(
-          roomId: widget.roomId, content: caption, imageUrl: url));
+      context.read<ChatBloc>().add(
+        ChatMessageSent(roomId: widget.roomId, content: caption, imageUrl: url),
+      );
       _ctrl.clear();
       setState(() {
         _hasText = false;
@@ -96,7 +106,10 @@ class _ChatInputState extends State<ChatInput> {
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,13 +128,15 @@ class _ChatInputState extends State<ChatInput> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                        width: 16,
-                        height: 16,
-                        child:
-                            CircularProgressIndicator(strokeWidth: 2)),
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                     SizedBox(width: 8),
-                    Text('Subiendo imagen…',
-                        style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(
+                      'Subiendo imagen…',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -129,10 +144,25 @@ class _ChatInputState extends State<ChatInput> {
               children: [
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2)]),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
                     child: Row(
                       children: [
-                        IconButton(icon: const Icon(Icons.emoji_emotions_outlined, color: Color(0xFF54656F)), onPressed: () {}),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.emoji_emotions_outlined,
+                            color: Color(0xFF54656F),
+                          ),
+                          onPressed: () {},
+                        ),
                         Expanded(
                           child: TextField(
                             controller: _ctrl,
@@ -140,20 +170,28 @@ class _ChatInputState extends State<ChatInput> {
                             onSubmitted: (_) => _send(),
                             minLines: 1,
                             maxLines: 5,
-                            decoration: const InputDecoration.collapsed(hintText: 'Mensaje', hintStyle: TextStyle(color: Color(0xFF667781))),
+                            decoration: const InputDecoration.collapsed(
+                              hintText: 'Mensaje',
+                              hintStyle: TextStyle(color: Color(0xFF667781)),
+                            ),
                           ),
                         ),
                         IconButton(
-                            icon: const Icon(Icons.attach_file,
-                                color: Color(0xFF54656F)),
-                            onPressed:
-                                _uploading ? null : _showAttachSheet),
+                          icon: const Icon(
+                            Icons.attach_file,
+                            color: Color(0xFF54656F),
+                          ),
+                          onPressed: _uploading ? null : _showAttachSheet,
+                        ),
                         IconButton(
-                            icon: const Icon(Icons.camera_alt,
-                                color: Color(0xFF54656F)),
-                            onPressed: _uploading
-                                ? null
-                                : () => _pickAndSend(ImageSource.camera)),
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Color(0xFF54656F),
+                          ),
+                          onPressed: _uploading
+                              ? null
+                              : () => _pickAndSend(ImageSource.camera),
+                        ),
                       ],
                     ),
                   ),
@@ -164,12 +202,17 @@ class _ChatInputState extends State<ChatInput> {
                   child: Container(
                     width: 48,
                     height: 48,
-                    decoration: const BoxDecoration(color: Color(0xFF25D366), shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF25D366),
+                      shape: BoxShape.circle,
+                    ),
                     child: _uploading
                         ? const Padding(
                             padding: EdgeInsets.all(12),
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : Icon(
                             _hasText ? Icons.send : Icons.mic,

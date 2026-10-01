@@ -52,8 +52,9 @@ class NotificationServiceImpl implements NotificationService {
     if (_initialized) return;
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -73,7 +74,8 @@ class NotificationServiceImpl implements NotificationService {
     );
     await _local
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
 
     final settings = await _messaging.requestPermission(

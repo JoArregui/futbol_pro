@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
-import '../../../../core/usecases/usecase.dart'; 
+import '../../../../core/usecases/usecase.dart';
 import '../repositories/chat_repository.dart';
 
 class MarkAsRead implements UseCase<void, MarkAsReadParams> {
@@ -11,11 +11,7 @@ class MarkAsRead implements UseCase<void, MarkAsReadParams> {
 
   @override
   Future<Either<Failure, void>> call(MarkAsReadParams params) async {
-   
-    return await repository.markMessagesAsRead(
-      params.roomId, 
-      params.userId,
-    );
+    return await repository.markMessagesAsRead(params.roomId, params.userId);
   }
 }
 

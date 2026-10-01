@@ -49,8 +49,9 @@ class MatchModel extends Match {
     }
 
     final rawMode = (json['mode'] ?? json['modo'] ?? 'open').toString();
-    final mode =
-        rawMode == 'team' ? MatchMode.teamVsTeam : MatchMode.openPlayers;
+    final mode = rawMode == 'team'
+        ? MatchMode.teamVsTeam
+        : MatchMode.openPlayers;
     final typeStr = (json['type'] ?? json['tipo'] ?? 'friendly').toString();
 
     List<String> parsePlayers(dynamic raw) {
@@ -76,10 +77,7 @@ class MatchModel extends Match {
 
     final participants = parseParticipants(json['participants']);
     final playerIds = parsePlayers(json['playerIds'] ?? json['participants']);
-    final mergedIds = {
-      ...playerIds,
-      ...participants.map((p) => p.id),
-    }.toList();
+    final mergedIds = {...playerIds, ...participants.map((p) => p.id)}.toList();
 
     MatchResult? result;
     final rawResult = json['result'];
@@ -87,16 +85,17 @@ class MatchModel extends Match {
       result = MatchResult.fromJson(Map<String, dynamic>.from(rawResult));
     }
 
-    num? toNum(dynamic v) =>
-        v is num ? v : num.tryParse(v?.toString() ?? '');
+    num? toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '');
     return MatchModel(
       id: (json['id'] ?? json['id_partido'] ?? '').toString(),
-      title: (json['title'] ??
-              json['titulo'] ??
-              json['organizerTeam'] ??
-              'Amistoso')
-          .toString(),
-      scheduledTime: DateTime.tryParse(
+      title:
+          (json['title'] ??
+                  json['titulo'] ??
+                  json['organizerTeam'] ??
+                  'Amistoso')
+              .toString(),
+      scheduledTime:
+          DateTime.tryParse(
             (json['scheduledTime'] ?? json['time'] ?? json['hora_inicio'])
                     ?.toString() ??
                 '',
@@ -119,8 +118,7 @@ class MatchModel extends Match {
       mvpId: json['mvpId']?.toString(),
       result: result,
       participants: participants,
-      costeTotal:
-          toNum(json['costeTotal'] ?? json['totalCost'])?.toDouble(),
+      costeTotal: toNum(json['costeTotal'] ?? json['totalCost'])?.toDouble(),
     );
   }
 

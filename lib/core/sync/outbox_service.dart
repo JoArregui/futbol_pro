@@ -23,29 +23,29 @@ class OutboxAction {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind,
-        'payload': payload,
-        'createdAt': createdAt.toIso8601String(),
-        'attempts': attempts,
-      };
+    'id': id,
+    'kind': kind,
+    'payload': payload,
+    'createdAt': createdAt.toIso8601String(),
+    'attempts': attempts,
+  };
 
   factory OutboxAction.fromJson(Map<String, dynamic> j) => OutboxAction(
-        id: (j['id'] ?? '').toString(),
-        kind: (j['kind'] ?? '').toString(),
-        payload: Map<String, dynamic>.from(j['payload'] as Map? ?? {}),
-        createdAt: DateTime.tryParse(j['createdAt']?.toString() ?? '') ??
-            DateTime.now(),
-        attempts: (j['attempts'] as num?)?.toInt() ?? 0,
-      );
+    id: (j['id'] ?? '').toString(),
+    kind: (j['kind'] ?? '').toString(),
+    payload: Map<String, dynamic>.from(j['payload'] as Map? ?? {}),
+    createdAt:
+        DateTime.tryParse(j['createdAt']?.toString() ?? '') ?? DateTime.now(),
+    attempts: (j['attempts'] as num?)?.toInt() ?? 0,
+  );
 
   OutboxAction bumped() => OutboxAction(
-        id: id,
-        kind: kind,
-        payload: payload,
-        createdAt: createdAt,
-        attempts: attempts + 1,
-      );
+    id: id,
+    kind: kind,
+    payload: payload,
+    createdAt: createdAt,
+    attempts: attempts + 1,
+  );
 }
 
 /// Detecta errores de red (los que sí tiene sentido reintentar).
@@ -93,17 +93,20 @@ class OutboxService {
     // mismo partido NO son duplicados (antes se descartaban).
     final fingerprint = '$kind:${jsonEncode(payload)}';
     final dup = _items.any(
-        (a) => '$a.kind:${jsonEncode(a.payload)}' == fingerprint);
+      (a) => '$a.kind:${jsonEncode(a.payload)}' == fingerprint,
+    );
     if (dup) {
       pendingCount.value = _items.length;
       return;
     }
-    _items.add(OutboxAction(
-      id: 'o${DateTime.now().microsecondsSinceEpoch}-${_seq++}',
-      kind: kind,
-      payload: payload,
-      createdAt: DateTime.now(),
-    ));
+    _items.add(
+      OutboxAction(
+        id: 'o${DateTime.now().microsecondsSinceEpoch}-${_seq++}',
+        kind: kind,
+        payload: payload,
+        createdAt: DateTime.now(),
+      ),
+    );
     while (_items.length > _maxItems) {
       _items.removeAt(0);
     }
@@ -126,7 +129,8 @@ class OutboxService {
         ok++;
       } catch (e) {
         failed++;
-        if (isNetworkError(e)) continue; // aún offline: reintentar luego sin bump
+        if (isNetworkError(e))
+          continue; // aún offline: reintentar luego sin bump
         final i = _items.indexWhere((a) => a.id == action.id);
         if (i >= 0) {
           final bumped = _items[i].bumped();
@@ -158,8 +162,11 @@ class OutboxService {
       final List<dynamic> list = jsonDecode(await file.readAsString());
       _items
         ..clear()
-        ..addAll(list.map(
-            (e) => OutboxAction.fromJson(Map<String, dynamic>.from(e as Map))));
+        ..addAll(
+          list.map(
+            (e) => OutboxAction.fromJson(Map<String, dynamic>.from(e as Map)),
+          ),
+        );
       pendingCount.value = _items.length;
     } catch (_) {
       // Cola corrupta: empezar vacía antes que romper el arranque.
@@ -173,8 +180,9 @@ class OutboxService {
     try {
       final dir = (await getApplicationDocumentsDirectory()).path;
       final file = File('$dir/$_fileName');
-      await file
-          .writeAsString(jsonEncode(_items.map((e) => e.toJson()).toList()));
+      await file.writeAsString(
+        jsonEncode(_items.map((e) => e.toJson()).toList()),
+      );
     } catch (_) {}
   }
 }

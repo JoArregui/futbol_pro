@@ -16,14 +16,13 @@ class LeagueTeam extends Equatable {
   });
 
   factory LeagueTeam.fromJson(Map<String, dynamic> json) => LeagueTeam(
-        id: (json['id'] ?? '').toString(),
-        nombre: (json['nombre'] ?? '').toString(),
-        capitanId: (json['capitanId'] ?? '').toString(),
-        plantilla: (json['plantilla'] as List?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const [],
-      );
+    id: (json['id'] ?? '').toString(),
+    nombre: (json['nombre'] ?? '').toString(),
+    capitanId: (json['capitanId'] ?? '').toString(),
+    plantilla:
+        (json['plantilla'] as List?)?.map((e) => e.toString()).toList() ??
+        const [],
+  );
 
   @override
   List<Object> get props => [id, nombre, capitanId, plantilla];
@@ -56,29 +55,29 @@ class FixtureEntry extends Equatable {
   bool get jugado => golesA != null && golesB != null;
 
   factory FixtureEntry.fromJson(Map<String, dynamic> json) => FixtureEntry(
-        jornada: (json['jornada'] as num?)?.toInt() ?? 0,
-        equipoAId: (json['equipoA']?['id'] ?? '').toString(),
-        equipoANombre: (json['equipoA']?['nombre'] ?? '').toString(),
-        equipoBId: (json['equipoB']?['id'] ?? '').toString(),
-        equipoBNombre: (json['equipoB']?['nombre'] ?? '').toString(),
-        matchId: json['matchId']?.toString(),
-        status: json['status']?.toString(),
-        golesA: (json['golesA'] as num?)?.toInt(),
-        golesB: (json['golesB'] as num?)?.toInt(),
-      );
+    jornada: (json['jornada'] as num?)?.toInt() ?? 0,
+    equipoAId: (json['equipoA']?['id'] ?? '').toString(),
+    equipoANombre: (json['equipoA']?['nombre'] ?? '').toString(),
+    equipoBId: (json['equipoB']?['id'] ?? '').toString(),
+    equipoBNombre: (json['equipoB']?['nombre'] ?? '').toString(),
+    matchId: json['matchId']?.toString(),
+    status: json['status']?.toString(),
+    golesA: (json['golesA'] as num?)?.toInt(),
+    golesB: (json['golesB'] as num?)?.toInt(),
+  );
 
   @override
   List<Object?> get props => [
-        jornada,
-        equipoAId,
-        equipoANombre,
-        equipoBId,
-        equipoBNombre,
-        matchId,
-        status,
-        golesA,
-        golesB,
-      ];
+    jornada,
+    equipoAId,
+    equipoANombre,
+    equipoBId,
+    equipoBNombre,
+    matchId,
+    status,
+    golesA,
+    golesB,
+  ];
 }
 
 /// Fila de la tabla de goleadores de la liga.
@@ -87,14 +86,17 @@ class ScorerRow extends Equatable {
   final String name;
   final int goles;
 
-  const ScorerRow(
-      {required this.playerId, required this.name, required this.goles});
+  const ScorerRow({
+    required this.playerId,
+    required this.name,
+    required this.goles,
+  });
 
   factory ScorerRow.fromJson(Map<String, dynamic> json) => ScorerRow(
-        playerId: (json['playerId'] ?? '').toString(),
-        name: (json['name'] ?? '').toString(),
-        goles: (json['goles'] as num?)?.toInt() ?? 0,
-      );
+    playerId: (json['playerId'] ?? '').toString(),
+    name: (json['name'] ?? '').toString(),
+    goles: (json['goles'] as num?)?.toInt() ?? 0,
+  );
 
   @override
   List<Object> get props => [playerId, name, goles];

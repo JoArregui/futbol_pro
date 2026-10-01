@@ -22,6 +22,13 @@ class Tournament extends Equatable {
   bool get isOpen => status == 'open' && registeredTeams < maxTeams;
 
   @override
-  List<Object> get props =>
-      [id, name, description, startDate, maxTeams, registeredTeams, status];
+  List<Object> get props => [
+    id,
+    name,
+    description,
+    startDate,
+    maxTeams,
+    registeredTeams,
+    status,
+  ];
 }

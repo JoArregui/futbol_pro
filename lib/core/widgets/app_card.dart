@@ -24,7 +24,8 @@ class AppCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: gradientColors ??
+          colors:
+              gradientColors ??
               (isDark
                   ? [const Color(0xFF1D261E), const Color(0xFF131913)]
                   : [Colors.white, const Color(0xFFF1F4EC)]),
@@ -79,21 +80,26 @@ class SectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               if (subtitle != null)
-                Text(subtitle!,
-                    style: const TextStyle(
-                        color: AppColors.textDim, fontSize: 13)),
+                Text(
+                  subtitle!,
+                  style: const TextStyle(
+                    color: AppColors.textDim,
+                    fontSize: 13,
+                  ),
+                ),
             ],
           ),
         ),
         if (actionLabel != null)
-          TextButton(
-            onPressed: onAction,
-            child: Text(actionLabel!),
-          ),
+          TextButton(onPressed: onAction, child: Text(actionLabel!)),
       ],
     );
   }
@@ -115,12 +121,18 @@ class HeroBackground extends StatelessWidget {
           Positioned(
             top: -80,
             right: -60,
-            child: _Orb(color: AppColors.lime.withValues(alpha: 0.16), size: 240),
+            child: _Orb(
+              color: AppColors.lime.withValues(alpha: 0.16),
+              size: 240,
+            ),
           ),
           Positioned(
             top: 120,
             left: -80,
-            child: _Orb(color: AppColors.field.withValues(alpha: 0.18), size: 200),
+            child: _Orb(
+              color: AppColors.field.withValues(alpha: 0.18),
+              size: 200,
+            ),
           ),
           SafeArea(child: child),
         ],

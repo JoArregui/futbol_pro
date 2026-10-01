@@ -43,8 +43,11 @@ class MatchDetailBloc extends Bloc<MatchDetailEvent, MatchDetailState> {
     on<MatchActaRequested>(_onActa);
   }
 
-  Future<void> _reload(String matchId, Emitter<MatchDetailState> emit,
-      {String? notice}) async {
+  Future<void> _reload(
+    String matchId,
+    Emitter<MatchDetailState> emit, {
+    String? notice,
+  }) async {
     final res = await getMatchDetails(GetMatchDetailsParams(matchId: matchId));
     res.fold(
       (failure) => emit(MatchDetailError(failure.errorMessage)),
@@ -70,10 +73,13 @@ class MatchDetailBloc extends Bloc<MatchDetailEvent, MatchDetailState> {
     final res = await submitMatchResult(event.params);
     await res.fold(
       (failure) async => emit(
-          MatchDetailLoaded(match: current.match, error: failure.errorMessage)),
-      (_) async => _reload(event.params.matchId, emit,
-          notice:
-              'Resultado propuesto. Falta que lo confirme otro participante.'),
+        MatchDetailLoaded(match: current.match, error: failure.errorMessage),
+      ),
+      (_) async => _reload(
+        event.params.matchId,
+        emit,
+        notice: 'Resultado propuesto. Falta que lo confirme otro participante.',
+      ),
     );
   }
 
@@ -84,13 +90,18 @@ class MatchDetailBloc extends Bloc<MatchDetailEvent, MatchDetailState> {
     final current = state;
     if (current is! MatchDetailLoaded) return;
     emit(MatchDetailActionRunning(match: current.match));
-    final res =
-        await confirmMatchResult(ConfirmResultParams(matchId: event.matchId));
+    final res = await confirmMatchResult(
+      ConfirmResultParams(matchId: event.matchId),
+    );
     await res.fold(
       (failure) async => emit(
-          MatchDetailLoaded(match: current.match, error: failure.errorMessage)),
-      (_) async => _reload(event.matchId, emit,
-          notice: 'Resultado confirmado. Reputación actualizada.'),
+        MatchDetailLoaded(match: current.match, error: failure.errorMessage),
+      ),
+      (_) async => _reload(
+        event.matchId,
+        emit,
+        notice: 'Resultado confirmado. Reputación actualizada.',
+      ),
     );
   }
 
@@ -102,12 +113,17 @@ class MatchDetailBloc extends Bloc<MatchDetailEvent, MatchDetailState> {
     if (current is! MatchDetailLoaded) return;
     emit(MatchDetailActionRunning(match: current.match));
     final res = await reportNoShow(
-        ReportNoShowParams(matchId: event.matchId, playerId: event.playerId));
+      ReportNoShowParams(matchId: event.matchId, playerId: event.playerId),
+    );
     await res.fold(
       (failure) async => emit(
-          MatchDetailLoaded(match: current.match, error: failure.errorMessage)),
-      (count) async => _reload(event.matchId, emit,
-          notice: 'No-show reportado ($count acumulados).'),
+        MatchDetailLoaded(match: current.match, error: failure.errorMessage),
+      ),
+      (count) async => _reload(
+        event.matchId,
+        emit,
+        notice: 'No-show reportado ($count acumulados).',
+      ),
     );
   }
 

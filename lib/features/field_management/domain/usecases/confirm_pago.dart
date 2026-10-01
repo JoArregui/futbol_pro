@@ -11,7 +11,10 @@ class ConfirmPago implements UseCase<bool, ConfirmPagoParams> {
 
   @override
   Future<Either<Failure, bool>> call(ConfirmPagoParams params) async {
-    return repository.confirmPago(pagoId: params.pagoId, orderId: params.orderId);
+    return repository.confirmPago(
+      pagoId: params.pagoId,
+      orderId: params.orderId,
+    );
   }
 }
 

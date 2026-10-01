@@ -135,8 +135,7 @@ class _GradientPill extends StatelessWidget {
   final Widget child;
   final VoidCallback? onPressed;
   final double height;
-  const _GradientPill(
-      {required this.child, this.onPressed, this.height = 54});
+  const _GradientPill({required this.child, this.onPressed, this.height = 54});
 
   @override
   Widget build(BuildContext context) {
@@ -164,10 +163,12 @@ class _GradientPill extends StatelessWidget {
           child: InkWell(
             onTap: onPressed,
             borderRadius: BorderRadius.circular(28),
-            child: Center(child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: child,
-            )),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: child,
+              ),
+            ),
           ),
         ),
       ),

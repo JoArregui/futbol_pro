@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:futbol_pro/core/errors/failures.dart';
 // 🟢 CORRECCIÓN: Usar la interfaz base correcta 'UseCase'
-import '../../../../core/usecases/usecase.dart'; 
+import '../../../../core/usecases/usecase.dart';
 import '../entities/message.dart';
 import '../repositories/chat_repository.dart';
 

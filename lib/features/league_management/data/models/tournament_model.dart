@@ -16,7 +16,8 @@ class TournamentModel extends Tournament {
       id: (json['id'] ?? '').toString(),
       name: (json['name'] ?? 'Torneo').toString(),
       description: (json['description'] ?? '').toString(),
-      startDate: DateTime.tryParse(json['startDate']?.toString() ?? '') ??
+      startDate:
+          DateTime.tryParse(json['startDate']?.toString() ?? '') ??
           DateTime.now(),
       maxTeams: (json['maxTeams'] as num?)?.toInt() ?? 16,
       registeredTeams: (json['registeredTeams'] as num?)?.toInt() ?? 0,

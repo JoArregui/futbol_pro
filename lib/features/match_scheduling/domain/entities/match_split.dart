@@ -6,14 +6,17 @@ class SplitShare extends Equatable {
   final String name;
   final double amount;
 
-  const SplitShare(
-      {required this.playerId, required this.name, required this.amount});
+  const SplitShare({
+    required this.playerId,
+    required this.name,
+    required this.amount,
+  });
 
   factory SplitShare.fromJson(Map<String, dynamic> json) => SplitShare(
-        playerId: (json['id'] ?? '').toString(),
-        name: (json['name'] ?? '').toString(),
-        amount: (json['amount'] as num?)?.toDouble() ?? 0,
-      );
+    playerId: (json['id'] ?? '').toString(),
+    name: (json['name'] ?? '').toString(),
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+  );
 
   @override
   List<Object> get props => [playerId, name, amount];
@@ -46,14 +49,20 @@ class MatchSplit extends Equatable {
       perPerson: (json['perPerson'] as num?)?.toDouble() ?? 0,
       detail: raw is List
           ? raw
-              .whereType<Map<dynamic, dynamic>>()
-              .map((e) => SplitShare.fromJson(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map<dynamic, dynamic>>()
+                .map((e) => SplitShare.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
           : const [],
     );
   }
 
   @override
-  List<Object> get props =>
-      [matchId, total, hasCost, participants, perPerson, detail];
+  List<Object> get props => [
+    matchId,
+    total,
+    hasCost,
+    participants,
+    perPerson,
+    detail,
+  ];
 }

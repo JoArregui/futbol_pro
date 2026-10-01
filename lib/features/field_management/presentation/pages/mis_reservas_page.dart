@@ -35,24 +35,23 @@ class _MisReservasPageState extends State<MisReservasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis reservas'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Mis reservas'), centerTitle: true),
       body: BlocConsumer<FieldBloc, FieldState>(
         listener: (context, state) {
           if (state is PagoConfirmado) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('Seña pagada. Cancha asegurada.'),
-                  backgroundColor: Colors.green),
+                content: Text('Seña pagada. Cancha asegurada.'),
+                backgroundColor: Colors.green,
+              ),
             );
             context.read<FieldBloc>().add(const MisReservasRequested());
           } else if (state is FieldError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red),
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         },
@@ -62,58 +61,77 @@ class _MisReservasPageState extends State<MisReservasPage> {
           }
           if (state is MisReservasLoaded) {
             if (state.reservas.isEmpty) {
-              return const Center(
-                  child: Text('Aún no tienes reservas.'));
+              return const Center(child: Text('Aún no tienes reservas.'));
             }
             return RefreshIndicator(
-              onRefresh: () async => context
-                  .read<FieldBloc>()
-                  .add(const MisReservasRequested()),
+              onRefresh: () async =>
+                  context.read<FieldBloc>().add(const MisReservasRequested()),
               child: ListView.builder(
                 itemCount: state.reservas.length,
                 itemBuilder: (context, i) {
                   final r = state.reservas[i];
                   return Card(
                     margin: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     child: ListTile(
-                      leading: Icon(Icons.stadium,
-                          color: _estadoColor(r.estado)),
+                      leading: Icon(
+                        Icons.stadium,
+                        color: _estadoColor(r.estado),
+                      ),
                       title: Text(
-                          r.fieldName.isNotEmpty
-                              ? r.fieldName
-                              : 'Cancha ${r.fieldId}',
-                          style:
-                              const TextStyle(fontWeight: FontWeight.bold)),
+                        r.fieldName.isNotEmpty
+                            ? r.fieldName
+                            : 'Cancha ${r.fieldId}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text(
                         'Total \$${r.total.toStringAsFixed(2)} • Seña \$${r.sena.toStringAsFixed(2)}\nEstado: ${r.estado}',
                       ),
                       isThreeLine: true,
                       trailing: r.senaPagada
                           ? Chip(
-                              label: const Text('Señada',
-                                  style: TextStyle(fontSize: 12)),
+                              label: const Text(
+                                'Señada',
+                                style: TextStyle(fontSize: 12),
+                              ),
                               backgroundColor: Colors.green.shade100,
                             )
                           : (r.pagoId == null || r.providerRef == null
-                              ? null
-                              : Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    TextButton(
-                                      onPressed: r.approvalUrl == null ? null : () async {
-                                        final url = Uri.tryParse(r.approvalUrl!);
-                                        if (url != null) await launchUrl(url, mode: LaunchMode.externalApplication);
-                                      },
-                                      child: const Text('Abrir PayPal'),
-                                    ),
-                                    FilledButton(
-                                      onPressed: () => context.read<FieldBloc>().add(ConfirmPagoRequested(
-                                          pagoId: r.pagoId!, orderId: r.providerRef!, reservaId: r.reservaId)),
-                                      child: const Text('Verificar'),
-                                    ),
-                                  ],
-                                )),
+                                ? null
+                                : Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextButton(
+                                        onPressed: r.approvalUrl == null
+                                            ? null
+                                            : () async {
+                                                final url = Uri.tryParse(
+                                                  r.approvalUrl!,
+                                                );
+                                                if (url != null)
+                                                  await launchUrl(
+                                                    url,
+                                                    mode: LaunchMode
+                                                        .externalApplication,
+                                                  );
+                                              },
+                                        child: const Text('Abrir PayPal'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            context.read<FieldBloc>().add(
+                                              ConfirmPagoRequested(
+                                                pagoId: r.pagoId!,
+                                                orderId: r.providerRef!,
+                                                reservaId: r.reservaId,
+                                              ),
+                                            ),
+                                        child: const Text('Verificar'),
+                                      ),
+                                    ],
+                                  )),
                     ),
                   );
                 },
@@ -122,9 +140,8 @@ class _MisReservasPageState extends State<MisReservasPage> {
           }
           return Center(
             child: FilledButton(
-              onPressed: () => context
-                  .read<FieldBloc>()
-                  .add(const MisReservasRequested()),
+              onPressed: () =>
+                  context.read<FieldBloc>().add(const MisReservasRequested()),
               child: const Text('Cargar reservas'),
             ),
           );

@@ -44,7 +44,11 @@ class AdminLoaded extends AdminState {
     this.friendlies = const [],
     this.tournaments = const [],
     this.finance = const AdminFinance(
-        totalRevenue: 0, monthRevenue: 0, pending: 0, byMonth: []),
+      totalRevenue: 0,
+      monthRevenue: 0,
+      pending: 0,
+      byMonth: [],
+    ),
     this.audit = const [],
   });
 
@@ -64,43 +68,42 @@ class AdminLoaded extends AdminState {
     List<AdminTournament>? tournaments,
     AdminFinance? finance,
     List<AdminAudit>? audit,
-  }) =>
-      AdminLoaded(
-        stats: stats ?? this.stats,
-        users: users ?? this.users,
-        matches: matches ?? this.matches,
-        selectedUserIds: selectedUserIds ?? this.selectedUserIds,
-        selectedMatchIds: selectedMatchIds ?? this.selectedMatchIds,
-        searchingUsers: searchingUsers ?? this.searchingUsers,
-        teams: teams ?? this.teams,
-        players: players ?? this.players,
-        fields: fields ?? this.fields,
-        referees: referees ?? this.referees,
-        leagues: leagues ?? this.leagues,
-        friendlies: friendlies ?? this.friendlies,
-        tournaments: tournaments ?? this.tournaments,
-        finance: finance ?? this.finance,
-        audit: audit ?? this.audit,
-      );
+  }) => AdminLoaded(
+    stats: stats ?? this.stats,
+    users: users ?? this.users,
+    matches: matches ?? this.matches,
+    selectedUserIds: selectedUserIds ?? this.selectedUserIds,
+    selectedMatchIds: selectedMatchIds ?? this.selectedMatchIds,
+    searchingUsers: searchingUsers ?? this.searchingUsers,
+    teams: teams ?? this.teams,
+    players: players ?? this.players,
+    fields: fields ?? this.fields,
+    referees: referees ?? this.referees,
+    leagues: leagues ?? this.leagues,
+    friendlies: friendlies ?? this.friendlies,
+    tournaments: tournaments ?? this.tournaments,
+    finance: finance ?? this.finance,
+    audit: audit ?? this.audit,
+  );
 
   @override
   List<Object> get props => [
-        stats,
-        users,
-        matches,
-        selectedUserIds,
-        selectedMatchIds,
-        searchingUsers,
-        teams,
-        players,
-        fields,
-        referees,
-        leagues,
-        friendlies,
-        tournaments,
-        finance,
-        audit,
-      ];
+    stats,
+    users,
+    matches,
+    selectedUserIds,
+    selectedMatchIds,
+    searchingUsers,
+    teams,
+    players,
+    fields,
+    referees,
+    leagues,
+    friendlies,
+    tournaments,
+    finance,
+    audit,
+  ];
 }
 
 class AdminActionRunning extends AdminState {
@@ -113,6 +116,7 @@ class AdminActionRunning extends AdminState {
 
 class AdminError extends AdminState {
   final String message;
+
   /// Estado anterior para restaurar lista/selección/scroll en la UI.
   final AdminLoaded? prev;
   const AdminError(this.message, [this.prev]);

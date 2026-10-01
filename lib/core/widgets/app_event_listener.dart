@@ -38,7 +38,7 @@ class _AppEventListenerState extends State<AppEventListener> {
         'match_result',
         'booking',
         'booking_created',
-        'squad'
+        'squad',
       ]) {
         socket.onAppEvent(e, (data) {
           final title = (data['title'] ?? 'Futbol Pro').toString();
@@ -46,9 +46,9 @@ class _AppEventListenerState extends State<AppEventListener> {
           if (body.isEmpty) return;
           notif.showLocal(title: title, body: body);
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$title: $body')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$title: $body')));
         });
       }
     } catch (_) {

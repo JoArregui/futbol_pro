@@ -28,8 +28,11 @@ void main() {
     });
 
     test('ScorerRow orden se mantiene por goles (parse)', () {
-      final s = ScorerRow.fromJson(
-          {'playerId': '5', 'name': 'Goleador', 'goles': 4});
+      final s = ScorerRow.fromJson({
+        'playerId': '5',
+        'name': 'Goleador',
+        'goles': 4,
+      });
       expect(s.goles, 4);
     });
 

@@ -84,8 +84,9 @@ class LeagueBloc extends Bloc<LeagueEvent, LeagueState> {
       return;
     }
     emit(LeagueLoading());
-    final res = await registerTeam!(RegisterTeamParams(
-        leagueId: event.leagueId, teamName: event.teamName));
+    final res = await registerTeam!(
+      RegisterTeamParams(leagueId: event.leagueId, teamName: event.teamName),
+    );
     res.fold(
       (f) => emit(LeagueError(message: f.errorMessage)),
       (_) => emit(TeamRegistered(leagueId: event.leagueId)),
@@ -101,11 +102,13 @@ class LeagueBloc extends Bloc<LeagueEvent, LeagueState> {
       return;
     }
     emit(LeagueLoading());
-    final res = await createLeague!(CreateLeagueParams(
-      nombre: event.nombre,
-      descripcion: event.descripcion,
-      maxEquipos: event.maxEquipos,
-    ));
+    final res = await createLeague!(
+      CreateLeagueParams(
+        nombre: event.nombre,
+        descripcion: event.descripcion,
+        maxEquipos: event.maxEquipos,
+      ),
+    );
     res.fold(
       (f) => emit(LeagueError(message: f.errorMessage)),
       (t) => emit(LeagueCreated(league: t)),
@@ -121,12 +124,18 @@ class LeagueBloc extends Bloc<LeagueEvent, LeagueState> {
       return;
     }
     emit(LeagueLoading());
-    final res =
-        await getLeagueDetail!(LeagueDetailParams(leagueId: event.leagueId));
+    final res = await getLeagueDetail!(
+      LeagueDetailParams(leagueId: event.leagueId),
+    );
     res.fold(
       (f) => emit(LeagueError(message: f.errorMessage)),
-      (d) => emit(LeagueDetailLoaded(
-          leagueId: event.leagueId, leagueName: event.leagueName, detail: d)),
+      (d) => emit(
+        LeagueDetailLoaded(
+          leagueId: event.leagueId,
+          leagueName: event.leagueName,
+          detail: d,
+        ),
+      ),
     );
   }
 
@@ -140,13 +149,17 @@ class LeagueBloc extends Bloc<LeagueEvent, LeagueState> {
     }
     emit(LeagueLoading());
     final res = await generateFixture!(
-        GenerateFixtureParams(leagueId: event.leagueId));
+      GenerateFixtureParams(leagueId: event.leagueId),
+    );
     res.fold(
       (f) => emit(LeagueError(message: f.errorMessage)),
-      (r) => emit(FixtureGenerated(
+      (r) => emit(
+        FixtureGenerated(
           leagueId: event.leagueId,
           jornadas: (r['jornadas'] as num?)?.toInt() ?? 0,
-          partidos: (r['partidos'] as num?)?.toInt() ?? 0)),
+          partidos: (r['partidos'] as num?)?.toInt() ?? 0,
+        ),
+      ),
     );
   }
 }

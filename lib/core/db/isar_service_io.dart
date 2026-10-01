@@ -57,7 +57,9 @@ class IsarService {
       Message? lastMessage;
       if (room.lastMessageJson != null) {
         try {
-          lastMessage = MessageModel.fromJson(jsonDecode(room.lastMessageJson!));
+          lastMessage = MessageModel.fromJson(
+            jsonDecode(room.lastMessageJson!),
+          );
         } catch (_) {}
       }
       return ChatRoom(

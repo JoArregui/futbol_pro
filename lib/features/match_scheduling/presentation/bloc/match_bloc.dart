@@ -106,10 +106,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     emit(MatchLoading());
 
     final failureOrMatch = await joinMatch(
-      JoinMatchParams(
-        matchId: event.matchId,
-        playerId: event.playerId,
-      ),
+      JoinMatchParams(matchId: event.matchId, playerId: event.playerId),
     );
 
     failureOrMatch.fold(
@@ -125,10 +122,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     emit(MatchLoading());
 
     final failureOrTeams = await generateBalancedTeams(
-      GenerateTeamsParams(
-        players: event.players,
-        minPlayers: 10,
-      ),
+      GenerateTeamsParams(players: event.players, minPlayers: 10),
     );
 
     await failureOrTeams.fold(

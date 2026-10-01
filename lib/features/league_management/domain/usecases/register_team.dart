@@ -17,7 +17,6 @@ class RegisterTeam implements UseCase<bool, RegisterTeamParams> {
   RegisterTeam(this.repository);
 
   @override
-  Future<Either<Failure, bool>> call(RegisterTeamParams params) =>
-      repository.registerTeam(
-          leagueId: params.leagueId, teamName: params.teamName);
+  Future<Either<Failure, bool>> call(RegisterTeamParams params) => repository
+      .registerTeam(leagueId: params.leagueId, teamName: params.teamName);
 }

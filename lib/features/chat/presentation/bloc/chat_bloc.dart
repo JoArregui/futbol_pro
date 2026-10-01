@@ -87,42 +87,63 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   void _registerSocketHandlers() {
     socketService.onNewMessage((data) {
-        final roomId = data['roomId']?.toString() ?? '';
-        final imageUrl = data['imageUrl']?.toString();
-        final msg = Message(
-          id: data['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          senderId: data['senderId']?.toString() ?? '',
-          senderName: data['senderName']?.toString() ?? '',
-          text: data['text']?.toString() ?? '',
-          timestamp: DateTime.fromMillisecondsSinceEpoch((data['timestamp'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch),
-          status: MessageStatus.delivered,
-          type: imageUrl != null ? MessageType.image : MessageType.text,
-          imageUrl: imageUrl,
-        );
-        final clientId = data['clientId']?.toString();
-        add(ChatSocketMessageReceived(message: msg, roomId: roomId, clientId: clientId));
-      });
-      socketService.onChatUpdated((_) => add(ChatRoomsSubscriptionRequested()));
-      socketService.onChatCreated((_) => add(ChatRoomsSubscriptionRequested()));
-      socketService.onTyping((data) {
-        final roomId = data['roomId']?.toString() ?? '';
-        final userId = data['userId']?.toString() ?? '';
-        if (roomId.isEmpty || userId.isEmpty) return;
-        final raw = data['isTyping'];
-        final isTyping = raw == true || raw == 1 || raw == '1' || raw == 'true';
-        add(ChatSocketTypingReceived(roomId: roomId, userId: userId, isTyping: isTyping));
-      });
+      final roomId = data['roomId']?.toString() ?? '';
+      final imageUrl = data['imageUrl']?.toString();
+      final msg = Message(
+        id:
+            data['id']?.toString() ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
+        senderId: data['senderId']?.toString() ?? '',
+        senderName: data['senderName']?.toString() ?? '',
+        text: data['text']?.toString() ?? '',
+        timestamp: DateTime.fromMillisecondsSinceEpoch(
+          (data['timestamp'] as num?)?.toInt() ??
+              DateTime.now().millisecondsSinceEpoch,
+        ),
+        status: MessageStatus.delivered,
+        type: imageUrl != null ? MessageType.image : MessageType.text,
+        imageUrl: imageUrl,
+      );
+      final clientId = data['clientId']?.toString();
+      add(
+        ChatSocketMessageReceived(
+          message: msg,
+          roomId: roomId,
+          clientId: clientId,
+        ),
+      );
+    });
+    socketService.onChatUpdated((_) => add(ChatRoomsSubscriptionRequested()));
+    socketService.onChatCreated((_) => add(ChatRoomsSubscriptionRequested()));
+    socketService.onTyping((data) {
+      final roomId = data['roomId']?.toString() ?? '';
+      final userId = data['userId']?.toString() ?? '';
+      if (roomId.isEmpty || userId.isEmpty) return;
+      final raw = data['isTyping'];
+      final isTyping = raw == true || raw == 1 || raw == '1' || raw == 'true';
+      add(
+        ChatSocketTypingReceived(
+          roomId: roomId,
+          userId: userId,
+          isTyping: isTyping,
+        ),
+      );
+    });
   }
 
   // ... (Manejadores _onRoomsFetchRequested y _onRoomsReceived sin cambios)
   // ==================================================
   // 1. Maneja la solicitud de carga de las salas de chat (ANTES STREAM)
   // ==================================================
-  Future<void> _onRoomsFetchRequested(ChatRoomsSubscriptionRequested event, Emitter<ChatState> emit) async {
+  Future<void> _onRoomsFetchRequested(
+    ChatRoomsSubscriptionRequested event,
+    Emitter<ChatState> emit,
+  ) async {
     emit(ChatLoading());
 
-    final failureOrRooms =
-        await getChatRooms(UserIdParams(userId: currentUserId));
+    final failureOrRooms = await getChatRooms(
+      UserIdParams(userId: currentUserId),
+    );
 
     failureOrRooms.fold(
       (failure) {
@@ -135,10 +156,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   // 2. Mantenemos el _onRoomsReceived solo si queremos mantener la arquitectura de eventos
-  void _onRoomsReceived(
-    ChatRoomsReceived event,
-    Emitter<ChatState> emit,
-  ) {
+  void _onRoomsReceived(ChatRoomsReceived event, Emitter<ChatState> emit) {
     emit(ChatRoomsLoaded(rooms: event.rooms));
   }
 
@@ -175,13 +193,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       );
 
       if (room.title == 'Sala no encontrada') {
-        emit(const ChatError(
-            'Error: La sala de chat solicitada no existe o no se encontró.'));
+        emit(
+          const ChatError(
+            'Error: La sala de chat solicitada no existe o no se encontró.',
+          ),
+        );
         return;
       }
 
       emit(ChatRoomSelectedState(room: room));
-      try { socketService.joinRoom(room.id); } catch (_) {}
+      try {
+        socketService.joinRoom(room.id);
+      } catch (_) {}
       add(ChatMessagesSubscriptionRequested(event.roomId));
       add(ChatMarkAsRead(event.roomId));
     } else {
@@ -203,8 +226,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     if (currentState.room.id != event.roomId) return;
 
-    final failureOrMessages =
-        await getMessages(MessagesParams(roomId: event.roomId));
+    final failureOrMessages = await getMessages(
+      MessagesParams(roomId: event.roomId),
+    );
 
     failureOrMessages.fold(
       (failure) {
@@ -249,10 +273,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       type: event.imageUrl != null ? MessageType.image : MessageType.text,
       imageUrl: event.imageUrl,
     );
-    emit(currentState.copyWith(
+    emit(
+      currentState.copyWith(
         messages: [...currentState.messages, optimistic],
         isSending: true,
-        error: null));
+        error: null,
+      ),
+    );
 
     final failureOrVoid = await sendMessage(
       SendParams(
@@ -272,44 +299,67 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             ? state as ChatRoomSelectedState
             : currentState;
         final updated = cur.messages
-            .map((m) => m.id == clientId
-                ? m.copyWith(status: MessageStatus.failed)
-                : m)
+            .map(
+              (m) => m.id == clientId
+                  ? m.copyWith(status: MessageStatus.failed)
+                  : m,
+            )
             .toList();
-        emit(cur.copyWith(
+        emit(
+          cur.copyWith(
             messages: updated,
             isSending: false,
-            error: 'Fallo al enviar: ${failure.errorMessage}'));
+            error: 'Fallo al enviar: ${failure.errorMessage}',
+          ),
+        );
       },
       (_) {
         // El eco del socket reconcilia el id; solo quitar el spinner.
         if (state is ChatRoomSelectedState) {
-          emit((state as ChatRoomSelectedState)
-              .copyWith(isSending: false, error: null));
+          emit(
+            (state as ChatRoomSelectedState).copyWith(
+              isSending: false,
+              error: null,
+            ),
+          );
         }
       },
     );
   }
 
-  Future<void> _onMarkAsRead(ChatMarkAsRead event, Emitter<ChatState> emit) async {
-    await markAsRead(MarkAsReadParams(roomId: event.roomId, userId: currentUserId));
-  }
-
-  Future<void> _onCreateChat(ChatCreateRequested event, Emitter<ChatState> emit) async {
-    emit(ChatLoading());
-    final res = await createChat(CreateChatParams(title: event.title, type: event.type, memberIds: event.memberIds));
-    res.fold(
-      (f) => emit(ChatError(f.message)),
-      (room) {
-        emit(ChatRoomsLoaded(rooms: [room]));
-        add(ChatRoomsSubscriptionRequested());
-        add(ChatRoomSelected(room.id));
-      },
+  Future<void> _onMarkAsRead(
+    ChatMarkAsRead event,
+    Emitter<ChatState> emit,
+  ) async {
+    await markAsRead(
+      MarkAsReadParams(roomId: event.roomId, userId: currentUserId),
     );
   }
 
+  Future<void> _onCreateChat(
+    ChatCreateRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(ChatLoading());
+    final res = await createChat(
+      CreateChatParams(
+        title: event.title,
+        type: event.type,
+        memberIds: event.memberIds,
+      ),
+    );
+    res.fold((f) => emit(ChatError(f.message)), (room) {
+      emit(ChatRoomsLoaded(rooms: [room]));
+      add(ChatRoomsSubscriptionRequested());
+      add(ChatRoomSelected(room.id));
+    });
+  }
+
   Timer? _searchTimer;
-  Future<void> _onSearch(ChatSearchRequested event, Emitter<ChatState> emit) async {
+  Future<void> _onSearch(
+    ChatSearchRequested event,
+    Emitter<ChatState> emit,
+  ) async {
     // Debounce 300ms + mínimo 2 caracteres: evita tormenta de requests y
     // que la respuesta lenta pise a la nueva (race).
     _searchTimer?.cancel();
@@ -324,10 +374,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
     emit(const ChatSearchState(isSearching: true));
     final completer = Completer<void>();
-    _searchTimer = Timer(const Duration(milliseconds: 300), () => completer.complete());
+    _searchTimer = Timer(
+      const Duration(milliseconds: 300),
+      () => completer.complete(),
+    );
     await completer.future;
     if (emit.isDone) return;
-    final res = await searchUsers(SearchUsersParams(query: query, excludeUid: currentUserId));
+    final res = await searchUsers(
+      SearchUsersParams(query: query, excludeUid: currentUserId),
+    );
     if (emit.isDone) return;
     res.fold(
       (f) => emit(ChatError(f.message)),
@@ -339,12 +394,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     socketService.sendTyping(event.roomId, currentUserId, event.isTyping);
     if (event.isTyping) {
       _typingTimer?.cancel();
-      _typingTimer = Timer(const Duration(seconds: 2), () => add(ChatTypingChanged(roomId: event.roomId, isTyping: false)));
+      _typingTimer = Timer(
+        const Duration(seconds: 2),
+        () => add(ChatTypingChanged(roomId: event.roomId, isTyping: false)),
+      );
     }
   }
 
-  void _onSocketMessage(ChatSocketMessageReceived event, Emitter<ChatState> emit) {
-    if (state is ChatRoomSelectedState && (state as ChatRoomSelectedState).room.id == event.roomId) {
+  void _onSocketMessage(
+    ChatSocketMessageReceived event,
+    Emitter<ChatState> emit,
+  ) {
+    if (state is ChatRoomSelectedState &&
+        (state as ChatRoomSelectedState).room.id == event.roomId) {
       final cur = state as ChatRoomSelectedState;
       // Reconciliación: si el eco trae clientId de nuestro optimista,
       // reemplazar el temp (mismo clientId) por el id servidor en vez de duplicar.
@@ -353,13 +415,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         if (idx >= 0) {
           final updated = List<Message>.from(cur.messages);
           updated[idx] = updated[idx].copyWith(
-              id: event.message.id, status: MessageStatus.delivered);
+            id: event.message.id,
+            status: MessageStatus.delivered,
+          );
           emit(cur.copyWith(messages: updated));
           return;
         }
       }
       final exists = cur.messages.any((m) => m.id == event.message.id);
-      if (!exists) emit(cur.copyWith(messages: [...cur.messages, event.message]));
+      if (!exists)
+        emit(cur.copyWith(messages: [...cur.messages, event.message]));
     } else {
       // actualizar lista en background
       add(ChatRoomsSubscriptionRequested());
@@ -372,14 +437,21 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           title: event.message.senderName.isNotEmpty
               ? event.message.senderName
               : 'Nuevo mensaje',
-          body: preview.length > 120 ? '${preview.substring(0, 120)}…' : preview,
+          body: preview.length > 120
+              ? '${preview.substring(0, 120)}…'
+              : preview,
         );
       }
     }
   }
 
-  void _onSocketTyping(ChatSocketTypingReceived event, Emitter<ChatState> emit) {
-    if (state is ChatRoomSelectedState && (state as ChatRoomSelectedState).room.id == event.roomId && event.userId != currentUserId) {
+  void _onSocketTyping(
+    ChatSocketTypingReceived event,
+    Emitter<ChatState> emit,
+  ) {
+    if (state is ChatRoomSelectedState &&
+        (state as ChatRoomSelectedState).room.id == event.roomId &&
+        event.userId != currentUserId) {
       final cur = state as ChatRoomSelectedState;
       if (event.isTyping) {
         emit(cur.copyWith(isTyping: true, typingUserId: event.userId));

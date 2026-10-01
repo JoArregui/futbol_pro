@@ -86,12 +86,19 @@ class _MatchListPageState extends State<MatchListPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.sports_soccer,
-                          size: 64, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.sports_soccer,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
                       const SizedBox(height: 12),
-                      const Text('No hay partidos programados.',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'No hay partidos programados.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Crea el primero y reta a tus amigos.',
@@ -113,13 +120,16 @@ class _MatchListPageState extends State<MatchListPage> {
               itemCount: matches.length,
               itemBuilder: (context, index) {
                 final match = matches[index];
-                final String timeFormatted =
-                    DateFormat('dd/MM HH:mm').format(match.scheduledTime);
+                final String timeFormatted = DateFormat(
+                  'dd/MM HH:mm',
+                ).format(match.scheduledTime);
 
                 return Card(
                   elevation: 2,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   child: ListTile(
                     leading: Icon(
                       match.mode == MatchMode.teamVsTeam

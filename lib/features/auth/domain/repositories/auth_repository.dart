@@ -22,7 +22,7 @@ abstract class AuthRepository {
   Future<bool> refreshSession();
 
   String getCurrentUserId();
-  
+
   String getCurrentUserName();
 
   String getCurrentUserRole();

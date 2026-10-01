@@ -12,7 +12,8 @@ class GenerateFixture
 
   @override
   Future<Either<Failure, Map<String, dynamic>>> call(
-      GenerateFixtureParams params) async {
+    GenerateFixtureParams params,
+  ) async {
     return repository.generateFixture(leagueId: params.leagueId);
   }
 }

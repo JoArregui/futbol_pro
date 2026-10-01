@@ -22,13 +22,16 @@ class _ProfilePageState extends State<ProfilePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final bloc = context.read<ProfileBloc>();
-      final fallbackName =
-          bloc.currentUserName.isNotEmpty ? bloc.currentUserName : 'Jugador';
-      bloc.add(ProfileLoadRequested(
-        bloc.currentUserId,
-        email: '',
-        nickname: fallbackName,
-      ));
+      final fallbackName = bloc.currentUserName.isNotEmpty
+          ? bloc.currentUserName
+          : 'Jugador';
+      bloc.add(
+        ProfileLoadRequested(
+          bloc.currentUserId,
+          email: '',
+          nickname: fallbackName,
+        ),
+      );
     });
   }
 
@@ -56,7 +59,8 @@ class _ProfilePageState extends State<ProfilePage> {
           if (state is ProfileUpdateSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('✅ Perfil actualizado exitosamente!')),
+                content: Text('✅ Perfil actualizado exitosamente!'),
+              ),
             );
           }
           if (state is ProfileError && state.message.contains('actualizar')) {

@@ -48,14 +48,16 @@ class BookingInfo extends Equatable {
       estado: (json['estado'] ?? 'pendiente').toString(),
       pagoId: (json['pago'] is Map ? json['pago']['id'] : json['pagoId'])
           ?.toString(),
-      providerRef: (json['pago'] is Map
-              ? json['pago']['providerRef']
-              : json['providerRef'])
-          ?.toString(),
-      approvalUrl: (json['pago'] is Map
-              ? json['pago']['approvalUrl']
-              : json['approvalUrl'])
-          ?.toString(),
+      providerRef:
+          (json['pago'] is Map
+                  ? json['pago']['providerRef']
+                  : json['providerRef'])
+              ?.toString(),
+      approvalUrl:
+          (json['pago'] is Map
+                  ? json['pago']['approvalUrl']
+                  : json['approvalUrl'])
+              ?.toString(),
       pagoEstado: json['pagoEstado']?.toString(),
       provider:
           (json['pago'] is Map ? json['pago']['provider'] : json['provider'])
@@ -65,17 +67,17 @@ class BookingInfo extends Equatable {
 
   @override
   List<Object?> get props => [
-        reservaId,
-        fieldId,
-        fieldName,
-        total,
-        sena,
-        senaPct,
-        estado,
-        pagoId,
-        providerRef,
-        approvalUrl,
-        pagoEstado,
-        provider,
-      ];
+    reservaId,
+    fieldId,
+    fieldName,
+    total,
+    sena,
+    senaPct,
+    estado,
+    pagoId,
+    providerRef,
+    approvalUrl,
+    pagoEstado,
+    provider,
+  ];
 }

@@ -33,8 +33,10 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, int>> bulkRole(
-      {required List<String> ids, required String role}) async {
+  Future<Either<Failure, int>> bulkRole({
+    required List<String> ids,
+    required String role,
+  }) async {
     try {
       return Right(await remote.bulkRole(ids: ids, role: role));
     } catch (e) {
@@ -61,8 +63,9 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, int>> bulkCancelMatches(
-      {required List<String> ids}) async {
+  Future<Either<Failure, int>> bulkCancelMatches({
+    required List<String> ids,
+  }) async {
     try {
       return Right(await remote.bulkCancelMatches(ids: ids));
     } catch (e) {
@@ -80,8 +83,9 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, List<AdminPlayer>>> getPlayers(
-      {String query = ''}) async {
+  Future<Either<Failure, List<AdminPlayer>>> getPlayers({
+    String query = '',
+  }) async {
     try {
       return Right(await remote.getPlayers(query: query));
     } catch (e) {
@@ -144,8 +148,10 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> createTeam(
-      {required String name, String league = ''}) async {
+  Future<Either<Failure, bool>> createTeam({
+    required String name,
+    String league = '',
+  }) async {
     try {
       return Right(await remote.createTeam(name: name, league: league));
     } catch (e) {
@@ -163,8 +169,10 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> toggleFieldStatus(
-      {required String id, required String status}) async {
+  Future<Either<Failure, bool>> toggleFieldStatus({
+    required String id,
+    required String status,
+  }) async {
     try {
       return Right(await remote.toggleFieldStatus(id: id, status: status));
     } catch (e) {
@@ -173,8 +181,10 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> updateTeam(
-      {required String id, required String name}) async {
+  Future<Either<Failure, bool>> updateTeam({
+    required String id,
+    required String name,
+  }) async {
     try {
       return Right(await remote.updateTeam(id: id, name: name));
     } catch (e) {
@@ -193,7 +203,8 @@ class AdminRepositoryImpl implements AdminRepository {
 
   @override
   Future<Either<Failure, List<AdminPlayer>>> getTeamPlayers(
-      String teamId) async {
+    String teamId,
+  ) async {
     try {
       return Right(await remote.getTeamPlayers(teamId));
     } catch (e) {
@@ -202,33 +213,43 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> addPlayerToTeam(
-      {required String teamId, required String playerId}) async {
+  Future<Either<Failure, bool>> addPlayerToTeam({
+    required String teamId,
+    required String playerId,
+  }) async {
     try {
       return Right(
-          await remote.addPlayerToTeam(teamId: teamId, playerId: playerId));
+        await remote.addPlayerToTeam(teamId: teamId, playerId: playerId),
+      );
     } catch (e) {
       return _err(e);
     }
   }
 
   @override
-  Future<Either<Failure, bool>> removePlayerFromTeam(
-      {required String teamId, required String playerId}) async {
+  Future<Either<Failure, bool>> removePlayerFromTeam({
+    required String teamId,
+    required String playerId,
+  }) async {
     try {
-      return Right(await remote.removePlayerFromTeam(
-          teamId: teamId, playerId: playerId));
+      return Right(
+        await remote.removePlayerFromTeam(teamId: teamId, playerId: playerId),
+      );
     } catch (e) {
       return _err(e);
     }
   }
 
   @override
-  Future<Either<Failure, bool>> createField(
-      {required String name, double price = 50, int capacity = 14}) async {
+  Future<Either<Failure, bool>> createField({
+    required String name,
+    double price = 50,
+    int capacity = 14,
+  }) async {
     try {
-      return Right(await remote.createField(
-          name: name, price: price, capacity: capacity));
+      return Right(
+        await remote.createField(name: name, price: price, capacity: capacity),
+      );
     } catch (e) {
       return _err(e);
     }
@@ -244,8 +265,10 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> createReferee(
-      {required String name, double fee = 20}) async {
+  Future<Either<Failure, bool>> createReferee({
+    required String name,
+    double fee = 20,
+  }) async {
     try {
       return Right(await remote.createReferee(name: name, fee: fee));
     } catch (e) {
@@ -254,11 +277,21 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> updateReferee(
-      {required String id, String? name, double? fee, String? status}) async {
+  Future<Either<Failure, bool>> updateReferee({
+    required String id,
+    String? name,
+    double? fee,
+    String? status,
+  }) async {
     try {
-      return Right(await remote.updateReferee(
-          id: id, name: name, fee: fee, status: status));
+      return Right(
+        await remote.updateReferee(
+          id: id,
+          name: name,
+          fee: fee,
+          status: status,
+        ),
+      );
     } catch (e) {
       return _err(e);
     }
