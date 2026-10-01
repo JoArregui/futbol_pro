@@ -25,8 +25,9 @@ class _ChatListPageState extends State<ChatListPage>
     _tab = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
-      if (authState is AuthAuthenticated)
+      if (authState is AuthAuthenticated) {
         context.read<ChatBloc>().add(ChatRoomsSubscriptionRequested());
+      }
     });
   }
 
@@ -116,8 +117,9 @@ class _ChatListPageState extends State<ChatListPage>
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (c, s) {
-          if (s is AuthAuthenticated)
+          if (s is AuthAuthenticated) {
             c.read<ChatBloc>().add(ChatRoomsSubscriptionRequested());
+          }
         },
         child: BlocBuilder<AuthBloc, AuthState>(
           builder: (c, authState) {
@@ -139,11 +141,12 @@ class _ChatListPageState extends State<ChatListPage>
             }
             return BlocBuilder<ChatBloc, ChatState>(
               builder: (c, s) {
-                if (s is ChatLoading)
+                if (s is ChatLoading) {
                   return const Center(
                     child: CircularProgressIndicator(color: Color(0xFF075E54)),
                   );
-                if (s is ChatError)
+                }
+                if (s is ChatError) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -159,6 +162,7 @@ class _ChatListPageState extends State<ChatListPage>
                       ],
                     ),
                   );
+                }
                 if (s is ChatRoomsLoaded) {
                   final filtered = _filter(s.rooms);
                   if (filtered.isEmpty) {
@@ -201,7 +205,7 @@ class _ChatListPageState extends State<ChatListPage>
                     ),
                     child: ListView.separated(
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(
+                      separatorBuilder: (_, _) => const Divider(
                         height: 1,
                         indent: 72,
                         color: Color(0xFFF0F0F0),

@@ -423,8 +423,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         }
       }
       final exists = cur.messages.any((m) => m.id == event.message.id);
-      if (!exists)
+      if (!exists) {
         emit(cur.copyWith(messages: [...cur.messages, event.message]));
+      }
     } else {
       // actualizar lista en background
       add(ChatRoomsSubscriptionRequested());

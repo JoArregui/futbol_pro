@@ -195,20 +195,22 @@ class _NewChatPageState extends State<NewChatPage> {
                   users = state.users;
                   loading = state.isSearching;
                 }
-                if (loading)
+                if (loading) {
                   return const Center(
                     child: CircularProgressIndicator(color: Color(0xFF075E54)),
                   );
-                if (users.isEmpty)
+                }
+                if (users.isEmpty) {
                   return const Center(
                     child: Text(
                       'Sin resultados',
                       style: TextStyle(color: Color(0xFF667781)),
                     ),
                   );
+                }
                 return ListView.separated(
                   itemCount: users.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const Divider(height: 1, indent: 72),
                   itemBuilder: (_, i) {
                     final u = users[i];

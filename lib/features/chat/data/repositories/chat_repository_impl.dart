@@ -77,10 +77,11 @@ class ChatRepositoryImpl implements ChatRepository {
     );
     // guarda optimista en Isar
     await localDataSource.cacheMessage(roomId, tempMsg);
-    if (!online)
+    if (!online) {
       return const Left(
         CacheFailure('Mensaje guardado offline, se enviará al reconectar'),
       );
+    }
     try {
       await remoteDataSource.sendMessage(
         roomId: roomId,

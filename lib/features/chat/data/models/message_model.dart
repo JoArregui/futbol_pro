@@ -42,11 +42,12 @@ class MessageModel extends Message {
     }
     MessageStatus status = MessageStatus.sent;
     final s = json['status'] as String?;
-    if (s != null)
+    if (s != null) {
       status = MessageStatus.values.firstWhere(
         (e) => e.name == s,
         orElse: () => MessageStatus.sent,
       );
+    }
 
     return MessageModel(
       id: (json['id'] ?? json['id_mensaje'] ?? '').toString(),

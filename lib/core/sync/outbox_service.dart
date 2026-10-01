@@ -129,8 +129,9 @@ class OutboxService {
         ok++;
       } catch (e) {
         failed++;
-        if (isNetworkError(e))
+        if (isNetworkError(e)) {
           continue; // aún offline: reintentar luego sin bump
+        }
         final i = _items.indexWhere((a) => a.id == action.id);
         if (i >= 0) {
           final bumped = _items[i].bumped();

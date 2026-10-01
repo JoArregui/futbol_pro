@@ -17,12 +17,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final _scrollController = ScrollController();
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients)
+      if (_scrollController.hasClients) {
         _scrollController.animateTo(
           0.0,
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
+      }
     });
   }
 

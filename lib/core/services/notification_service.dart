@@ -162,5 +162,9 @@ class NotificationServiceImpl implements NotificationService {
     );
   }
 
-  void dispose() => _onMessageCtrl.close();
+  Future<void> dispose() async {
+    await _fgSub?.cancel();
+    _fgSub = null;
+    await _onMessageCtrl.close();
+  }
 }

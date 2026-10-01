@@ -121,7 +121,7 @@ class MessageBubble extends StatelessWidget {
                                 imageUrl: message.imageUrl!,
                                 width: 220,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => Container(
+                                placeholder: (_, _) => Container(
                                   width: 220,
                                   height: 140,
                                   color: Colors.black12,
@@ -135,7 +135,7 @@ class MessageBubble extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                errorWidget: (_, __, ___) => Container(
+                                errorWidget: (_, _, _) => Container(
                                   width: 220,
                                   height: 80,
                                   color: Colors.black12,

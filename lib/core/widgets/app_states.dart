@@ -135,8 +135,8 @@ class AppSkeletonList extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: count,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) => AppCard(
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) => AppCard(
         child: Row(
           children: [
             _pulse(isDark, 48, 48, 14),
@@ -236,7 +236,7 @@ class _OutboxBannerState extends State<OutboxBanner> {
       return const SizedBox.shrink();
     }
     return ValueListenableBuilder<int>(
-      valueListenable: outbox!.pendingCount,
+      valueListenable: outbox.pendingCount,
       builder: (context, count, _) {
         if (count == 0) return const SizedBox.shrink();
         return Container(

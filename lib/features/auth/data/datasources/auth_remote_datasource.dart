@@ -93,10 +93,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final player = _parseAuthResponse(jsonResponse);
         final token = jsonResponse['token']?.toString();
         final refreshToken = jsonResponse['refreshToken']?.toString();
-        if (player.id.isEmpty)
+        if (player.id.isEmpty) {
           throw const ServerException(
             message: 'Respuesta inválida del servidor',
           );
+        }
         await _persist(player, token, refreshToken);
         return player;
       } else if (response.statusCode == 401) {

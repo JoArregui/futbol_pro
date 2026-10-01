@@ -110,12 +110,13 @@ class _MisReservasPageState extends State<MisReservasPage> {
                                                 final url = Uri.tryParse(
                                                   r.approvalUrl!,
                                                 );
-                                                if (url != null)
+                                                if (url != null) {
                                                   await launchUrl(
                                                     url,
                                                     mode: LaunchMode
                                                         .externalApplication,
                                                   );
+                                                }
                                               },
                                         child: const Text('Abrir PayPal'),
                                       ),
