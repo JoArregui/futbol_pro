@@ -65,4 +65,9 @@ abstract class AdminRepository {
   });
   Future<Either<Failure, bool>> deleteReferee({required String id});
   Future<Either<Failure, List<AdminAudit>>> getAudit({int limit});
+  Future<Either<Failure, AdminPlayer>> createManualPlayer({
+    required String apodo,
+    String? nombre,
+    String? email,
+  });
 }

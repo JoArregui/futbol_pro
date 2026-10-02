@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/services/biometric_auth_service.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/register_user.dart';
+import '../../domain/usecases/forgot_password.dart';
+import '../../domain/usecases/reset_password.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 part 'auth_event.dart';
@@ -12,12 +16,16 @@ part 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUser loginUser;
   final RegisterUser registerUser;
+  final ForgotPassword forgotPassword;
+  final ResetPassword resetPassword;
   final AuthRepository repository;
   final BiometricAuthService biometricService;
 
   AuthBloc({
     required this.loginUser,
     required this.registerUser,
+    required this.forgotPassword,
+    required this.resetPassword,
     required this.repository,
     BiometricAuthService? biometricService,
   }) : biometricService = biometricService ?? BiometricAuthService(),
@@ -25,6 +33,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AppStarted>(_onAppStarted);
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
+    on<ForgotPasswordRequested>(_onForgotPasswordRequested);
+    on<ResetPasswordRequested>(_onResetPasswordRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<BiometricUnlockRequested>(_onBiometricUnlock);
     on<BiometricEnrollmentRequested>(_onBiometricEnroll);
@@ -84,6 +94,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
+  Future<void> _onForgotPasswordRequested(
+    ForgotPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    final result = await forgotPassword(ForgotPasswordParams(email: event.email));
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (_) => emit(ForgotPasswordSent(event.email)),
+    );
+  }
+
+  Future<void> _onResetPasswordRequested(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    final result = await resetPassword(ResetPasswordParams(token: event.token, password: event.password));
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (_) => emit(const ResetPasswordSuccess()),
+    );
+  }
+
   Future<void> _onBiometricUnlock(
     BiometricUnlockRequested event,
     Emitter<AuthState> emit,
@@ -104,12 +138,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       userId = player.id;
       role = player.role;
     }
+    debugPrint('🔐 Intentando desbloqueo biométrico para user: $userId');
+    emit(AuthBiometricLoading(userId, role: role));
     final ok = await biometricService.authenticate(
       reason: 'Desbloquea Futbol Pro con tu huella',
     );
+    debugPrint('🔐 Resultado biometric: $ok');
     if (ok) {
       emit(AuthAuthenticated(userId, role: role));
     } else {
+      debugPrint('🔐 Biométrico falló o cancelado, manteniendo AuthBiometricRequired');
       emit(AuthBiometricRequired(userId, role: role));
     }
   }

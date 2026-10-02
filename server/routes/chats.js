@@ -237,7 +237,7 @@ router.post('/:roomId/messages', async (req, res) => {
         try {
             const io = req.app.get('io');
             if (io) {
-                io.to(`room_${roomId}`).emit('new_message', {
+                const payload = {
                     id: messageId,
                     senderId,
                     senderName: cleanSender,
@@ -246,11 +246,14 @@ router.post('/:roomId/messages', async (req, res) => {
                     timestamp: now.getTime(),
                     roomId,
                     clientId: (typeof clientId === 'string' ? clientId.slice(0, 64) : null),
-                });
-                // Notificar lista de chats para actualizar lastMessage
+                };
+                io.to(`room_${roomId}`).emit('new_message', payload);
+                // Entregar también por user_* por si el cliente no está en room_*
+                // (reconexión o join_room tardío). El cliente deduplica por id.
                 const [members] = await pool.execute(`SELECT id_miembro_fk FROM chats_miembros WHERE id_chat_fk = ?`, [roomId]);
                 for (const m of members) {
-                    io.to(`user_${m.id_miembro_fk}`).emit('chat_updated', { roomId, lastMessage: { id: messageId, senderId, senderName: cleanSender, text: cleanText, imageUrl, timestamp: now.getTime() } });
+                    io.to(`user_${m.id_miembro_fk}`).emit('new_message', payload);
+                    io.to(`user_${m.id_miembro_fk}`).emit('chat_updated', { roomId, lastMessage: payload });
                 }
             }
         } catch (_) {}

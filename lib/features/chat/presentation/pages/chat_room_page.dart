@@ -15,6 +15,9 @@ class ChatRoomPage extends StatefulWidget {
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
   final _scrollController = ScrollController();
+  ChatBloc? _bloc;
+  bool _requestedRoom = false;
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -28,7 +31,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _bloc ??= context.read<ChatBloc>();
+    if (!_requestedRoom) {
+      _requestedRoom = true;
+      _bloc!.add(ChatRoomSelected(widget.chatRoomId));
+    }
+  }
+
+  @override
   void dispose() {
+    _bloc?.add(ChatRoomLeft(widget.chatRoomId));
     _scrollController.dispose();
     super.dispose();
   }

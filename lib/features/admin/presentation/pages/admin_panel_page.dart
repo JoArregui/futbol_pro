@@ -268,7 +268,7 @@ class _DashboardTab extends StatelessWidget {
       _MiniStat('Árbitros', '${state.referees.length}', Icons.sports_rounded),
       _MiniStat(
         'Ingresos',
-        '\$${state.finance.totalRevenue.toStringAsFixed(0)}',
+        '${state.finance.totalRevenue.toStringAsFixed(0)} €',
         Icons.payments_rounded,
       ),
     ];
@@ -297,7 +297,7 @@ class _DashboardTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Mes: \$${state.finance.monthRevenue.toStringAsFixed(0)} · Pendiente: \$${state.finance.pending.toStringAsFixed(0)}',
+                      'Mes: ${state.finance.monthRevenue.toStringAsFixed(0)} € · Pendiente: ${state.finance.pending.toStringAsFixed(0)} €',
                       style: const TextStyle(
                         color: AppColors.lime,
                         fontWeight: FontWeight.w700,
@@ -727,6 +727,19 @@ class _SquadManagerState extends State<_SquadManager> {
             'Añadir jugador',
             style: TextStyle(fontWeight: FontWeight.w800),
           ),
+          // Botón para crear jugador manual (sin cuenta en la app)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.person_add_rounded, color: AppColors.lime),
+              label: const Text('Crear jugador manual', style: TextStyle(color: AppColors.lime)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.lime),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _showCreateManualPlayerDialog(context),
+            ),
+          ),
           ...available.take(20).map((p) {
             final pl = p as dynamic;
             return ListTile(
@@ -749,6 +762,95 @@ class _SquadManagerState extends State<_SquadManager> {
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCreateManualPlayerDialog(BuildContext context) async {
+    final nickCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Crear jugador manual'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nickCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Apodo (nickname) *',
+                  hintText: 'Ej: ElMatador9',
+                  prefixIcon: Icon(Icons.tag_rounded),
+                ),
+                validator: (v) => (v == null || v.trim().length < 2)
+                    ? 'Mínimo 2 caracteres.'
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre completo',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Email (opcional)',
+                  hintText: 'jugador@email.com',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  if (!v.contains('@')) return 'Email inválido.';
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              Navigator.pop(context);
+              
+              final messenger = ScaffoldMessenger.of(context);
+              final result = await widget.bloc.repository.createManualPlayer(
+                apodo: nickCtrl.text.trim(),
+                nombre: nameCtrl.text.trim().isEmpty ? null : nameCtrl.text.trim(),
+                email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+              );
+              
+              result.fold(
+                (failure) => messenger.showSnackBar(
+                  SnackBar(content: Text('Error: ${failure.message}'), backgroundColor: AppColors.danger),
+                ),
+                (player) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Jugador "${player.nickname}" creado ✓')),
+                  );
+                  _load();
+                  widget.bloc.add(const AdminLoadRequested());
+                },
+              );
+            },
+            child: const Text('Crear'),
+          ),
         ],
       ),
     );
@@ -1621,7 +1723,7 @@ class _MoneyCard extends StatelessWidget {
           Icon(Icons.payments_rounded, color: accent, size: 22),
           const SizedBox(height: 8),
           Text(
-            '\$${value.toStringAsFixed(0)}',
+            '${value.toStringAsFixed(0)} €',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
           Text(

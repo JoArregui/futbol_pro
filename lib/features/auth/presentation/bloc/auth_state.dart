@@ -27,6 +27,14 @@ class AuthBiometricRequired extends AuthState {
   List<Object> get props => [userId, role];
 }
 
+class AuthBiometricLoading extends AuthState {
+  final String userId;
+  final String role;
+  const AuthBiometricLoading(this.userId, {this.role = 'player'});
+  @override
+  List<Object> get props => [userId, role];
+}
+
 class AuthUnauthenticated extends AuthState {}
 
 class AuthError extends AuthState {
@@ -34,4 +42,15 @@ class AuthError extends AuthState {
   const AuthError(this.message);
   @override
   List<Object> get props => [message];
+}
+
+class ForgotPasswordSent extends AuthState {
+  final String email;
+  const ForgotPasswordSent(this.email);
+  @override
+  List<Object> get props => [email];
+}
+
+class ResetPasswordSuccess extends AuthState {
+  const ResetPasswordSuccess();
 }

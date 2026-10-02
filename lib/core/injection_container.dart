@@ -16,6 +16,8 @@ import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/usecases/login_user.dart';
 import '../features/auth/domain/usecases/register_user.dart';
+import '../features/auth/domain/usecases/forgot_password.dart';
+import '../features/auth/domain/usecases/reset_password.dart';
 import '../features/auth/domain/usecases/subscribe_to_notifications.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 
@@ -147,19 +149,23 @@ Future<void> init() async {
   );
   debugPrint('  ✅ AuthRepository registrado');
 
-  // Domain (Use Cases)
+// Domain (Use Cases)
   sl.registerLazySingleton(
     () => SubscribeToNotifications(sl<NotificationService>()),
   );
   sl.registerLazySingleton(() => LoginUser(sl<AuthRepository>()));
   sl.registerLazySingleton(() => RegisterUser(sl<AuthRepository>()));
-  debugPrint('  ✅ UseCases registrados');
+  sl.registerLazySingleton(() => ForgotPassword(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => ResetPassword(sl<AuthRepository>()));
+  debugPrint('  ✅ UseCases registrados');
 
   // Presentation (BLoC)
   sl.registerFactory(
     () => AuthBloc(
       loginUser: sl<LoginUser>(),
       registerUser: sl<RegisterUser>(),
+      forgotPassword: sl<ForgotPassword>(),
+      resetPassword: sl<ResetPassword>(),
       repository: sl<AuthRepository>(),
     ),
   );

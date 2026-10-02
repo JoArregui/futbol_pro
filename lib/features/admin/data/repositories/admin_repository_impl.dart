@@ -314,4 +314,21 @@ class AdminRepositoryImpl implements AdminRepository {
       return _err(e);
     }
   }
+
+  @override
+  Future<Either<Failure, AdminPlayer>> createManualPlayer({
+    required String apodo,
+    String? nombre,
+    String? email,
+  }) async {
+    try {
+      return Right(await remote.createManualPlayer(
+        apodo: apodo,
+        nombre: nombre,
+        email: email,
+      ));
+    } catch (e) {
+      return _err(e);
+    }
+  }
 }

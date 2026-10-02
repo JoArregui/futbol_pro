@@ -7,6 +7,8 @@ import 'package:futbol_pro/routes/app_routes.dart';
 import '../core/routing/go_router_refresh_stream.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
+import '../features/auth/presentation/pages/forgot_password_page.dart';
+import '../features/auth/presentation/pages/reset_password_page.dart';
 import '../features/auth/presentation/widgets/auth_initializer_widget.dart';
 import '../features/chat/presentation/pages/chat_list_page.dart';
 import '../features/chat/presentation/pages/chat_room_page.dart';
@@ -140,6 +142,18 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          final token = state.uri.queryParameters['token'];
+          return ResetPasswordPage(email: email, token: token);
+        },
       ),
       GoRoute(
         path: AppRoutes.splash,

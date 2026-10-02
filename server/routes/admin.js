@@ -1,5 +1,6 @@
 const express = require('express');
 const pool = require('../db');
+const crypto = require('crypto');
 const { requireSuperAdmin } = require('../middleware/auth');
 const { logAudit } = require('../services/audit');
 const notify = require('../services/notify');
@@ -228,19 +229,8 @@ async function ensureAdminTables() {
           await db.exec("ALTER TABLE campos ADD COLUMN estado TEXT DEFAULT 'disponible'");
         }
       } catch (_) {}
-      const r = await db.get('SELECT COUNT(*) as c FROM arbitros');
-      if (r.c === 0) {
-        await db.exec(`INSERT INTO arbitros (nombre, rating, tarifa, estado) VALUES
-          ('Carlos Ruiz', 4.8, 25, 'activo'),
-          ('Miguel Torres', 4.6, 20, 'activo'),
-          ('Jorge Salas', 4.9, 30, 'activo')`);
-      }
-      const t = await db.get('SELECT COUNT(*) as c FROM torneos');
-      if (t.c === 0) {
-        await db.exec(`INSERT INTO torneos (nombre, fase, equipos) VALUES
-          ('Copa Relampago', 'Semifinal', 8),
-          ('Supercopa Barrial', 'Grupos', 16)`);
-      }
+      // ELIMINADO: seed hardcoded de árbitros y torneos
+      // Ahora se crean manualmente desde el panel admin
     }
   } catch (_) {}
 }
@@ -310,6 +300,62 @@ router.get('/players', async (req, res) => {
     })));
   } catch (e) {
     res.json([]);
+  }
+});
+
+// POST /api/v1/admin/players — crear jugador manual (sin cuenta auth)
+router.post('/players', async (req, res) => {
+  const { nombre, apodo, email } = req.body || {};
+  const nick = (apodo || '').toString().trim();
+  const nom = (nombre || '').toString().trim();
+  const em = (email || '').toString().trim().toLowerCase();
+  
+  if (!nick) return res.status(400).json({ message: 'Apodo (nickname) requerido.' });
+  if (nick.length < 2) return res.status(400).json({ message: 'Apodo demasiado corto (mín 2).' });
+  
+  // Si se proporciona email, verificar que no exista en auth
+  if (em && em.includes('@')) {
+    const [exAuth] = await pool.execute('SELECT id_auth FROM auth WHERE email = ?', [em]);
+    if (exAuth.length > 0) {
+      return res.status(409).json({ message: 'Ese email ya tiene cuenta en la app.' });
+    }
+    const [exPerfil] = await pool.execute('SELECT uid FROM perfiles WHERE email = ?', [em]);
+    if (exPerfil.length > 0) {
+      return res.status(409).json({ message: 'Ese email ya tiene perfil.' });
+    }
+  }
+  
+  try {
+    // Crear entrada en perfiles SIN auth (uid = null o 0, pero SQLite no permite FK null en PK)
+    // Usamos un uid negativo temporal o creamos un auth "fantasma"
+    // Mejor: creamos un auth con password aleatorio (nunca se usará) y rol 'player'
+    const bcrypt = require('bcryptjs');
+    const fakePass = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    const [authResult] = await pool.execute(
+      'INSERT INTO auth (email, password, role) VALUES (?, ?, ?)',
+      [em || `manual_${nick}_${Date.now()}@futbolpro.local`, fakePass, 'player']
+    );
+    const uid = authResult.insertId;
+    
+    await pool.execute(
+      `INSERT INTO perfiles (uid, email, apodo, nombre, partidos_jugados, victorias, rating, fecha_creacion)
+       VALUES (?, ?, ?, ?, 0, 0, 0, datetime('now'))`,
+      [uid, em || `manual_${uid}@futbolpro.local`, nick, nom]
+    );
+    
+    await logAudit(req, 'create-manual-player', 'player', String(uid), { apodo: nick, nombre: nom, email: em });
+    
+    res.status(201).json({ 
+      ok: true, 
+      id: String(uid), 
+      name: nom, 
+      nickname: nick,
+      email: em,
+      manual: true 
+    });
+  } catch (e) {
+    console.error('Error creando jugador manual:', e);
+    res.status(500).json({ message: 'Error creando jugador.' });
   }
 });
 
@@ -508,6 +554,20 @@ router.post('/teams/:id/players', async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Equipo no encontrado.' });
     const [ex] = await pool.execute('SELECT uid FROM perfiles WHERE uid = ?', [playerId]);
     if (ex.length === 0) return res.status(404).json({ message: 'Jugador no existe.' });
+    
+    // Verificar si el jugador ya está en OTRO equipo
+    const [otherTeams] = await pool.execute(
+      `SELECT id_equipo, nombre FROM liga_equipos 
+       WHERE plantilla LIKE ? AND id_equipo != ?`,
+      [`%${playerId}%`, req.params.id]
+    );
+    if (otherTeams.length > 0) {
+      return res.status(409).json({ 
+        message: `El jugador ya está en el equipo "${otherTeams[0].nombre}" (ID: ${otherTeams[0].id_equipo}). Un jugador solo puede estar en un equipo.`,
+        equipoExistente: otherTeams[0].nombre
+      });
+    }
+    
     let ids = [];
     try { ids = JSON.parse(rows[0].plantilla || '[]').map(String); } catch (_) {}
     if (!ids.includes(playerId)) {

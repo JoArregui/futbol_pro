@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:local_auth/local_auth.dart';
 
 /// Huella / Face ID — desbloqueo rápido OPCIONAL, desactivado por defecto.
@@ -30,14 +32,18 @@ class BiometricAuthService {
 
   Future<bool> authenticate({String reason = 'Confirma tu identidad'}) async {
     try {
-      return await _auth.authenticate(
+      debugPrint('🔐 Llamando a local_auth.authenticate...');
+      final result = await _auth.authenticate(
         localizedReason: reason,
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: true,
         ),
       );
-    } catch (_) {
+      debugPrint('🔐 local_auth.authenticate resultado: $result');
+      return result;
+    } catch (e) {
+      debugPrint('🔐 Error en biometric authenticate: $e');
       return false;
     }
   }

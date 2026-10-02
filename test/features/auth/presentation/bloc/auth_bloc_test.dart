@@ -5,6 +5,8 @@ import 'package:futbol_pro/core/errors/failures.dart';
 import 'package:futbol_pro/features/auth/domain/repositories/auth_repository.dart';
 import 'package:futbol_pro/features/auth/domain/usecases/login_user.dart';
 import 'package:futbol_pro/features/auth/domain/usecases/register_user.dart';
+import 'package:futbol_pro/features/auth/domain/usecases/forgot_password.dart';
+import 'package:futbol_pro/features/auth/domain/usecases/reset_password.dart';
 import 'package:futbol_pro/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:futbol_pro/features/match_scheduling/domain/entities/player.dart';
 
@@ -14,10 +16,16 @@ class MockLoginUser extends Mock implements LoginUser {}
 
 class MockRegisterUser extends Mock implements RegisterUser {}
 
+class MockForgotPassword extends Mock implements ForgotPassword {}
+
+class MockResetPassword extends Mock implements ResetPassword {}
+
 void main() {
   late MockAuthRepository mockRepo;
   late MockLoginUser mockLogin;
   late MockRegisterUser mockRegister;
+  late MockForgotPassword mockForgot;
+  late MockResetPassword mockReset;
 
   const tPlayer = Player(
     id: 'uid-123',
@@ -31,10 +39,14 @@ void main() {
     mockRepo = MockAuthRepository();
     mockLogin = MockLoginUser();
     mockRegister = MockRegisterUser();
+    mockForgot = MockForgotPassword();
+    mockReset = MockResetPassword();
     registerFallbackValue(const LoginParams(email: 'a@a.com', password: '123'));
     registerFallbackValue(
       const RegisterParams(email: 'a@a.com', password: '123', nickname: 'nick'),
     );
+    registerFallbackValue(const ForgotPasswordParams(email: 'a@a.com'));
+    registerFallbackValue(const ResetPasswordParams(token: 'token', password: '12345678'));
     when(() => mockRepo.isBiometricEnabled()).thenAnswer((_) async => false);
     when(() => mockRepo.setBiometricEnabled(any())).thenAnswer((_) async {});
   });
@@ -42,6 +54,8 @@ void main() {
   AuthBloc buildBloc() => AuthBloc(
     loginUser: mockLogin,
     registerUser: mockRegister,
+    forgotPassword: mockForgot,
+    resetPassword: mockReset,
     repository: mockRepo,
   );
 

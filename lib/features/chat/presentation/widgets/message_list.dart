@@ -9,6 +9,7 @@ class MessageList extends StatelessWidget {
   final ScrollController scrollController;
   final bool isGroupChat;
   final bool isTyping;
+
   const MessageList({
     super.key,
     required this.messages,
@@ -38,26 +39,31 @@ class MessageList extends StatelessWidget {
         ),
       );
     }
-    // Agrupar por fecha
+
+    // Agrupar por fecha de arriba a abajo
     final items = <Widget>[];
     DateTime? lastDate;
+
     for (int i = 0; i < messages.length; i++) {
       final m = messages[i];
       final d = DateTime(m.timestamp.year, m.timestamp.month, m.timestamp.day);
+
       if (lastDate == null || d != lastDate) {
         items.add(_DateChip(label: _dateLabel(m.timestamp)));
         lastDate = d;
       }
+
       final isMe = m.senderId == currentUserId;
       items.add(
         MessageBubble(message: m, isMe: isMe, isGroupChat: isGroupChat),
       );
     }
+
     if (isTyping) {
       items.add(const _TypingIndicator());
     }
+
     return ListView.builder(
-      reverse: true,
       controller: scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       itemCount: items.length,
@@ -69,6 +75,7 @@ class MessageList extends StatelessWidget {
 class _DateChip extends StatelessWidget {
   final String label;
   const _DateChip({required this.label});
+
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.symmetric(vertical: 8),
@@ -100,6 +107,7 @@ class _DateChip extends StatelessWidget {
 
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
+
   @override
   Widget build(BuildContext context) => Align(
     alignment: Alignment.centerLeft,
@@ -140,12 +148,14 @@ class _TypingIndicator extends StatelessWidget {
 class _Dot extends StatefulWidget {
   final int delay;
   const _Dot({required this.delay});
+
   @override
   State<_Dot> createState() => _DotState();
 }
 
 class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
   late AnimationController _c;
+
   @override
   void initState() {
     super.initState();

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'firebase_options.dart';
 
@@ -31,8 +32,12 @@ const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicialización de datos de localización para formateo de fechas
+  await initializeDateFormatting('es', null);
+
   debugPrint(
-    '⚙️ ${AppConfig.appName} | flavor=${AppConfig.flavor.name} | api=${AppConfig.apiUrl()}',
+    '⚙️ ${AppConfig.appName} | flavor=${AppConfig.flavor.name} \vert{} api=${AppConfig.apiUrl()}',
   );
 
   // Reporte global de errores: siempre a consola, a Sentry solo con DSN.

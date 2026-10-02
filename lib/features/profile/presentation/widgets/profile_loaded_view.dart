@@ -96,6 +96,23 @@ class _ProfileLoadedViewState extends State<ProfileLoadedView> {
             const _BiometricTile(),
             const SizedBox(height: 16),
 
+            // Botón de Cerrar Sesión
+            OutlinedButton.icon(
+              onPressed: () {
+                context.read<AuthBloc>().add(const LogoutRequested());
+              },
+              icon: const Icon(Icons.logout, color: Colors.red),
+              label: const Text(
+                'Cerrar sesión',
+                style: TextStyle(color: Colors.red, fontSize: 16),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: const BorderSide(color: Colors.red),
+              ),
+            ),
+            const SizedBox(height: 12),
+
             // Botón de Guardar
             ElevatedButton(
               onPressed: widget.isUpdating ? null : _submitUpdate,
@@ -369,14 +386,18 @@ class _BiometricTileState extends State<_BiometricTile> {
           'Opcional y apagado por defecto. Solo sirve para entrar más rápido al volver a la app, después de haber iniciado sesión una vez con email + contraseña. No cambia tu contraseña.',
         ),
         value: _enabled,
-        onChanged: (v) {
-          context.read<AuthBloc>().add(BiometricEnrollmentRequested(v));
-          setState(() => _enabled = v);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(v ? 'Huella activada' : 'Huella desactivada'),
-            ),
-          );
+        onChanged: (v) async {
+          // Esperar a que se guarde en el repositorio antes de actualizar UI
+          final messenger = ScaffoldMessenger.of(context);
+          await context.read<AuthBloc>().repository.setBiometricEnabled(v);
+          if (mounted) {
+            setState(() => _enabled = v);
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(v ? 'Huella activada' : 'Huella desactivada'),
+              ),
+            );
+          }
         },
       ),
     );

@@ -50,7 +50,7 @@ class MainScaffold extends StatelessWidget {
                 Expanded(child: child),
               ],
             ),
-            const DraggableFloatingChatButton(),
+            if (!hideBottomBar) const DraggableFloatingChatButton(),
           ],
         ),
       ),

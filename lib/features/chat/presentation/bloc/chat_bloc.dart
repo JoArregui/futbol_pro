@@ -28,9 +28,38 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final SocketService socketService;
   final NotificationService? notifications;
   Timer? _typingTimer;
+  List<ChatRoom> _cachedRooms = const [];
 
   String get currentUserId => authRepository.getCurrentUserId();
   String get currentUserName => authRepository.getCurrentUserName();
+
+  static String _roomIdOf(Map<String, dynamic> data) =>
+      (data['roomId'] ?? data['id_chat'] ?? data['chatId'] ?? '')
+          .toString()
+          .trim();
+
+  static bool _sameId(String a, String b) => a.trim() == b.trim();
+
+  Message _messageFromPayload(Map<String, dynamic> data) {
+    final imageUrl = data['imageUrl']?.toString();
+    return Message(
+      id:
+          data['id']?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      senderId: data['senderId']?.toString() ?? '',
+      senderName: data['senderName']?.toString() ?? '',
+      text: data['text']?.toString() ?? '',
+      timestamp: DateTime.fromMillisecondsSinceEpoch(
+        (data['timestamp'] as num?)?.toInt() ??
+            DateTime.now().millisecondsSinceEpoch,
+      ),
+      status: MessageStatus.delivered,
+      type: imageUrl != null && imageUrl.isNotEmpty
+          ? MessageType.image
+          : MessageType.text,
+      imageUrl: imageUrl,
+    );
+  }
 
   ChatBloc({
     required this.getMessages,
@@ -44,6 +73,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this.notifications,
   }) : super(ChatInitial()) {
     on<ChatRoomsSubscriptionRequested>(_onRoomsFetchRequested);
+    on<ChatRoomsBackgroundRefreshRequested>(_onRoomsBackgroundRefreshRequested);
     on<ChatRoomsReceived>(_onRoomsReceived);
     on<ChatRoomSelected>(_onRoomSelected);
     on<ChatMessagesSubscriptionRequested>(_onMessagesFetchRequested);
@@ -55,14 +85,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatTypingChanged>(_onTypingChanged);
     on<ChatSocketMessageReceived>(_onSocketMessage);
     on<ChatSocketTypingReceived>(_onSocketTyping);
+    on<ChatRoomLeft>(_onRoomLeft);
     _initSocket();
   }
 
   void _initSocket() {
     if (currentUserId.isEmpty) return;
     try {
-      socketService.connect(userId: currentUserId);
-      _registerSocketHandlers();
       // Re-conecta con JWT cuando esté disponible (server exige auth).
       authRepository.getAuthToken().then((t) {
         if (t != null && t.isNotEmpty) {
@@ -79,6 +108,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (currentUserId.isEmpty) return;
     try {
       authRepository.getAuthToken().then((t) {
+        if (t == null || t.isEmpty) return;
         socketService.connect(userId: currentUserId, token: t);
         _registerSocketHandlers();
       });
@@ -87,34 +117,41 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   void _registerSocketHandlers() {
     socketService.onNewMessage((data) {
-      final roomId = data['roomId']?.toString() ?? '';
-      final imageUrl = data['imageUrl']?.toString();
-      final msg = Message(
-        id:
-            data['id']?.toString() ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        senderId: data['senderId']?.toString() ?? '',
-        senderName: data['senderName']?.toString() ?? '',
-        text: data['text']?.toString() ?? '',
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-          (data['timestamp'] as num?)?.toInt() ??
-              DateTime.now().millisecondsSinceEpoch,
-        ),
-        status: MessageStatus.delivered,
-        type: imageUrl != null ? MessageType.image : MessageType.text,
-        imageUrl: imageUrl,
-      );
+      final roomId = _roomIdOf(data);
       final clientId = data['clientId']?.toString();
       add(
         ChatSocketMessageReceived(
-          message: msg,
+          message: _messageFromPayload(data),
           roomId: roomId,
           clientId: clientId,
         ),
       );
     });
-    socketService.onChatUpdated((_) => add(ChatRoomsSubscriptionRequested()));
-    socketService.onChatCreated((_) => add(ChatRoomsSubscriptionRequested()));
+    socketService.onChatUpdated((data) {
+      final roomId = _roomIdOf(data);
+      final last = data['lastMessage'];
+      if (roomId.isNotEmpty && last is Map) {
+        final lastMap = last.map((k, v) => MapEntry(k.toString(), v));
+        final senderId = lastMap['senderId']?.toString() ?? '';
+        final inThisRoom =
+            state is ChatRoomSelectedState &&
+            _sameId((state as ChatRoomSelectedState).room.id, roomId);
+        // El propio eco ya va por new_message + mensaje optimista.
+        if (!(inThisRoom && senderId == currentUserId)) {
+          add(
+            ChatSocketMessageReceived(
+              message: _messageFromPayload(lastMap),
+              roomId: roomId,
+              clientId: lastMap['clientId']?.toString(),
+            ),
+          );
+        }
+      }
+      add(ChatRoomsBackgroundRefreshRequested());
+    });
+    socketService.onChatCreated(
+      (_) => add(ChatRoomsBackgroundRefreshRequested()),
+    );
     socketService.onTyping((data) {
       final roomId = data['roomId']?.toString() ?? '';
       final userId = data['userId']?.toString() ?? '';
@@ -139,7 +176,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatRoomsSubscriptionRequested event,
     Emitter<ChatState> emit,
   ) async {
-    emit(ChatLoading());
+    // Nunca desmontar la conversación abierta con ChatLoading.
+    if (state is! ChatRoomSelectedState) {
+      emit(ChatLoading());
+    }
 
     final failureOrRooms = await getChatRooms(
       UserIdParams(userId: currentUserId),
@@ -147,9 +187,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     failureOrRooms.fold(
       (failure) {
+        if (state is ChatRoomSelectedState) return;
         emit(ChatError(failure.errorMessage));
       },
       (rooms) {
+        _cachedRooms = rooms;
+        if (state is ChatRoomSelectedState) return;
         emit(ChatRoomsLoaded(rooms: rooms));
       },
     );
@@ -157,7 +200,30 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   // 2. Mantenemos el _onRoomsReceived solo si queremos mantener la arquitectura de eventos
   void _onRoomsReceived(ChatRoomsReceived event, Emitter<ChatState> emit) {
+    _cachedRooms = event.rooms;
+    if (state is ChatRoomSelectedState) return;
     emit(ChatRoomsLoaded(rooms: event.rooms));
+  }
+
+  Future<void> _onRoomsBackgroundRefreshRequested(
+    ChatRoomsBackgroundRefreshRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    final failureOrRooms = await getChatRooms(
+      UserIdParams(userId: currentUserId),
+    );
+
+    failureOrRooms.fold(
+      // La sala abierta ya tiene sus mensajes por Socket.IO. Un fallo de
+      // refresco de la lista no debe sustituirla por una pantalla de carga.
+      (_) {},
+      (rooms) {
+        _cachedRooms = rooms;
+        if (state is! ChatRoomSelectedState) {
+          emit(ChatRoomsLoaded(rooms: rooms));
+        }
+      },
+    );
   }
 
   // ==================================================
@@ -167,48 +233,46 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatRoomSelected event,
     Emitter<ChatState> emit,
   ) async {
-    if (state is ChatLoading) {
-      return;
-    }
-
     if (state is ChatRoomSelectedState &&
-        (state as ChatRoomSelectedState).room.id == event.roomId) {
+        _sameId((state as ChatRoomSelectedState).room.id, event.roomId)) {
       add(ChatMarkAsRead(event.roomId));
+      try {
+        socketService.joinRoom(event.roomId);
+      } catch (_) {}
       return;
     }
 
-    if (state is ChatRoomsLoaded) {
-      final roomsState = state as ChatRoomsLoaded;
+    final rooms = state is ChatRoomsLoaded
+        ? (state as ChatRoomsLoaded).rooms
+        : _cachedRooms;
 
-      final room = roomsState.rooms.firstWhere(
-        (r) => r.id == event.roomId,
-        orElse: () => ChatRoom(
-          id: event.roomId,
-          title: 'Sala no encontrada',
-          memberIds: const [],
-          // 🟢 CORRECCIÓN: Agregar 'type' si es un parámetro requerido
-          // Asumiendo que existe un enum ChatRoomType con un valor por defecto.
-          type: ChatRoomType.private,
-        ),
+    ChatRoom room;
+    try {
+      room = rooms.firstWhere((r) => _sameId(r.id, event.roomId));
+    } catch (_) {
+      room = ChatRoom(
+        id: event.roomId,
+        title: 'Chat',
+        memberIds: const [],
+        type: ChatRoomType.private,
       );
+    }
 
-      if (room.title == 'Sala no encontrada') {
-        emit(
-          const ChatError(
-            'Error: La sala de chat solicitada no existe o no se encontró.',
-          ),
-        );
-        return;
-      }
+    emit(ChatRoomSelectedState(room: room));
+    try {
+      socketService.joinRoom(room.id);
+    } catch (_) {}
+    add(ChatMessagesSubscriptionRequested(event.roomId));
+    add(ChatMarkAsRead(event.roomId));
+  }
 
-      emit(ChatRoomSelectedState(room: room));
-      try {
-        socketService.joinRoom(room.id);
-      } catch (_) {}
-      add(ChatMessagesSubscriptionRequested(event.roomId));
-      add(ChatMarkAsRead(event.roomId));
-    } else {
-      emit(const ChatError('Error: Las salas de chat no se han cargado.'));
+  void _onRoomLeft(ChatRoomLeft event, Emitter<ChatState> emit) {
+    try {
+      socketService.leaveRoom(event.roomId);
+    } catch (_) {}
+    if (state is ChatRoomSelectedState &&
+        _sameId((state as ChatRoomSelectedState).room.id, event.roomId)) {
+      emit(ChatRoomsLoaded(rooms: _cachedRooms));
     }
   }
 
@@ -247,9 +311,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) {
     if (state is ChatRoomSelectedState) {
       final currentState = state as ChatRoomSelectedState;
-
-      emit(currentState.copyWith(messages: event.messages));
-
+      final byId = <String, Message>{for (final m in event.messages) m.id: m};
+      for (final m in currentState.messages) {
+        byId.putIfAbsent(m.id, () => m);
+      }
+      final merged = byId.values.toList()
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      emit(currentState.copyWith(messages: merged));
       add(ChatMarkAsRead(currentState.room.id));
     }
   }
@@ -349,8 +417,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
     res.fold((f) => emit(ChatError(f.message)), (room) {
-      emit(ChatRoomsLoaded(rooms: [room]));
-      add(ChatRoomsSubscriptionRequested());
+      _cachedRooms = [room, ..._cachedRooms.where((r) => r.id != room.id)];
+      emit(ChatRoomsLoaded(rooms: _cachedRooms));
+      add(ChatRoomsBackgroundRefreshRequested());
       add(ChatRoomSelected(room.id));
     });
   }
@@ -405,8 +474,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatSocketMessageReceived event,
     Emitter<ChatState> emit,
   ) {
-    if (state is ChatRoomSelectedState &&
-        (state as ChatRoomSelectedState).room.id == event.roomId) {
+    final inThisRoom =
+        state is ChatRoomSelectedState &&
+        _sameId((state as ChatRoomSelectedState).room.id, event.roomId);
+    if (inThisRoom) {
       final cur = state as ChatRoomSelectedState;
       // Reconciliación: si el eco trae clientId de nuestro optimista,
       // reemplazar el temp (mismo clientId) por el id servidor en vez de duplicar.
@@ -427,9 +498,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         emit(cur.copyWith(messages: [...cur.messages, event.message]));
       }
     } else {
-      // actualizar lista en background
-      add(ChatRoomsSubscriptionRequested());
-      // Aviso local si el mensaje es de otro y no estoy en esa sala.
+      add(ChatRoomsBackgroundRefreshRequested());
       if (event.message.senderId != currentUserId) {
         final preview = event.message.imageUrl != null
             ? '📷 ${event.message.text.isNotEmpty ? event.message.text : 'Foto'}'

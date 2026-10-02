@@ -53,17 +53,23 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               );
             }
+            // Solo mostrar bienvenida en login explícito (viene de AuthLoading),
+            // no en refresh de token ni desbloqueo biométrico.
             if (state is AuthAuthenticated) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('¡Bienvenido de vuelta, crack! ⚽'),
-                ),
-              );
+              final previous = context.read<AuthBloc>().state;
+              if (previous is AuthLoading) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('¡Bienvenido de vuelta, crack! ⚽'),
+                  ),
+                );
+              }
             }
           },
           child: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, authState) {
-              if (authState is AuthBiometricRequired) {
+              if (authState is AuthBiometricRequired || authState is AuthBiometricLoading) {
+                final isLoading = authState is AuthBiometricLoading;
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -100,11 +106,14 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 20),
                           AppButton(
-                            label: 'Desbloquear con huella',
+                            label: isLoading ? 'Autenticando...' : 'Desbloquear con huella',
                             icon: Icons.fingerprint,
-                            onPressed: () => context.read<AuthBloc>().add(
-                              const BiometricUnlockRequested(),
-                            ),
+                            loading: isLoading,
+                            onPressed: isLoading
+                                ? null
+                                : () => context.read<AuthBloc>().add(
+                                      const BiometricUnlockRequested(),
+                                    ),
                           ),
                           AppButton.ghost(
                             label: 'Usar otra cuenta',
@@ -246,6 +255,19 @@ class _LoginPageState extends State<LoginPage> {
                       label: 'Crear una cuenta nueva',
                       icon: Icons.person_add_alt_rounded,
                       onPressed: () => context.push(AppRoutes.register),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => context.push(AppRoutes.forgotPassword),
+                        child: const Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: TextStyle(
+                            color: AppColors.lime,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

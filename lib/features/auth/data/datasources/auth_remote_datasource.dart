@@ -25,6 +25,8 @@ abstract class AuthRemoteDataSource {
   Future<String?> getAuthToken();
   Future<bool> isBiometricEnabled();
   Future<void> setBiometricEnabled(bool v);
+  Future<void> forgotPassword(String email);
+  Future<void> resetPassword(String token, String password);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -357,4 +359,80 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> setBiometricEnabled(bool v) =>
       secureStorage.setBiometricEnabled(v);
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    final url = Uri.parse('$_kBaseUrl/forgot-password');
+    try {
+      final response = await client
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email}),
+          )
+          .timeout(AppConsts.httpTimeout);
+
+      if (response.statusCode != 200) {
+        String serverMsg = response.body;
+        try {
+          serverMsg =
+              (jsonDecode(response.body) as Map)['message']?.toString() ??
+                  serverMsg;
+        } catch (_) {}
+        throw ServerException(
+          message: 'Error al solicitar restablecimiento (${response.statusCode}): $serverMsg',
+        );
+      }
+    } on TimeoutException {
+      throw const ServerException(
+        message: 'Sin conexión al servidor. Inténtalo más tarde.',
+      );
+    } on ServerException {
+      rethrow;
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión: $e');
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String token, String password) async {
+    final url = Uri.parse('$_kBaseUrl/reset-password');
+    try {
+      final response = await client
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': token, 'password': password}),
+          )
+          .timeout(AppConsts.httpTimeout);
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 400) {
+        String msg = 'Token inválido o expirado.';
+        try {
+          msg = (jsonDecode(response.body) as Map)['message']?.toString() ?? msg;
+        } catch (_) {}
+        throw ServerException(message: msg);
+      } else {
+        String serverMsg = response.body;
+        try {
+          serverMsg =
+              (jsonDecode(response.body) as Map)['message']?.toString() ??
+                  serverMsg;
+        } catch (_) {}
+        throw ServerException(
+          message: 'Error al restablecer contraseña (${response.statusCode}): $serverMsg',
+        );
+      }
+    } on TimeoutException {
+      throw const ServerException(
+        message: 'Sin conexión al servidor. Inténtalo más tarde.',
+      );
+    } on ServerException {
+      rethrow;
+    } on Exception catch (e) {
+      throw ServerException(message: 'Fallo de conexión: $e');
+    }
+  }
 }

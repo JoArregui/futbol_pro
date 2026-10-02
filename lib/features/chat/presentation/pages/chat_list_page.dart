@@ -26,7 +26,13 @@ class _ChatListPageState extends State<ChatListPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
-        context.read<ChatBloc>().add(ChatRoomsSubscriptionRequested());
+        final bloc = context.read<ChatBloc>();
+        if (bloc.state is ChatRoomsLoaded ||
+            bloc.state is ChatRoomSelectedState) {
+          bloc.add(ChatRoomsBackgroundRefreshRequested());
+        } else {
+          bloc.add(ChatRoomsSubscriptionRequested());
+        }
       }
     });
   }
@@ -201,7 +207,7 @@ class _ChatListPageState extends State<ChatListPage>
                   }
                   return RefreshIndicator(
                     onRefresh: () async => context.read<ChatBloc>().add(
-                      ChatRoomsSubscriptionRequested(),
+                      ChatRoomsBackgroundRefreshRequested(),
                     ),
                     child: ListView.separated(
                       itemCount: filtered.length,

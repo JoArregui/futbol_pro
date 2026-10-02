@@ -315,6 +315,34 @@ class AdminRemoteDataSource {
 
   Future<bool> deleteReferee({required String id}) => _delete('/referees/$id');
 
+  Future<AdminPlayer> createManualPlayer({
+    required String apodo,
+    String? nombre,
+    String? email,
+  }) async {
+    final res = await client.post(
+      Uri.parse('$_base/players'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'apodo': apodo,
+        'nombre': nombre,
+        'email': email,
+      }),
+    );
+    if (res.statusCode == 201) {
+      final data = jsonDecode(res.body);
+      return AdminPlayer(
+        id: data['id'].toString(),
+        name: data['name']?.toString() ?? '',
+        nickname: data['nickname']?.toString() ?? '',
+        team: '',
+        goals: 0,
+        rating: 4.5,
+      );
+    }
+    throw ServerException(message: 'Error creando jugador: ${res.statusCode} ${res.body}');
+  }
+
   Future<List<AdminAudit>> getAudit({int limit = 30}) async {
     final res = await client.get(
       Uri.parse('$_base/audit?limit=$limit'),

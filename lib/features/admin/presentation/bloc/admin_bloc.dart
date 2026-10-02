@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
@@ -33,56 +36,44 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onLoad(AdminLoadRequested e, Emitter<AdminState> emit) async {
-    emit(AdminLoading());
-    // Paralelo real: 3 críticos + 8 extendidos. friendlies se deriva de
-    // matches (el datasource lo refetcheaba: doble GET + race).
-    final results = await Future.wait([
+  emit(AdminLoading());
+  try {
+    final (stats, users, matches, teams, players, fields) = await (
       repository.getStats(),
       repository.getUsers(),
       repository.getMatches(),
       repository.getTeams(),
       repository.getPlayers(),
       repository.getFields(),
+    ).wait.timeout(const Duration(seconds: 15));
+
+    final (referees, leagues, tournaments, finance, audit) = await (
       repository.getReferees(),
       repository.getLeagues(),
       repository.getTournaments(),
       repository.getFinance(),
       repository.getAudit(limit: 20),
-    ]);
-    final stats = results[0] as dynamic;
-    final users = results[1] as dynamic;
-    final matches = results[2] as dynamic;
-    final teams = results[3] as dynamic;
-    final players = results[4] as dynamic;
-    final fields = results[5] as dynamic;
-    final referees = results[6] as dynamic;
-    final leagues = results[7] as dynamic;
-    final tournaments = results[8] as dynamic;
-    final finance = results[9] as dynamic;
-    final audit = results[10] as dynamic;
+    ).wait.timeout(const Duration(seconds: 15));
 
-    if (stats.isLeft() || users.isLeft() || matches.isLeft()) {
-      final f =
-          stats.fold((l) => l, (_) => null) ??
-          users.fold((l) => l, (_) => null) ??
-          matches.fold((l) => l, (_) => null);
-      emit(AdminError((f as Failure).errorMessage));
-      return;
+    // Primer fallo (incl. 403 no superadmin)
+    final all = <Either<Failure, Object?>>[
+      stats, users, matches, teams, players, fields,
+      referees, leagues, tournaments, finance, audit,
+    ];
+    for (final r in all) {
+      final failure = r.fold<Failure?>((l) => l, (_) => null);
+      if (failure != null) {
+        emit(AdminError(failure.errorMessage));
+        return;
+      }
     }
 
     emit(
       AdminLoaded(
         stats: stats.getOrElse(
           () => const AdminStats(
-            users: 0,
-            matches: 0,
-            fields: 0,
-            bookings: 0,
-            chats: 0,
-            teams: 0,
-            leagues: 0,
-            referees: 0,
-            revenue: 0,
+            users: 0, matches: 0, fields: 0, bookings: 0,
+            chats: 0, teams: 0, leagues: 0, referees: 0, revenue: 0,
           ),
         ),
         users: users.getOrElse(() => []),
@@ -93,7 +84,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         referees: referees.getOrElse(() => []),
         leagues: leagues.getOrElse(() => []),
         friendlies: matches
-            .getOrElse(() => <AdminMatch>[])
+            .getOrElse(() => [])
             .where((m) => m.type.toUpperCase() == 'AMISTOSO')
             .toList(),
         tournaments: tournaments.getOrElse(() => []),
@@ -101,7 +92,12 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         audit: audit.getOrElse(() => []),
       ),
     );
+  } on TimeoutException {
+    emit(AdminError('Timeout cargando panel admin'));
+  } catch (err) {
+    emit(AdminError('Error cargando panel admin: $err'));
   }
+}
 
   Future<void> _onSearchUsers(
     AdminUsersSearchRequested e,

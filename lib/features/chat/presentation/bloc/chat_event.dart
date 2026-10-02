@@ -10,6 +10,9 @@ abstract class ChatEvent extends Equatable {
 /// 🟢 Evento para inicializar y cargar las salas de chat disponibles (La clase que faltaba).
 class ChatRoomsSubscriptionRequested extends ChatEvent {}
 
+/// Actualiza los metadatos de las salas sin desmontar la sala abierta.
+class ChatRoomsBackgroundRefreshRequested extends ChatEvent {}
+
 /// Evento disparado cuando se selecciona una sala de chat específica.
 class ChatRoomSelected extends ChatEvent {
   final String roomId;
@@ -61,6 +64,14 @@ class ChatMarkAsRead extends ChatEvent {
 
   const ChatMarkAsRead(this.roomId);
 
+  @override
+  List<Object> get props => [roomId];
+}
+
+/// Sale de la conversación abierta sin recargar la lista con ChatLoading.
+class ChatRoomLeft extends ChatEvent {
+  final String roomId;
+  const ChatRoomLeft(this.roomId);
   @override
   List<Object> get props => [roomId];
 }

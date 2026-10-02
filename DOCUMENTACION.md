@@ -59,8 +59,8 @@ Futbol Pro es una app social para futbolistas amateurs: perfil, partidos amistos
 | Firebase | `firebase_core` 4.2.1, `firebase_messaging` 16.0.4, `cloud_firestore` 6.1.0, `firebase_storage` 13.0.4 | — | Iniciado en `main.dart` |
 | Notif local | `flutter_local_notifications` | 19.5.0 | Canal `futbol_pro_default` |
 | Formato | `intl` 0.20.2 | — | `HH:mm`, fechas |
-| Backend | Node 18+, Express 4.18.2, `mysql2/promise` 3.9.7, `socket.io` 4.7.5, `bcrypt` 5.1.1, `cors`, `dotenv`, PayPal SDK | — | `server/` |
-| Tests | `bloc_test` 10.0.0, `mocktail` 1.0.5 | — | 11 tests |
+| **Backend** | Node 20+, Express 4.21.2, `helmet`, `bcryptjs` 5.0.1, `cors`, `dotenv`, `stripe` SDK, `paypal` SDK | — | `server/`; `engines.node>=20` en package.json; node --check en CI |
+| Tests | `bloc_test` 10.0.0, `mocktail` 1.0.5 | — | 39 npm tests (7 suites); 23 flutter tests |
 
 ---
 
@@ -177,6 +177,9 @@ DB_NAME=futbol_pro
 DB_PORT=3306
 DB_CONNECTION_LIMIT=10
 PORT=3000
+STRIPE_PUBLIC_KEY=pk_test_******************
+STRIPE_SECRET_KEY=sk_test_******************
+PAYPAL_CLIENT_ID=AfZ...  # nunca commitear valor secreto real
 ```
 
 ---
@@ -335,9 +338,10 @@ GoRoute(path:'/chat', builder:ChatListPage, routes:[
 
 ## Configuración por Plataforma
 
-- **Android** `android/app/build.gradle.kts` — `namespace/applicationId com.masai.futbol_pro`, `compileSdk flutter.compileSdkVersion`, `Java 21 + desugaring 2.1.4`, `firebase-messaging-ktx:24.0.0`; `MainActivity.kt` en `com/masai/futbol_pro/MainActivity.kt` (`package com.masai.futbol_pro`)
-- **iOS/macOS** `firebase_options.dart` bundle `com.example.futbolPro` (coherente con Android tras fix)
-- **Firebase** proyecto `masai-app` `1011658046972` (5 plataformas en `firebase_options.dart`)
+- **Android** `android/app/build.gradle.kts` — `namespace/applicationId com.masai.futbol_pro`, `compileSdk flutter.compileSdkVersion`, `Java 21 + desugaring 2.1.4`, `firebase-messaging-ktx:24.0.0`; `MainActivity.kt` en `com/masai/futbol_pro/MainActivity.kt` (`package com.masai.futbol_pro`). `minSdk 23` (requiere `network_security_config` + `local_auth`). `key.properties` para firma release (nunca commitear).
+- **iOS/macOS** `Runner.xcodeproj/project.pbxproj` — 6 apps con `com.masai.futbolPro`, 3 test entries aún `com.example` (pendiente Xcode fix). bundle IDs unificadas.
+- **Firebase** proyecto `masai-app` `1011658046972` (5 plataformas en `firebase_options.dart`). `GoogleService-Info.plist` pendiente en disco — `flutterfire configure --ios-bundle-id=com.masai.futbolPro` para generar.
+- **Windows/Linux/macOS** bundle IDs todos `com.masai.futbolPro` (consistencia cross-platform).
 - **Analysis** `analysis_options.yaml` incluye `package:flutter_lints/flutter.yaml` y excluye `server/**`, `lib/backend/**`
 
 ---
@@ -346,12 +350,18 @@ GoRoute(path:'/chat', builder:ChatListPage, routes:[
 
 ```powershell
 flutter test
-# 11 tests: test/core/consts_test, auth_bloc_test (6 casos AppStarted/login/register/logout),
-#           chat_bloc_test (initial), match_bloc_test (initial), widget_test placeholder
-flutter analyze --no-pub # 0 errors, ~55 infos (avoid_print, withOpacity deprecated, etc.)
+# 23 tests: test/core/consts_test, auth_bloc_test (12 casos AppStarted/login/register/logout/refresh),
+#           chat_bloc_test (initial + send/message/image), match_bloc_test (initial),
+#           league_detail_test (3 parse), widget_test placeholder
+flutter analyze --no-pub # 0 errors, 9 informaciones previas (unnecessary_underscores, unused_field, etc.)
 ```
 
+39 npm tests (7 suites): auth, pagos, admin, matches, leagues, chat_images, health. Todos pass en CI.
+
 Nuevos tests mockean `SocketService.connect` para evitar conexión real.
+
+BlocTest upgrades: `bloc_test` 10.0.0 compatible con `flutter_bloc 9.1.1`.
+```
 
 ---
 
@@ -376,11 +386,13 @@ Tras auditoría se ejecutó `git rm --cached -r lib/backend` y `git rm --cached 
 
 **Hecho en auditoría (8):** AuthBloc real, DI lazy, `AppConsts` con dart-define, mover backend a `server/` + `dotenv/cors`, `NotificationService` real, fix namespace Android, `SecureStorage` + `bloc_test`, limpieza git.
 
+**Hecho en auditoría (3ra ronda):** `AdminError` con `prev`, `friendlies` derivado de `matches`, `notification_service` tópicos sanitizados, `AdminLoaded` sin `friendlies` duplicado, `profile_state` `updatedAt`, `server` bcryptjs+helmet+STRIPE, `admin.js` LIKE escape, CSV injection, `no-show` UNIQUE+dedup, `users` profile whitelist, `chats` senderName DB, `available` excluye cancel/error_pago, `reserve` pre-check provider, `refresh_tokens` atomic tx BEGIN IMMEDIATE + límite 10, `fields` disponibilidad, `matches` teams authz+overlap, `acta.csv` neutralizer, `socket` join con auth estricto, `post /users/bulk-delete` proxy-safe.
+
 **Chat implementado:** entidades extendidas, socket.io server+client, datasource `createChat/searchUsers`, bloc typing/socket, UI WhatsApp completa, ruteo `/chat/new`.
 
 **PayPal:** integración en `server/services/paypal.js`, rutas `server/routes/admin.js`, flujo de pagos en dashboard.
 
-**Próximos:** adjuntos imagen (usar `image_picker` + `firebase_storage` → `imageUrl` en `Message`), notas de voz, cifrado, paginación `LIMIT 50` → infinite scroll, `intl` locale `es_ES` inicializar en `main.dart`.
+**Próximos:** adjuntos imagen (usar `image_picker` + `firebase_storage` → `imageUrl` en `Message`), notas de voz, cifrado, paginación `LIMIT 50` → infinite scroll, `intl` locale `es_ES` inicializar en `main.dart`, iOS test bundle IDs `com.example→com.masai`, `key.properties` release, `DOCUMENTACION.md` actualización.
 
 **Troubleshooting:**
 - `10.0.2.2` solo funciona en emulador; en físico usar `192.168.x.x` y `--dart-define`
@@ -388,6 +400,9 @@ Tras auditoría se ejecutó `git rm --cached -r lib/backend` y `git rm --cached 
 - `chat_updated` no llega → verificar `server.listen` (ahora HTTP+Socket, no `app.listen`) y `SocketService` connect con `userId` no vacío
 - `flutter pub get` falla `bloc_test` → usar `bloc_test: ^10.0.0` (compatible con `flutter_bloc 9.1.1` que usa `bloc 9.0.0`)
 - `flutter analyze` `include_file_not_found` → `flutter pub get` pendiente
+- `GoogleService-Info.plist` faltante → `flutterfire configure --ios-bundle-id=com.masai.futbolPro`
+- `project.pbxproj` 3 test entries `com.example` → actualizar a `com.masai.futbolPro` (Xcode manual)
+- `server/.env` `STRIPE_SECRET_KEY` vacío → agregar `sk_test_...` local, nunca commitear
 
 ---
 

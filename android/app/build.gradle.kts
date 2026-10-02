@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -29,7 +32,7 @@ android {
 
     defaultConfig {
         applicationId = "com.masai.futbol_pro" // <-- Debe coincidir con el namespace
-        minSdk = 23 // local_auth + notificaciones lo exigen
+        minSdk = flutter.minSdkVersion // local_auth + notificaciones lo exigen
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -38,8 +41,8 @@ android {
     // Firma release vía android/key.properties (no commitear).
     // Si no existe, se usa debug solo para desarrollo local.
     val keyPropsFile = rootProject.file("key.properties")
-    val keyProps = java.util.Properties()
-    if (keyPropsFile.exists()) keyProps.load(java.io.FileInputStream(keyPropsFile))
+    val keyProps = Properties()
+    if (keyPropsFile.exists()) keyProps.load(FileInputStream(keyPropsFile))
     signingConfigs {
         create("release") {
             if (keyPropsFile.exists()) {

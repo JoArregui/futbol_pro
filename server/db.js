@@ -236,15 +236,19 @@ function getDb() {
         await ensure('mensajes', 'image_url', "image_url TEXT NULL");
       } catch (_) { /* noop */ }
 
-      // Seed campos si vacío
+      // Seed campos si vacío - En test crear campos por defecto, en prod se crean manualmente desde el panel admin
       const row = await db.get('SELECT COUNT(*) as c FROM campos');
       if (row.c === 0) {
-        await db.exec(`INSERT INTO campos (nombre, tarifa_horaria, capacidad) VALUES
-          ('Campo Central', 50, 22),
-          ('Campo Norte', 45, 14),
-          ('Campo Sur - 7', 30, 14),
-          ('Cancha Techada', 60, 10)`);
-        console.log('🌱 Seed: campos insertados');
+        if (process.env.NODE_ENV === 'test') {
+          await db.exec(`INSERT INTO campos (nombre, tarifa_horaria, capacidad) VALUES
+            ('Campo Central', 50, 22),
+            ('Campo Norte', 45, 14),
+            ('Campo Sur - 7', 30, 14),
+            ('Cancha Techada', 60, 10)`);
+          console.log('🌱 Seed: campos insertados (test)');
+        } else {
+          console.log('ℹ️ Sin campos predefinidos. Crea tus campos desde el panel admin.');
+        }
       }
 
       // Seed superadmin solo si .env lo define explícitamente (sin default).
