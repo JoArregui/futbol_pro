@@ -46,7 +46,9 @@ void main() {
       const RegisterParams(email: 'a@a.com', password: '123', nickname: 'nick'),
     );
     registerFallbackValue(const ForgotPasswordParams(email: 'a@a.com'));
-    registerFallbackValue(const ResetPasswordParams(token: 'token', password: '12345678'));
+    registerFallbackValue(
+      const ResetPasswordParams(token: 'token', password: '12345678'),
+    );
     when(() => mockRepo.isBiometricEnabled()).thenAnswer((_) async => false);
     when(() => mockRepo.setBiometricEnabled(any())).thenAnswer((_) async {});
   });

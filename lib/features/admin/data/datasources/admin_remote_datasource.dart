@@ -323,11 +323,7 @@ class AdminRemoteDataSource {
     final res = await client.post(
       Uri.parse('$_base/players'),
       headers: await _headers(),
-      body: jsonEncode({
-        'apodo': apodo,
-        'nombre': nombre,
-        'email': email,
-      }),
+      body: jsonEncode({'apodo': apodo, 'nombre': nombre, 'email': email}),
     );
     if (res.statusCode == 201) {
       final data = jsonDecode(res.body);
@@ -340,7 +336,9 @@ class AdminRemoteDataSource {
         rating: 4.5,
       );
     }
-    throw ServerException(message: 'Error creando jugador: ${res.statusCode} ${res.body}');
+    throw ServerException(
+      message: 'Error creando jugador: ${res.statusCode} ${res.body}',
+    );
   }
 
   Future<List<AdminAudit>> getAudit({int limit = 30}) async {

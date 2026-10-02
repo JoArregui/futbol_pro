@@ -36,68 +36,84 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   Future<void> _onLoad(AdminLoadRequested e, Emitter<AdminState> emit) async {
-  emit(AdminLoading());
-  try {
-    final (stats, users, matches, teams, players, fields) = await (
-      repository.getStats(),
-      repository.getUsers(),
-      repository.getMatches(),
-      repository.getTeams(),
-      repository.getPlayers(),
-      repository.getFields(),
-    ).wait.timeout(const Duration(seconds: 15));
+    emit(AdminLoading());
+    try {
+      final (stats, users, matches, teams, players, fields) = await (
+        repository.getStats(),
+        repository.getUsers(),
+        repository.getMatches(),
+        repository.getTeams(),
+        repository.getPlayers(),
+        repository.getFields(),
+      ).wait.timeout(const Duration(seconds: 15));
 
-    final (referees, leagues, tournaments, finance, audit) = await (
-      repository.getReferees(),
-      repository.getLeagues(),
-      repository.getTournaments(),
-      repository.getFinance(),
-      repository.getAudit(limit: 20),
-    ).wait.timeout(const Duration(seconds: 15));
+      final (referees, leagues, tournaments, finance, audit) = await (
+        repository.getReferees(),
+        repository.getLeagues(),
+        repository.getTournaments(),
+        repository.getFinance(),
+        repository.getAudit(limit: 20),
+      ).wait.timeout(const Duration(seconds: 15));
 
-    // Primer fallo (incl. 403 no superadmin)
-    final all = <Either<Failure, Object?>>[
-      stats, users, matches, teams, players, fields,
-      referees, leagues, tournaments, finance, audit,
-    ];
-    for (final r in all) {
-      final failure = r.fold<Failure?>((l) => l, (_) => null);
-      if (failure != null) {
-        emit(AdminError(failure.errorMessage));
-        return;
+      // Primer fallo (incl. 403 no superadmin)
+      final all = <Either<Failure, Object?>>[
+        stats,
+        users,
+        matches,
+        teams,
+        players,
+        fields,
+        referees,
+        leagues,
+        tournaments,
+        finance,
+        audit,
+      ];
+      for (final r in all) {
+        final failure = r.fold<Failure?>((l) => l, (_) => null);
+        if (failure != null) {
+          emit(AdminError(failure.errorMessage));
+          return;
+        }
       }
-    }
 
-    emit(
-      AdminLoaded(
-        stats: stats.getOrElse(
-          () => const AdminStats(
-            users: 0, matches: 0, fields: 0, bookings: 0,
-            chats: 0, teams: 0, leagues: 0, referees: 0, revenue: 0,
+      emit(
+        AdminLoaded(
+          stats: stats.getOrElse(
+            () => const AdminStats(
+              users: 0,
+              matches: 0,
+              fields: 0,
+              bookings: 0,
+              chats: 0,
+              teams: 0,
+              leagues: 0,
+              referees: 0,
+              revenue: 0,
+            ),
           ),
+          users: users.getOrElse(() => []),
+          matches: matches.getOrElse(() => []),
+          teams: teams.getOrElse(() => []),
+          players: players.getOrElse(() => []),
+          fields: fields.getOrElse(() => []),
+          referees: referees.getOrElse(() => []),
+          leagues: leagues.getOrElse(() => []),
+          friendlies: matches
+              .getOrElse(() => [])
+              .where((m) => m.type.toUpperCase() == 'AMISTOSO')
+              .toList(),
+          tournaments: tournaments.getOrElse(() => []),
+          finance: finance.getOrElse(() => AdminFinance.empty()),
+          audit: audit.getOrElse(() => []),
         ),
-        users: users.getOrElse(() => []),
-        matches: matches.getOrElse(() => []),
-        teams: teams.getOrElse(() => []),
-        players: players.getOrElse(() => []),
-        fields: fields.getOrElse(() => []),
-        referees: referees.getOrElse(() => []),
-        leagues: leagues.getOrElse(() => []),
-        friendlies: matches
-            .getOrElse(() => [])
-            .where((m) => m.type.toUpperCase() == 'AMISTOSO')
-            .toList(),
-        tournaments: tournaments.getOrElse(() => []),
-        finance: finance.getOrElse(() => AdminFinance.empty()),
-        audit: audit.getOrElse(() => []),
-      ),
-    );
-  } on TimeoutException {
-    emit(AdminError('Timeout cargando panel admin'));
-  } catch (err) {
-    emit(AdminError('Error cargando panel admin: $err'));
+      );
+    } on TimeoutException {
+      emit(AdminError('Timeout cargando panel admin'));
+    } catch (err) {
+      emit(AdminError('Error cargando panel admin: $err'));
+    }
   }
-}
 
   Future<void> _onSearchUsers(
     AdminUsersSearchRequested e,

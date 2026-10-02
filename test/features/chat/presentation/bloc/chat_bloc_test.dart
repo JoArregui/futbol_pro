@@ -138,8 +138,7 @@ void main() {
     );
     final next = await bloc.stream.firstWhere(
       (s) =>
-          s is ChatRoomSelectedState &&
-          (s).messages.any((m) => m.id == 'm2'),
+          s is ChatRoomSelectedState && (s).messages.any((m) => m.id == 'm2'),
     );
     final selected = next as ChatRoomSelectedState;
     expect(selected.messages.any((m) => m.id == 'm2'), isTrue);

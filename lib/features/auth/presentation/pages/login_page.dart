@@ -68,7 +68,8 @@ class _LoginPageState extends State<LoginPage> {
           },
           child: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, authState) {
-              if (authState is AuthBiometricRequired || authState is AuthBiometricLoading) {
+              if (authState is AuthBiometricRequired ||
+                  authState is AuthBiometricLoading) {
                 final isLoading = authState is AuthBiometricLoading;
                 return Center(
                   child: Padding(
@@ -106,14 +107,16 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 20),
                           AppButton(
-                            label: isLoading ? 'Autenticando...' : 'Desbloquear con huella',
+                            label: isLoading
+                                ? 'Autenticando...'
+                                : 'Desbloquear con huella',
                             icon: Icons.fingerprint,
                             loading: isLoading,
                             onPressed: isLoading
                                 ? null
                                 : () => context.read<AuthBloc>().add(
-                                      const BiometricUnlockRequested(),
-                                    ),
+                                    const BiometricUnlockRequested(),
+                                  ),
                           ),
                           AppButton.ghost(
                             label: 'Usar otra cuenta',

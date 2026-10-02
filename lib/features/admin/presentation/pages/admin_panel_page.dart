@@ -732,10 +732,15 @@ class _SquadManagerState extends State<_SquadManager> {
             padding: const EdgeInsets.only(bottom: 12),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.person_add_rounded, color: AppColors.lime),
-              label: const Text('Crear jugador manual', style: TextStyle(color: AppColors.lime)),
+              label: const Text(
+                'Crear jugador manual',
+                style: TextStyle(color: AppColors.lime),
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.lime),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () => _showCreateManualPlayerDialog(context),
             ),
@@ -828,21 +833,30 @@ class _SquadManagerState extends State<_SquadManager> {
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
               Navigator.pop(context);
-              
+
               final messenger = ScaffoldMessenger.of(context);
               final result = await widget.bloc.repository.createManualPlayer(
                 apodo: nickCtrl.text.trim(),
-                nombre: nameCtrl.text.trim().isEmpty ? null : nameCtrl.text.trim(),
-                email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+                nombre: nameCtrl.text.trim().isEmpty
+                    ? null
+                    : nameCtrl.text.trim(),
+                email: emailCtrl.text.trim().isEmpty
+                    ? null
+                    : emailCtrl.text.trim(),
               );
-              
+
               result.fold(
                 (failure) => messenger.showSnackBar(
-                  SnackBar(content: Text('Error: ${failure.message}'), backgroundColor: AppColors.danger),
+                  SnackBar(
+                    content: Text('Error: ${failure.message}'),
+                    backgroundColor: AppColors.danger,
+                  ),
                 ),
                 (player) {
                   messenger.showSnackBar(
-                    SnackBar(content: Text('Jugador "${player.nickname}" creado ✓')),
+                    SnackBar(
+                      content: Text('Jugador "${player.nickname}" creado ✓'),
+                    ),
                   );
                   _load();
                   widget.bloc.add(const AdminLoadRequested());

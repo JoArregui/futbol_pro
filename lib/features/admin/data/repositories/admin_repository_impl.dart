@@ -322,11 +322,13 @@ class AdminRepositoryImpl implements AdminRepository {
     String? email,
   }) async {
     try {
-      return Right(await remote.createManualPlayer(
-        apodo: apodo,
-        nombre: nombre,
-        email: email,
-      ));
+      return Right(
+        await remote.createManualPlayer(
+          apodo: apodo,
+          nombre: nombre,
+          email: email,
+        ),
+      );
     } catch (e) {
       return _err(e);
     }

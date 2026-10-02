@@ -19,6 +19,9 @@ class ResetPassword {
   ResetPassword(this.repository);
 
   Future<Either<Failure, void>> call(ResetPasswordParams params) async {
-    return await repository.resetPassword(token: params.token, password: params.password);
+    return await repository.resetPassword(
+      token: params.token,
+      password: params.password,
+    );
   }
 }

@@ -32,7 +32,7 @@ const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicialización de datos de localización para formateo de fechas
   await initializeDateFormatting('es', null);
 

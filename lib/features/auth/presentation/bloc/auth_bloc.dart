@@ -99,7 +99,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final result = await forgotPassword(ForgotPasswordParams(email: event.email));
+    final result = await forgotPassword(
+      ForgotPasswordParams(email: event.email),
+    );
     result.fold(
       (failure) => emit(AuthError(failure.message)),
       (_) => emit(ForgotPasswordSent(event.email)),
@@ -111,7 +113,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final result = await resetPassword(ResetPasswordParams(token: event.token, password: event.password));
+    final result = await resetPassword(
+      ResetPasswordParams(token: event.token, password: event.password),
+    );
     result.fold(
       (failure) => emit(AuthError(failure.message)),
       (_) => emit(const ResetPasswordSuccess()),
@@ -147,7 +151,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (ok) {
       emit(AuthAuthenticated(userId, role: role));
     } else {
-      debugPrint('🔐 Biométrico falló o cancelado, manteniendo AuthBiometricRequired');
+      debugPrint(
+        '🔐 Biométrico falló o cancelado, manteniendo AuthBiometricRequired',
+      );
       emit(AuthBiometricRequired(userId, role: role));
     }
   }

@@ -149,7 +149,7 @@ Future<void> init() async {
   );
   debugPrint('  ✅ AuthRepository registrado');
 
-// Domain (Use Cases)
+  // Domain (Use Cases)
   sl.registerLazySingleton(
     () => SubscribeToNotifications(sl<NotificationService>()),
   );

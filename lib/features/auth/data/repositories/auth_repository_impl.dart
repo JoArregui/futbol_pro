@@ -57,9 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> forgotPassword({
-    required String email,
-  }) async {
+  Future<Either<Failure, void>> forgotPassword({required String email}) async {
     try {
       await remoteDataSource.forgotPassword(email);
       return const Right(null);
@@ -83,9 +81,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on Exception {
-      return const Left(
-        ServerFailure('Error al restablecer la contraseña.'),
-      );
+      return const Left(ServerFailure('Error al restablecer la contraseña.'));
     }
   }
 

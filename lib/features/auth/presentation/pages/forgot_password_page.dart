@@ -55,7 +55,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             );
           }
           if (state is ForgotPasswordSent) {
-            context.go('${AppRoutes.resetPassword}?email=${Uri.encodeComponent(state.email)}');
+            context.go(
+              '${AppRoutes.resetPassword}?email=${Uri.encodeComponent(state.email)}',
+            );
           }
         },
         child: Center(

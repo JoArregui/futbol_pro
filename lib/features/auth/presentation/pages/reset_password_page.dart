@@ -12,11 +12,7 @@ class ResetPasswordPage extends StatefulWidget {
   final String? email;
   final String? token;
 
-  const ResetPasswordPage({
-    super.key,
-    this.email,
-    this.token,
-  });
+  const ResetPasswordPage({super.key, this.email, this.token});
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -65,7 +61,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         return;
       }
       context.read<AuthBloc>().add(
-        ResetPasswordRequested(token: _token!, password: _passwordController.text),
+        ResetPasswordRequested(
+          token: _token!,
+          password: _passwordController.text,
+        ),
       );
     }
   }
@@ -94,7 +93,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           if (state is ResetPasswordSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('✅ Contraseña actualizada correctamente. Ya puedes iniciar sesión.'),
+                content: Text(
+                  '✅ Contraseña actualizada correctamente. Ya puedes iniciar sesión.',
+                ),
               ),
             );
             context.go(AppRoutes.login);
@@ -123,7 +124,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     Center(
                       child: Text(
                         'Restableciendo para: $_email',
-                        style: const TextStyle(color: AppColors.textDim, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppColors.textDim,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -144,7 +148,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
                               ),
-                              onPressed: () => setState(() => _obscure = !_obscure),
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
                             ),
                           ),
                           validator: (v) => (v == null || v.length < 8)
@@ -160,8 +165,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             prefixIcon: Icon(Icons.lock_outline_rounded),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Confirma la contraseña.';
-                            if (v != _passwordController.text) return 'Las contraseñas no coinciden.';
+                            if (v == null || v.isEmpty) {
+                              return 'Confirma la contraseña.';
+                            }
+                            if (v != _passwordController.text) {
+                              return 'Las contraseñas no coinciden.';
+                            }
                             return null;
                           },
                         ),

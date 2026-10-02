@@ -377,10 +377,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         try {
           serverMsg =
               (jsonDecode(response.body) as Map)['message']?.toString() ??
-                  serverMsg;
+              serverMsg;
         } catch (_) {}
         throw ServerException(
-          message: 'Error al solicitar restablecimiento (${response.statusCode}): $serverMsg',
+          message:
+              'Error al solicitar restablecimiento (${response.statusCode}): $serverMsg',
         );
       }
     } on TimeoutException {
@@ -411,7 +412,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       } else if (response.statusCode == 400) {
         String msg = 'Token inválido o expirado.';
         try {
-          msg = (jsonDecode(response.body) as Map)['message']?.toString() ?? msg;
+          msg =
+              (jsonDecode(response.body) as Map)['message']?.toString() ?? msg;
         } catch (_) {}
         throw ServerException(message: msg);
       } else {
@@ -419,10 +421,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         try {
           serverMsg =
               (jsonDecode(response.body) as Map)['message']?.toString() ??
-                  serverMsg;
+              serverMsg;
         } catch (_) {}
         throw ServerException(
-          message: 'Error al restablecer contraseña (${response.statusCode}): $serverMsg',
+          message:
+              'Error al restablecer contraseña (${response.statusCode}): $serverMsg',
         );
       }
     } on TimeoutException {
